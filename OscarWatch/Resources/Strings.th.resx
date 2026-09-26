@@ -3988,6 +3988,12 @@ LOS: {2}
   <data name="Ft4.AutoReply.Note">
     <value>ขณะเรียก CQ จะตอบสถานีแรกที่เรียกคุณ ยกเลิกเพื่อเรียก CQ ต่อไปจนกว่าจะคลิกสถานี เลือกอีกครั้งเพื่อตอบสถานีถัดไป รวมถึงสถานีที่เรียกเมื่อไม่กี่วินาทีก่อน</value>
   </data>
+  <data name="Ft4.CloseWhileTx.Title">
+    <value>ปิด FT4 ขณะส่ง</value>
+  </data>
+  <data name="Ft4.CloseWhileTx.Message">
+    <value>FT4 กำลังส่งอยู่ ปิดหน้าต่างและหยุดส่งทันทีหรือไม่?</value>
+  </data>
   <data name="Ft4.HoldTxFrequency">
     <value>คงความถี่ TX</value>
   </data>

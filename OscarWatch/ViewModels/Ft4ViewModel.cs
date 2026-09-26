@@ -704,6 +704,22 @@ public partial class Ft4ViewModel : ViewModelBase, IDisposable
         TuneCommand.NotifyCanExecuteChanged();
     }
 
+    /// <summary>CQ, a contact, or Tune is using the transmitter.</summary>
+    public bool IsTransmissionActive => TxEnabled || IsTuning || _modem.IsTransmissionActive;
+
+    /// <summary>Unkey and stop the audio immediately. Used when the operator closes the window.</summary>
+    public void StopTransmissionNow()
+    {
+        _modem.StopTransmissionNow();
+        TxEnabled = false;
+        IsTuning = false;
+        ManualPttPrompt = "";
+        StatusLine = _modem.Status;
+        TuneCommand.NotifyCanExecuteChanged();
+        HaltTxCommand.NotifyCanExecuteChanged();
+        EnableTxCommand.NotifyCanExecuteChanged();
+    }
+
     private bool CanHaltTx() => TxEnabled || IsTuning;
 
     [RelayCommand(CanExecute = nameof(CanTune))]

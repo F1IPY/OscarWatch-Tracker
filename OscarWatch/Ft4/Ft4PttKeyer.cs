@@ -75,8 +75,29 @@ public sealed class Ft4PttKeyer : IDisposable
         var ft4 = _settings.Current.Ft4;
         var tail = Math.Clamp(ft4.PttTailMs, 0, 2000);
         if (tail > 0)
-            await Task.Delay(tail, cancellationToken).ConfigureAwait(false);
+        {
+            try
+            {
+                await Task.Delay(tail, cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                // Halt still has to drop PTT. The tail must not leave the radio keyed.
+            }
+        }
 
+        DropPtt();
+    }
+
+    /// <summary>Drop PTT at once, without the tail delay. Used when the operator stops a transmission.</summary>
+    public void UnkeyNow() => DropPtt();
+
+    private void DropPtt()
+    {
+        if (!_keyed)
+            return;
+
+        var ft4 = _settings.Current.Ft4;
         try
         {
             switch (ft4.PttMethod)

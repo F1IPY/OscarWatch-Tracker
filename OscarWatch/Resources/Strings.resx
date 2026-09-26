@@ -3984,6 +3984,12 @@ Latest: {1} ({2})</value>
   <data name="Ft4.AutoReply.Note">
     <value>While calling CQ, answer the first station that calls you. Clear this to keep calling CQ until you click a station. Tick it again to answer the next caller, including one from the last few seconds.</value>
   </data>
+  <data name="Ft4.CloseWhileTx.Title">
+    <value>Close FT4 while transmitting</value>
+  </data>
+  <data name="Ft4.CloseWhileTx.Message">
+    <value>FT4 is transmitting. Close the window and stop transmitting now?</value>
+  </data>
   <data name="Ft4.HoldTxFrequency">
     <value>Hold Tx Freq</value>
   </data>

@@ -442,6 +442,19 @@ public sealed class Ft4ModemService : IDisposable
         Changed?.Invoke();
     }
 
+    /// <summary>True while CQ/QSO transmit is armed, Tune is on, or audio is still playing.</summary>
+    public bool IsTransmissionActive =>
+        IsTuning
+        || _sequencer is { TransmitEnabled: true }
+        || _audio.IsPlaying;
+
+    /// <summary>Stop the current transmission at once: audio off and PTT dropped, without waiting for the slot.</summary>
+    public void StopTransmissionNow()
+    {
+        HaltTx();
+        _ptt.UnkeyNow();
+    }
+
     /// <summary>
     /// WSJT-X-style Tune: continuous tone on the TX audio frequency with PTT.
     /// Call again (or Halt Tx) to stop. While on, the downlink tone can trim the uplink.

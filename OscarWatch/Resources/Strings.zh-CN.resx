@@ -3984,6 +3984,12 @@
   <data name="Ft4.AutoReply.Note">
     <value>呼叫 CQ 时，应答第一个呼叫您的电台。取消后会继续呼叫 CQ，直到您点击某个电台。再次勾选后，将应答下一个呼叫，包括几秒前的呼叫。</value>
   </data>
+  <data name="Ft4.CloseWhileTx.Title">
+    <value>正在发射时关闭 FT4</value>
+  </data>
+  <data name="Ft4.CloseWhileTx.Message">
+    <value>FT4 正在发射。关闭窗口并立即停止发射？</value>
+  </data>
   <data name="Ft4.HoldTxFrequency">
     <value>保持 TX 频率</value>
   </data>
