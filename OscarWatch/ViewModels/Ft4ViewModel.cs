@@ -1074,7 +1074,7 @@ public partial class Ft4ViewModel : ViewModelBase, IDisposable
             CurrentTxMessage = _modem.Sequencer?.CurrentTxMessage ?? CurrentTxMessage;
             TxEnabled = _modem.Sequencer?.TransmitEnabled == true;
             IsTuning = _modem.IsTuning;
-            // Set partner before any decode-list rebuild so new rows paint correctly.
+            // Recolour rows already on screen when the QSO partner changes.
             QsoPartnerCall = _modem.Sequencer?.TheirCall;
             if (!string.IsNullOrEmpty(_modem.ManualPrompt))
                 SetManualPttPrompt(_modem.ManualPrompt);
@@ -1092,31 +1092,54 @@ public partial class Ft4ViewModel : ViewModelBase, IDisposable
 
     private void OnDecodesChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
-        Dispatcher.UIThread.Post(() =>
-        {
-            QsoPartnerCall = _modem.Sequencer?.TheirCall;
-            RebuildDecodeRows();
-            RefreshRxMarker();
-        });
+        // Inserts are already posted to the UI thread. Syncing here paints the new
+        // line in that same turn. A second post, or clearing and recreating every row,
+        // left the background for the next decode to apply.
+        if (Dispatcher.UIThread.CheckAccess())
+            ShowDecodeListChange();
+        else
+            Dispatcher.UIThread.Post(ShowDecodeListChange);
     }
 
-    private void RebuildDecodeRows()
+    private void ShowDecodeListChange()
     {
-        var messages = _modem.Decodes.ToList();
-        if (Decodes.Count == messages.Count
-            && Decodes.Zip(messages, (row, msg) => ReferenceEquals(row.Message, msg)).All(same => same))
+        QsoPartnerCall = _modem.Sequencer?.TheirCall;
+        SyncDecodeRows();
+        RefreshRxMarker();
+    }
+
+    /// <summary>
+    /// Keep one row per modem message. New lines are inserted in place with their
+    /// background already set, so existing rows are not thrown away and repainted later.
+    /// </summary>
+    private void SyncDecodeRows()
+    {
+        var messages = _modem.Decodes;
+        var live = new HashSet<Ft4DecodedMessage>(messages, ReferenceEqualityComparer.Instance);
+        for (var i = Decodes.Count - 1; i >= 0; i--)
         {
-            RefreshDecodeHighlights();
-            return;
+            if (!live.Contains(Decodes[i].Message))
+                Decodes.RemoveAt(i);
         }
 
-        Decodes.Clear();
-        foreach (var message in messages)
+        var rowIndex = 0;
+        for (var messageIndex = 0; messageIndex < messages.Count; messageIndex++)
         {
+            var message = messages[messageIndex];
+            if (rowIndex < Decodes.Count && ReferenceEquals(Decodes[rowIndex].Message, message))
+            {
+                rowIndex++;
+                continue;
+            }
+
             var row = new Ft4DecodeRowViewModel(message);
             ApplyHighlight(row);
-            Decodes.Add(row);
+            Decodes.Insert(rowIndex, row);
+            rowIndex++;
         }
+
+        while (Decodes.Count > messages.Count)
+            Decodes.RemoveAt(Decodes.Count - 1);
     }
 
     private void RefreshDecodeHighlights()

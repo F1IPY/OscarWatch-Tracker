@@ -17,6 +17,9 @@ public sealed partial class Ft4DecodeRowViewModel : ObservableObject
 
     [ObservableProperty] private IBrush _rowBackground = Brushes.Transparent;
 
+    private string? _appliedColourHex;
+    private bool _highlightApplied;
+
     public void RefreshHighlight(
         string? myCall,
         string? partnerCall,
@@ -41,6 +44,13 @@ public sealed partial class Ft4DecodeRowViewModel : ObservableObject
             Ft4DecodeHighlightKind.NewGrid => newGridColour,
             _ => null
         };
+
+        // Replacing the brush when the colour has not changed repaints every row.
+        if (_highlightApplied && string.Equals(_appliedColourHex, hex, StringComparison.OrdinalIgnoreCase))
+            return;
+
+        _highlightApplied = true;
+        _appliedColourHex = hex;
         RowBackground = Ft4DecodeRowBackgroundConverter.BrushFromHex(hex);
     }
 }
