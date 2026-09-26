@@ -54,6 +54,7 @@ public sealed class Ft4ModemService : IDisposable
     private DateTime _lastEchoCalibrationSlot = DateTime.MinValue;
     private bool _decodeQueuedThisSlot;
     private readonly HashSet<string> _postedDecodeKeys = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, Ft4DecodedMessage> _postedEchoes = new(StringComparer.Ordinal);
     private readonly object _decodePostGate = new();
     private DateTime _lastRelevantDecodeUtc = DateTime.UtcNow;
     private DateTime _lastTuneCalUtc = DateTime.MinValue;
@@ -265,6 +266,7 @@ public sealed class Ft4ModemService : IDisposable
         lock (_decodePostGate)
         {
             _postedDecodeKeys.Clear();
+            _postedEchoes.Clear();
             _lastEchoCalibrationSlot = DateTime.MinValue;
         }
         _lastRelevantDecodeUtc = DateTime.UtcNow;
@@ -633,7 +635,10 @@ public sealed class Ft4ModemService : IDisposable
         {
             Decodes.Clear();
             lock (_decodePostGate)
+            {
                 _postedDecodeKeys.Clear();
+                _postedEchoes.Clear();
+            }
             Status = _l.Get("Ft4.Status.DecodesCleared");
             Changed?.Invoke();
         }
@@ -691,7 +696,23 @@ public sealed class Ft4ModemService : IDisposable
                     // and must not republish (or re-calibrate from) lines the early decode posted.
                     var keepPrefix = previousSlot.Ticks + "|";
                     lock (_decodePostGate)
+                    {
                         _postedDecodeKeys.RemoveWhere(k => !k.StartsWith(keepPrefix, StringComparison.Ordinal));
+                        List<string>? staleEchoes = null;
+                        foreach (var key in _postedEchoes.Keys)
+                        {
+                            if (key.StartsWith(keepPrefix, StringComparison.Ordinal))
+                                continue;
+                            staleEchoes ??= new List<string>();
+                            staleEchoes.Add(key);
+                        }
+
+                        if (staleEchoes is not null)
+                        {
+                            foreach (var key in staleEchoes)
+                                _postedEchoes.Remove(key);
+                        }
+                    }
 
                     // Audio first when the soft timer missed; Doppler can follow.
                     if (!alreadyTx && !IsTuning)
@@ -1444,29 +1465,65 @@ public sealed class Ft4ModemService : IDisposable
                     extra,
                     IsOwnEcho: true);
 
-                var echoKey = slotStart.Ticks + "|echo|" + d.text + "|" + ((int)Math.Round(d.freq_hz / 5.0) * 5);
+                // One echo per transmission. A second pass often reports the same
+                // message about 10 Hz away; that copy only clutters the list.
+                var echoIdentity = slotStart.Ticks + "|echo|" + d.text;
+                var publishEcho = false;
+                var replaced = false;
+                float replacedHz = 0;
                 lock (_decodePostGate)
                 {
-                    if (!_postedDecodeKeys.Add(echoKey))
-                        continue;
+                    if (_postedEchoes.TryGetValue(echoIdentity, out var shown))
+                    {
+                        foundOwn = true;
+                        if (!Ft4EchoChoice.IsClearerCopy(shown.FreqHz, shown.SnrDb, echo.FreqHz, echo.SnrDb, txHz))
+                        {
+                            Log.Debug(
+                                "FT4 duplicate echo suppressed: {Text} at {Hz:0} Hz, kept {KeptHz:0} Hz",
+                                d.text,
+                                d.freq_hz,
+                                shown.FreqHz);
+                            continue;
+                        }
+
+                        replacedHz = shown.FreqHz;
+                        replaced = true;
+                        _postedEchoes[echoIdentity] = echo;
+                        publishEcho = true;
+                    }
+                    else
+                    {
+                        _postedEchoes[echoIdentity] = echo;
+                        publishEcho = true;
+                    }
                 }
+
+                if (!publishEcho)
+                    continue;
 
                 ApplyEchoCalibration(slotStart, echo);
 
                 foundOwn = true;
                 any = true;
-                Log.Information(
-                    "FT4 own echo: {Text} at {Hz:0} Hz, DT {Dt:0.00} s, SNR {Snr:0} dB",
-                    d.text,
-                    d.freq_hz,
-                    timeSec,
-                    d.snr);
-                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                if (replaced)
                 {
-                    Decodes.Insert(0, echo);
-                    while (Decodes.Count > 200)
-                        Decodes.RemoveAt(Decodes.Count - 1);
-                });
+                    Log.Information(
+                        "FT4 own echo kept the clearer copy of {Text} at {Hz:0} Hz (dropped {OldHz:0} Hz)",
+                        d.text,
+                        d.freq_hz,
+                        replacedHz);
+                }
+                else
+                {
+                    Log.Information(
+                        "FT4 own echo: {Text} at {Hz:0} Hz, DT {Dt:0.00} s, SNR {Snr:0} dB",
+                        d.text,
+                        d.freq_hz,
+                        timeSec,
+                        d.snr);
+                }
+
+                Avalonia.Threading.Dispatcher.UIThread.Post(() => ShowChosenEcho(echo));
                 continue;
             }
 
@@ -1520,6 +1577,36 @@ public sealed class Ft4ModemService : IDisposable
         if (any)
             Changed?.Invoke();
         return foundOwn;
+    }
+
+    /// <summary>
+    /// Show this echo and drop any other copy of the same transmission.
+    /// A later post for a copy we no longer prefer does nothing.
+    /// </summary>
+    private void ShowChosenEcho(Ft4DecodedMessage echo)
+    {
+        var identity = echo.SlotUtc.Ticks + "|echo|" + echo.Text;
+        lock (_decodePostGate)
+        {
+            if (!_postedEchoes.TryGetValue(identity, out var chosen) || !ReferenceEquals(chosen, echo))
+                return;
+        }
+
+        for (var i = Decodes.Count - 1; i >= 0; i--)
+        {
+            var row = Decodes[i];
+            if (!row.IsOwnEcho || row.SlotUtc != echo.SlotUtc)
+                continue;
+            if (!string.Equals(row.Text, echo.Text, StringComparison.Ordinal))
+                continue;
+            if (ReferenceEquals(row, echo))
+                return;
+            Decodes.RemoveAt(i);
+        }
+
+        Decodes.Insert(0, echo);
+        while (Decodes.Count > 200)
+            Decodes.RemoveAt(Decodes.Count - 1);
     }
 
     private void ApplyEchoCalibration(DateTime slotStart, Ft4DecodedMessage own)

@@ -386,7 +386,8 @@
       <p>
         The decoder looks for FT4 signals starting up to about 2.5 s into the slot, which covers most satellite echoes.
         When <strong>Parallel TX echo decode</strong> is on, a second pass that realigns late echoes runs alongside the
-        normal decode during transmit slots. Transmit audio is prepared before each slot and starts on the slot boundary;
+        normal decode during transmit slots. If that pass finds the same echo again, only one line is kept: the copy
+        nearest your TX frequency. Transmit audio is prepared before each slot and starts on the slot boundary;
         the tone itself follows a half-second lead-in, which is part of FT4 timing.
       </p>
 
