@@ -16,6 +16,7 @@ public sealed class Ft4QsoSequencer
     private readonly Func<bool> _skipRrr;
     private readonly Func<bool> _holdTxFrequency;
     private readonly Func<bool> _autoReply;
+    private bool? _autoReplyOverride;
 
     public Ft4QsoSequencer(
         Func<string> myCall,
@@ -30,6 +31,18 @@ public sealed class Ft4QsoSequencer
         _holdTxFrequency = holdTxFrequency ?? (() => true);
         _autoReply = autoReply ?? (() => true);
     }
+
+    /// <summary>
+    /// The Auto reply checkbox. Overrides the settings read so a tick takes effect
+    /// on the next decode, including one already on screen.
+    /// </summary>
+    public void SetAutoReply(bool enabled) => _autoReplyOverride = enabled;
+
+    private bool AutoReplyOn => _autoReplyOverride ?? _autoReply();
+
+    public bool IsCqMessage =>
+        Ft4MessageCodec.TryParse(CurrentTxMessage, out var callTo, out _, out _)
+        && Ft4MessageCodec.IsCq(callTo);
 
     public Ft4QsoPhase Phase { get; private set; } = Ft4QsoPhase.Idle;
     public string? TheirCall { get; private set; }
@@ -55,13 +68,8 @@ public sealed class Ft4QsoSequencer
     public void StartCq(bool evenSlot)
     {
         PreferEvenSlot = evenSlot;
-        Phase = Ft4QsoPhase.CallingCq;
-        TheirCall = null;
-        TheirGrid = null;
-        ReportSent = null;
-        ReportReceived = null;
         CurrentTxMessage = Ft4MessageCodec.BuildCq(_myCall(), _myGrid());
-        TransmitEnabled = true;
+        BeginFreshCq(keepMessage: true);
     }
 
     /// <summary>Operator clicked a decode to answer.</summary>
@@ -137,8 +145,43 @@ public sealed class Ft4QsoSequencer
     {
         if (string.IsNullOrWhiteSpace(CurrentTxMessage))
             CurrentTxMessage = Ft4MessageCodec.BuildCq(_myCall(), _myGrid());
+
+        // A CQ in the box is a new call. Leaving the previous contact in place
+        // meant auto reply ignored the station that answered this CQ.
+        if (IsCqMessage)
+        {
+            BeginFreshCq(keepMessage: true);
+            return;
+        }
+
         if (Phase == Ft4QsoPhase.Idle || Phase == Ft4QsoPhase.Finished)
             Phase = Ft4QsoPhase.CallingCq;
+        TransmitEnabled = true;
+    }
+
+    /// <summary>
+    /// Auto reply was turned on while a CQ is going out. Drop any previous contact
+    /// so the next caller is answered. Returns false when this is not a CQ.
+    /// </summary>
+    public bool PrepareAutoReply()
+    {
+        if (!TransmitEnabled || !AutoReplyOn || !IsCqMessage)
+            return false;
+
+        if (Phase != Ft4QsoPhase.CallingCq || TheirCall is not null || ReportSent is not null)
+            BeginFreshCq(keepMessage: true);
+        return true;
+    }
+
+    private void BeginFreshCq(bool keepMessage)
+    {
+        Phase = Ft4QsoPhase.CallingCq;
+        TheirCall = null;
+        TheirGrid = null;
+        ReportSent = null;
+        ReportReceived = null;
+        if (!keepMessage || string.IsNullOrWhiteSpace(CurrentTxMessage))
+            CurrentTxMessage = Ft4MessageCodec.BuildCq(_myCall(), _myGrid());
         TransmitEnabled = true;
     }
 
@@ -172,7 +215,7 @@ public sealed class Ft4QsoSequencer
             && !callDe.Equals(my, StringComparison.OrdinalIgnoreCase))
         {
             // Auto reply off: keep calling CQ until the operator clicks a station.
-            if (!_autoReply())
+            if (!AutoReplyOn)
                 return false;
 
             TheirCall = Ft4MessageCodec.NormalizeCall(callDe);

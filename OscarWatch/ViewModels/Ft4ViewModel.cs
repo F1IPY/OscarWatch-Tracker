@@ -219,6 +219,9 @@ public partial class Ft4ViewModel : ViewModelBase, IDisposable
     {
         _settings.Current.Ft4.AutoReply = value;
         _settings.RequestSave();
+        // The sequencer must see this tick immediately. A settings read alone
+        // left CQ running after the box was cleared and ticked again.
+        _modem.SetAutoReply(value);
     }
 
     partial void OnHoldTxFrequencyChanged(bool value)
@@ -636,10 +639,13 @@ public partial class Ft4ViewModel : ViewModelBase, IDisposable
     private void EnableTx()
     {
         PushTxMessageToModem();
+        _modem.SetAutoReply(AutoReply);
         _modem.EnableTx();
         TxEnabled = _modem.Sequencer?.TransmitEnabled == true;
         CurrentTxMessage = _modem.Sequencer?.CurrentTxMessage ?? CurrentTxMessage;
-        StatusLine = _l.Get("Ft4.Status.TxEnabled");
+        StatusLine = string.IsNullOrWhiteSpace(_modem.Status)
+            ? _l.Get("Ft4.Status.TxEnabled")
+            : _modem.Status;
     }
 
     private bool CanEnableTx() => !TxEnabled && !IsTuning;
@@ -747,10 +753,13 @@ public partial class Ft4ViewModel : ViewModelBase, IDisposable
     private void StartCq()
     {
         // Rebuild from Settings → Station so portable callsigns (e.g. MM9SQL/M) pack correctly.
+        _modem.SetAutoReply(AutoReply);
         _modem.StartCq(PreferEvenSlot);
         CurrentTxMessage = _modem.Sequencer?.CurrentTxMessage ?? "";
         TxEnabled = _modem.Sequencer?.TransmitEnabled == true;
-        StatusLine = _l.Get("Ft4.Status.CallingCq");
+        StatusLine = string.IsNullOrWhiteSpace(_modem.Status)
+            ? _l.Get("Ft4.Status.CallingCq")
+            : _modem.Status;
         OnPropertyChanged(nameof(CanManualLog));
         ManualLogCommand.NotifyCanExecuteChanged();
     }

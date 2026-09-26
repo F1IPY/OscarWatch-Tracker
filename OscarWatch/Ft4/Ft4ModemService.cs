@@ -319,8 +319,64 @@ public sealed class Ft4ModemService : IDisposable
         _sequencer?.StartCq(evenSlot);
         _lastLoggedKey = null;
         _lastRelevantDecodeUtc = DateTime.UtcNow;
-        Status = _l.Get("Ft4.Status.CallingCq");
+        if (!TryAcceptRecentCaller(out var answered))
+            Status = _l.Get("Ft4.Status.CallingCq");
+        else
+            Status = _l.Get("Ft4.Status.Answering", answered);
         Changed?.Invoke();
+    }
+
+    /// <summary>
+    /// Apply the Auto reply checkbox at once. While a CQ is going out, a station
+    /// that already called in the last few seconds is answered on the next slot.
+    /// </summary>
+    public void SetAutoReply(bool enabled)
+    {
+        var seq = _sequencer;
+        if (seq is null)
+            return;
+
+        seq.SetAutoReply(enabled);
+        if (!enabled || !TryAcceptRecentCaller(out var answered))
+            return;
+
+        _lastRelevantDecodeUtc = DateTime.UtcNow;
+        Status = _l.Get("Ft4.Status.Answering", answered);
+        Changed?.Invoke();
+    }
+
+    /// <summary>
+    /// A caller decoded while Auto reply was off is not seen again. Look back
+    /// about three FT4 slots so ticking the box still answers them.
+    /// </summary>
+    private bool TryAcceptRecentCaller(out string answeredText)
+    {
+        answeredText = "";
+        var seq = _sequencer;
+        if (seq is null || !seq.PrepareAutoReply())
+            return false;
+
+        var cutoff = DateTime.UtcNow.AddSeconds(-22);
+        foreach (var msg in Decodes)
+        {
+            if (msg.SlotUtc < cutoff)
+                break;
+            if (!msg.IsReceiveActivity)
+                continue;
+
+            var before = seq.Phase;
+            var finished = seq.OnDecoded(msg);
+            if (seq.Phase != Ft4QsoPhase.InQso || before == Ft4QsoPhase.InQso)
+                continue;
+
+            answeredText = msg.Text;
+            Log.Information("FT4 auto reply to a recent call: {Text}", msg.Text);
+            if (finished)
+                _ = TryLogAsync(manual: false);
+            return true;
+        }
+
+        return false;
     }
 
     public bool QueueReport(float? snrDb)
@@ -364,7 +420,10 @@ public sealed class Ft4ModemService : IDisposable
         _sequencer?.EnableTx();
         // Reset idle timeout so re-arming after a watchdog halt does not trip again immediately.
         _lastRelevantDecodeUtc = DateTime.UtcNow;
-        Status = _l.Get("Ft4.Status.TxEnabled");
+        if (TryAcceptRecentCaller(out var answered))
+            Status = _l.Get("Ft4.Status.Answering", answered);
+        else
+            Status = _l.Get("Ft4.Status.TxEnabled");
         Changed?.Invoke();
     }
 
@@ -1429,8 +1488,17 @@ public sealed class Ft4ModemService : IDisposable
 
             if (_sequencer is not null && !isOwn)
             {
+                var wasCallingCq = _sequencer.Phase == Ft4QsoPhase.CallingCq;
                 var finished = _sequencer.OnDecoded(msg);
                 _lastRelevantDecodeUtc = DateTime.UtcNow;
+                if (wasCallingCq && _sequencer.Phase == Ft4QsoPhase.InQso)
+                {
+                    Log.Information(
+                        "FT4 auto reply to {Call}: {Message}",
+                        _sequencer.TheirCall,
+                        _sequencer.CurrentTxMessage);
+                }
+
                 if (finished)
                     _ = TryLogAsync(manual: false);
             }

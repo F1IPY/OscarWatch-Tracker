@@ -3986,7 +3986,7 @@ Terbaru: {1} ({2})</value>
     <value>Balas otomatis</value>
   </data>
   <data name="Ft4.AutoReply.Note">
-    <value>Saat memanggil CQ, jawab stasiun pertama yang memanggil Anda. Nonaktifkan untuk terus memanggil CQ sampai Anda mengklik stasiun.</value>
+    <value>Saat memanggil CQ, jawab stasiun pertama yang memanggil Anda. Nonaktifkan untuk terus memanggil CQ sampai Anda mengklik stasiun. Aktifkan lagi untuk menjawab pemanggil berikutnya, termasuk yang memanggil beberapa detik lalu.</value>
   </data>
   <data name="Ft4.HoldTxFrequency">
     <value>Tahan frek. TX</value>

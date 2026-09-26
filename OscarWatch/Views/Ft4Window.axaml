@@ -328,7 +328,7 @@
                         IsChecked="{Binding HoldTxFrequency}"
                         VerticalAlignment="Center" />
               <CheckBox Content="{loc:Localize Key=Ft4.AutoReply}"
-                        IsChecked="{Binding AutoReply}"
+                        IsChecked="{Binding AutoReply, Mode=TwoWay}"
                         ToolTip.Tip="{loc:Localize Key=Ft4.AutoReply.Note}"
                         VerticalAlignment="Center" />
             </StackPanel>

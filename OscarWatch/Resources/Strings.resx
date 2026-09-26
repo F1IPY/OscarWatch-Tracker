@@ -3982,7 +3982,7 @@ Latest: {1} ({2})</value>
     <value>Auto reply</value>
   </data>
   <data name="Ft4.AutoReply.Note">
-    <value>While calling CQ, answer the first station that calls you. Clear this to keep calling CQ until you click a station.</value>
+    <value>While calling CQ, answer the first station that calls you. Clear this to keep calling CQ until you click a station. Tick it again to answer the next caller, including one from the last few seconds.</value>
   </data>
   <data name="Ft4.HoldTxFrequency">
     <value>Hold Tx Freq</value>

@@ -3986,7 +3986,7 @@ Aktuell: {1} ({2})</value>
     <value>Auto-Antwort</value>
   </data>
   <data name="Ft4.AutoReply.Note">
-    <value>Beim CQ-Rufen wird die erste Station beantwortet, die Sie ruft. Abwählen, um CQ weiterzurufen, bis Sie eine Station anklicken.</value>
+    <value>Beim CQ-Rufen wird die erste Station beantwortet, die Sie ruft. Abwählen, um CQ weiterzurufen, bis Sie eine Station anklicken. Erneut auswählen, um den nächsten Anrufer zu beantworten, auch einen aus den letzten Sekunden.</value>
   </data>
   <data name="Ft4.HoldTxFrequency">
     <value>TX-Freq halten</value>

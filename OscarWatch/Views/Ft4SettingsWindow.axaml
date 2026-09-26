@@ -164,7 +164,7 @@
         <ScrollViewer Margin="8,10,4,4" VerticalScrollBarVisibility="Auto">
           <StackPanel Spacing="8">
             <CheckBox Content="{loc:Localize Key=Ft4.AutoReply}"
-                      IsChecked="{Binding AutoReply}" />
+                      IsChecked="{Binding AutoReply, Mode=TwoWay}" />
             <TextBlock Text="{loc:Localize Key=Ft4.AutoReply.Note}"
                        TextWrapping="Wrap"
                        FontSize="11"

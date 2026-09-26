@@ -3982,7 +3982,7 @@
     <value>自動応答</value>
   </data>
   <data name="Ft4.AutoReply.Note">
-    <value>CQ中は、最初に呼んできた局に応答します。オフにすると、局をクリックするまでCQを続けます。</value>
+    <value>CQ中は、最初に呼んできた局に応答します。オフにすると、局をクリックするまでCQを続けます。再度オンにすると、直前数秒の呼び出しを含め、次の局に応答します。</value>
   </data>
   <data name="Ft4.HoldTxFrequency">
     <value>TX周波数保持</value>

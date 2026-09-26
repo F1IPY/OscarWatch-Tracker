@@ -237,6 +237,64 @@ public sealed class Ft4QsoSequencerTests
     }
 
     [Fact]
+    public void Auto_reply_turned_back_on_answers_the_next_caller()
+    {
+        var seq = new Ft4QsoSequencer(
+            () => "MM9SQL", () => "IO85", () => true, holdTxFrequency: () => true, autoReply: () => false);
+        seq.StartCq(evenSlot: true);
+
+        Assert.False(seq.OnDecoded(Msg("MM9SQL G4ABC IO91", snr: -6f)));
+        Assert.Equal(Ft4QsoPhase.CallingCq, seq.Phase);
+        Assert.Equal("CQ MM9SQL IO85", seq.CurrentTxMessage);
+
+        seq.SetAutoReply(true);
+        Assert.True(seq.PrepareAutoReply());
+        Assert.False(seq.OnDecoded(Msg("MM9SQL M0XYZ IO92", snr: -4f)));
+        Assert.Equal(Ft4QsoPhase.InQso, seq.Phase);
+        Assert.Equal("M0XYZ", seq.TheirCall);
+        Assert.StartsWith("M0XYZ MM9SQL", seq.CurrentTxMessage);
+    }
+
+    [Fact]
+    public void EnableTx_of_a_cq_drops_the_previous_contact()
+    {
+        var seq = new Ft4QsoSequencer(() => "MM9SQL", () => "IO85", () => true);
+        seq.StartCq(evenSlot: true);
+        seq.OnDecoded(Msg("MM9SQL G4ABC IO91"));
+        Assert.Equal(Ft4QsoPhase.InQso, seq.Phase);
+        Assert.Equal("G4ABC", seq.TheirCall);
+
+        seq.HaltTx();
+        seq.SetTxMessage("CQ MM9SQL IO85");
+        seq.EnableTx();
+
+        Assert.Equal(Ft4QsoPhase.CallingCq, seq.Phase);
+        Assert.Null(seq.TheirCall);
+        Assert.True(seq.TransmitEnabled);
+
+        Assert.False(seq.OnDecoded(Msg("MM9SQL M0XYZ IO92", snr: 2f)));
+        Assert.Equal("M0XYZ", seq.TheirCall);
+        Assert.StartsWith("M0XYZ MM9SQL", seq.CurrentTxMessage);
+    }
+
+    [Fact]
+    public void Auto_reply_toggled_during_a_report_keeps_the_contact()
+    {
+        var seq = new Ft4QsoSequencer(
+            () => "MM9SQL", () => "IO85", () => true, autoReply: () => true);
+        seq.StartCq(evenSlot: true);
+        seq.OnDecoded(Msg("MM9SQL G4ABC IO91"));
+        var message = seq.CurrentTxMessage;
+
+        seq.SetAutoReply(false);
+        seq.SetAutoReply(true);
+        Assert.False(seq.PrepareAutoReply());
+        Assert.Equal(Ft4QsoPhase.InQso, seq.Phase);
+        Assert.Equal("G4ABC", seq.TheirCall);
+        Assert.Equal(message, seq.CurrentTxMessage);
+    }
+
+    [Fact]
     public void Second_caller_ignored_while_in_qso()
     {
         var seq = new Ft4QsoSequencer(() => "MM9SQL", () => "IO85", () => true);

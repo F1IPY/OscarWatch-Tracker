@@ -3982,7 +3982,7 @@ Mais recente: {1} ({2})</value>
     <value>Resposta automática</value>
   </data>
   <data name="Ft4.AutoReply.Note">
-    <value>Ao chamar CQ, responde à primeira estação que o chamar. Desmarque para continuar chamando CQ até clicar numa estação.</value>
+    <value>Ao chamar CQ, responde à primeira estação que o chamar. Desmarque para continuar chamando CQ até clicar numa estação. Marque de novo para responder à próxima, inclusive uma dos últimos segundos.</value>
   </data>
   <data name="Ft4.HoldTxFrequency">
     <value>Manter freq. TX</value>
