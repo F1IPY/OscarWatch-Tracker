@@ -715,7 +715,7 @@
     <value>更新</value>
   </data>
   <data name="Settings.Tab.Appearance">
-    <value>外观</value>
+    <value>界面</value>
   </data>
   <data name="Settings.Tab.Cloudlog">
     <value>Cloudlog</value>
@@ -3970,7 +3970,7 @@
     <value>调制解调器</value>
   </data>
   <data name="Ft4.Settings.AppearanceSection">
-    <value>外观</value>
+    <value>界面</value>
   </data>
   <data name="Ft4.Ptt.LeadMs">
     <value>PTT 提前 (ms)</value>
