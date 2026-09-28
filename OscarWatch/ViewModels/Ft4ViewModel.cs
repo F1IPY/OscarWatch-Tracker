@@ -1220,8 +1220,7 @@ public partial class Ft4ViewModel : ViewModelBase, IDisposable
         var progress = Math.Clamp(100.0 * into / Ft4SlotClock.Ft4SlotSeconds, 0, 100);
         SlotProgressPercent = progress;
         SlotProgressText = $"{progress:0}%";
-        var preferEven = _modem.Sequencer?.PreferEvenSlot ?? PreferEvenSlot;
-        IsTxSlot = TxEnabled && even == preferEven;
+        IsTxSlot = _modem.IsLiveTransmitSlot(utc);
         SlotPeriodLabel = IsTxSlot ? _l.Get("Ft4.Slot.Tx") : _l.Get("Ft4.Slot.Rx");
 
         OnPropertyChanged(nameof(TxMessageWatermark));

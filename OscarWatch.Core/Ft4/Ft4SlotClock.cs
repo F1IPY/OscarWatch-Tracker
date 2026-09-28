@@ -47,4 +47,29 @@ public static class Ft4SlotClock
             candidate = candidate.AddSeconds(slotSeconds);
         return candidate;
     }
+
+    /// <summary>
+    /// True when this period will be transmitted, or transmission for it has already started.
+    /// A matching period more than 0.5 s old is left as receive unless it was already kicked.
+    /// </summary>
+    public static bool IsLiveTransmitSlot(
+        DateTime utc,
+        double slotSeconds,
+        bool transmitEnabled,
+        bool preferEven,
+        DateTime? transmittingSlotStartUtc)
+    {
+        if (!transmitEnabled)
+            return false;
+
+        var now = utc.Kind == DateTimeKind.Utc ? utc : utc.ToUniversalTime();
+        var start = SlotStartUtc(now, slotSeconds);
+        if (IsEvenSlot(start, slotSeconds) != preferEven)
+            return false;
+
+        if (transmittingSlotStartUtc is { } kicked && kicked.ToUniversalTime() == start)
+            return true;
+
+        return NextTransmitSlotStart(now, slotSeconds, preferEven) == start;
+    }
 }

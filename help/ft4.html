@@ -114,8 +114,7 @@
           the radio is switched to transmit (see <a href="#settings">FT4 Settings</a>).</li>
         <li>Press <strong>Tune</strong>. OscarWatch sends a steady tone. Adjust <strong>TX level</strong> in
           Settings until the radio's ALC meter barely moves and the power is where you want it (30 W or less).
-          While Tune is on, OscarWatch also measures where the tone comes back and nudges your uplink so it
-          lands on the red marker. Press <strong>Tune</strong> again to stop.</li>
+          Press <strong>Tune</strong> again to stop. Tune does not change the saved uplink trim.</li>
         <li>Watch the decode list for a while. Stations calling CQ show as lines such as
           <code>CQ EA1ABC IN63</code>.</li>
         <li>To answer someone, click their line. OscarWatch builds your reply, picks the right slot, and
@@ -175,8 +174,9 @@
 
       <h3>Status bar</h3>
       <ul>
-        <li><strong>RX / TX and progress bar</strong>: whether the current slot is a receive or transmit slot, and
-          how far through the 7.5 seconds it is.</li>
+        <li><strong>RX / TX and progress bar</strong>: TX while this 7.5 second period is being sent, or can still
+          be sent (the first half-second). A late click stays on RX until the next transmit period. The bar shows
+          how far through the period it is.</li>
         <li><strong>Slot clock</strong>: the current UTC time, time into the slot, and whether it is an even or odd slot.</li>
         <li id="clock-source"><strong>Clock source</strong> (in brackets after the slot clock):
           <ul>
@@ -239,18 +239,14 @@
       <h3>Echo calibration</h3>
       <p>
         Even with Doppler correction, your echo may not come back exactly on the red bracket (for example because the
-        satellite's own frequency is slightly off). When OscarWatch decodes your echo, it measures the difference and
-        adjusts your uplink so the next transmission lands on the red bracket. The adjustment is saved for each
-        satellite and used again next time.
+        satellite's own frequency is slightly off).         When OscarWatch decodes your own CQ echo, it measures the difference and
+        adjusts your uplink so the next transmission lands on the red bracket. Reports and 73 are not used.
+        The adjustment is saved for each satellite and used again next time.
       </p>
       <ul>
         <li>Corrections are made at most once per slot, so they do not overshoot.</li>
         <li>If your echo is visible on the waterfall but not decoded, OscarWatch only makes small corrections
           (up to 50 Hz) from the waterfall, so another station nearby cannot pull your signal away.</li>
-        <li><strong>Tune</strong> uses the same method on its steady tone. To avoid chasing another signal, it only
-          corrects once two slots in a row agree, then checks the next slot. If the tone has not landed on the
-          red marker, it puts the trim back, stops calibrating, and asks you to call CQ so your echo can be used
-          instead. Calibration from the CQ echo is the most reliable method.</li>
         <li>To see, change, or reset the saved adjustment, open <strong>Settings → Echo calibration</strong>. Use
           <strong>Clear</strong> for the focused satellite or <strong>Clear all</strong> for every satellite.</li>
       </ul>

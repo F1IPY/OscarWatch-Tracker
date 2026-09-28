@@ -22,6 +22,20 @@ public sealed class Ft4SlotClockTests
     }
 
     [Fact]
+    public void IsLiveTransmitSlot_skips_a_matching_period_that_has_already_started()
+    {
+        var slot = new DateTime(2026, 9, 21, 12, 0, 0, DateTimeKind.Utc);
+        var early = slot.AddSeconds(0.2);
+        var late = slot.AddSeconds(2);
+
+        Assert.True(Ft4SlotClock.IsLiveTransmitSlot(early, Ft4SlotClock.Ft4SlotSeconds, true, preferEven: true, null));
+        Assert.False(Ft4SlotClock.IsLiveTransmitSlot(late, Ft4SlotClock.Ft4SlotSeconds, true, preferEven: true, null));
+        Assert.True(Ft4SlotClock.IsLiveTransmitSlot(late, Ft4SlotClock.Ft4SlotSeconds, true, preferEven: true, slot));
+        Assert.False(Ft4SlotClock.IsLiveTransmitSlot(late, Ft4SlotClock.Ft4SlotSeconds, false, preferEven: true, slot));
+        Assert.False(Ft4SlotClock.IsLiveTransmitSlot(late, Ft4SlotClock.Ft4SlotSeconds, true, preferEven: false, slot));
+    }
+
+    [Fact]
     public void Early_decode_window_is_after_burst_and_before_slot_end()
     {
         Assert.True(Ft4SlotClock.Ft4EarlyDecodeSeconds > Ft4SlotClock.Ft4SymbolBurstSeconds);
