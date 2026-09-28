@@ -27,7 +27,8 @@ public partial class QsoLogbookViewModel : ViewModelBase, IDisposable
     private readonly IHamQthCallbookService _hamQth;
     private readonly ILocalizationService _l;
     private readonly DispatcherTimer _liveTimer;
-    private string _lastStationMode = "";
+    private string _lastRstModeKey = "";
+    private bool _snrRst;
     private bool _suppressCallLookup;
     private bool _suppressFieldCoercion;
     private QsoRecord? _editingSource;
@@ -80,7 +81,7 @@ public partial class QsoLogbookViewModel : ViewModelBase, IDisposable
 
     public bool ShowQsoCountText => SelectedLogbook is not null;
 
-    public IReadOnlyList<string> RstOptions { get; } = ["59", "599", "55", "559", "57", "579", "53", "539"];
+    public ObservableCollection<string> RstOptions { get; } = new(QsoRstSuggestions.VoiceOptions);
 
     public ObservableCollection<QsoLogbook> Logbooks { get; } = [];
 
@@ -348,8 +349,9 @@ public partial class QsoLogbookViewModel : ViewModelBase, IDisposable
             await CancelEditQso().ConfigureAwait(true);
 
         ClearEntryForm();
-        RstSent = "59";
-        RstRcvd = "59";
+        var report = CurrentDefaultReport();
+        RstSent = report;
+        RstRcvd = report;
         StatusText = _l.Get("Logbook.Status.Ready");
         await ReloadQsosAsync().ConfigureAwait(true);
         CommitQsoCommand.NotifyCanExecuteChanged();
@@ -382,8 +384,8 @@ public partial class QsoLogbookViewModel : ViewModelBase, IDisposable
             LogbookId = SelectedLogbook.Id,
             QsoUtc = qsoUtc,
             Call = Call,
-            RstSent = RstSent,
-            RstRcvd = RstRcvd,
+            RstSent = FormatRstForLog(RstSent),
+            RstRcvd = FormatRstForLog(RstRcvd),
             GridSquare = workedGrid,
             Name = Name,
             Comment = Comment,
@@ -465,8 +467,8 @@ public partial class QsoLogbookViewModel : ViewModelBase, IDisposable
             Id = _editingSource.Id,
             QsoUtc = _editingSource.QsoUtc,
             Call = Call,
-            RstSent = RstSent,
-            RstRcvd = RstRcvd,
+            RstSent = FormatRstForLog(RstSent),
+            RstRcvd = FormatRstForLog(RstRcvd),
             GridSquare = workedGrid,
             Name = Name,
             Comment = Comment,
@@ -1155,29 +1157,60 @@ public partial class QsoLogbookViewModel : ViewModelBase, IDisposable
             ? _l.Get("Logbook.Station.Tracking", snapshot.SatelliteName)
             : _l.Get("Logbook.Station.Unavailable");
 
-        ApplyDefaultRstForMode(snapshot.Mode);
+        ApplyDefaultRstForMode(snapshot);
     }
 
-    private void ApplyDefaultRstForMode(string mode)
+    private void ApplyDefaultRstForMode(LiveTrackerSnapshot snapshot)
     {
         if (IsEditingQso)
             return;
 
-        var normalized = mode.Trim().ToUpperInvariant();
-        if (string.Equals(normalized, _lastStationMode, StringComparison.Ordinal))
+        var key = QsoRstSuggestions.ModeKey(snapshot.Mode, snapshot.ModeType);
+        if (string.Equals(key, _lastRstModeKey, StringComparison.Ordinal))
             return;
 
-        _lastStationMode = normalized;
-        if (normalized is "FM" or "PKT" or "FT4" or "FT8")
+        _lastRstModeKey = key;
+        _snrRst = QsoRstSuggestions.UsesSnr(snapshot.Mode, snapshot.ModeType);
+        SetRstOptions(_snrRst ? QsoRstSuggestions.SnrOptions : QsoRstSuggestions.VoiceOptions);
+
+        var report = QsoRstSuggestions.DefaultReport(snapshot.Mode, snapshot.ModeType);
+        if (report is null)
+            return;
+
+        RstSent = report;
+        RstRcvd = report;
+    }
+
+    private string CurrentDefaultReport()
+    {
+        var snapshot = _tracker.GetCurrent();
+        return QsoRstSuggestions.DefaultReport(snapshot.Mode, snapshot.ModeType) ?? "59";
+    }
+
+    private string FormatRstForLog(string? value) =>
+        QsoRstSuggestions.NormalizeForLog(value, _snrRst);
+
+    private void SetRstOptions(IReadOnlyList<string> options)
+    {
+        if (RstOptions.Count == options.Count)
         {
-            RstSent = "59";
-            RstRcvd = "59";
+            var same = true;
+            for (var i = 0; i < options.Count; i++)
+            {
+                if (!string.Equals(RstOptions[i], options[i], StringComparison.Ordinal))
+                {
+                    same = false;
+                    break;
+                }
+            }
+
+            if (same)
+                return;
         }
-        else if (!string.IsNullOrWhiteSpace(normalized))
-        {
-            RstSent = "599";
-            RstRcvd = "599";
-        }
+
+        RstOptions.Clear();
+        foreach (var option in options)
+            RstOptions.Add(option);
     }
 
     private static string FormatMode(LiveTrackerSnapshot snapshot)

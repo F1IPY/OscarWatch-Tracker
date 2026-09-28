@@ -217,7 +217,7 @@
             <ComboBox Grid.Row="1" Grid.Column="1"
                       Classes="rst-entry"
                       ItemsSource="{Binding RstOptions}"
-                      SelectedItem="{Binding RstSent, Mode=TwoWay}"
+                      Text="{Binding RstSent, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                       IsEditable="True"
                       KeyDown="OnEntryKeyDown">
               <ComboBox.ItemTemplate>
@@ -231,7 +231,7 @@
             <ComboBox Grid.Row="1" Grid.Column="2"
                       Classes="rst-entry"
                       ItemsSource="{Binding RstOptions}"
-                      SelectedItem="{Binding RstRcvd, Mode=TwoWay}"
+                      Text="{Binding RstRcvd, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                       IsEditable="True"
                       KeyDown="OnEntryKeyDown">
               <ComboBox.ItemTemplate>
