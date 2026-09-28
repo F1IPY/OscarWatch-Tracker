@@ -4188,9 +4188,6 @@
   <data name="Ft4.Status.NothingToLog">
     <value>没有可记录的内容。请先应答一条解码或开始一次通联。</value>
   </data>
-  <data name="Ft4.Status.NeedLogbook">
-    <value>请先在“工具 → OscarWatch Logbook”中创建日志本。</value>
-  </data>
   <data name="Ft4.Status.LoggedManual">
     <value>已记录与 {0} 的通联（手动）</value>
   </data>

@@ -4188,9 +4188,6 @@ Latest: {1} ({2})</value>
   <data name="Ft4.Status.NothingToLog">
     <value>Nothing to log. Answer a decode or start a QSO first.</value>
   </data>
-  <data name="Ft4.Status.NeedLogbook">
-    <value>Create a logbook under Tools → OscarWatch Logbook first.</value>
-  </data>
   <data name="Ft4.Status.LoggedManual">
     <value>Logged QSO with {0} (manual)</value>
   </data>

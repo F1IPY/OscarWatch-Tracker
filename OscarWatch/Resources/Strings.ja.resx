@@ -4188,9 +4188,6 @@
   <data name="Ft4.Status.NothingToLog">
     <value>記録するものがありません。デコードに応答するか、まずQSOを開始してください。</value>
   </data>
-  <data name="Ft4.Status.NeedLogbook">
-    <value>先にツール → OscarWatch Logbook でログブックを作成してください。</value>
-  </data>
   <data name="Ft4.Status.LoggedManual">
     <value>{0} とのQSOを記録しました（手動）</value>
   </data>

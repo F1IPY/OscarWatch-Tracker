@@ -4192,9 +4192,6 @@ Terbaru: {1} ({2})</value>
   <data name="Ft4.Status.NothingToLog">
     <value>Tidak ada yang dicatat. Jawab decode atau mulai QSO dulu.</value>
   </data>
-  <data name="Ft4.Status.NeedLogbook">
-    <value>Buat logbook di Alat → OscarWatch Logbook terlebih dahulu.</value>
-  </data>
   <data name="Ft4.Status.LoggedManual">
     <value>QSO dengan {0} dicatat (manual)</value>
   </data>

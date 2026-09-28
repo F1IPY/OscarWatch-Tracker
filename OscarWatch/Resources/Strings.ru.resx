@@ -4192,9 +4192,6 @@ LOS: {2}
   <data name="Ft4.Status.NothingToLog">
     <value>Нечего записывать. Сначала ответьте на декод или начните QSO.</value>
   </data>
-  <data name="Ft4.Status.NeedLogbook">
-    <value>Сначала создайте журнал в Инструменты → OscarWatch Logbook.</value>
-  </data>
   <data name="Ft4.Status.LoggedManual">
     <value>QSO с {0} записано (вручную)</value>
   </data>

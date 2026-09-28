@@ -29,6 +29,7 @@ public sealed class QsoLogbookRepository : IQsoLogbookRepository, IDisposable
         """;
 
     private readonly SemaphoreSlim _gate = new(1, 1);
+    private readonly SemaphoreSlim _getOrCreateGate = new(1, 1);
     private bool _initialized;
 
     public QsoLogbookRepository(string? databasePath = null)
@@ -110,6 +111,25 @@ public sealed class QsoLogbookRepository : IQsoLogbookRepository, IDisposable
             ORDER BY datetime(created_utc) DESC, id DESC
             """;
         return await ReadLogbooksAsync(command, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<QsoLogbook> GetOrCreateLogbookAsync(
+        QsoLogbookCreateRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        await _getOrCreateGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            var existing = (await ListLogbooksAsync(cancellationToken).ConfigureAwait(false)).FirstOrDefault();
+            if (existing is not null)
+                return existing;
+
+            return await CreateLogbookAsync(request, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            _getOrCreateGate.Release();
+        }
     }
 
     public async Task<QsoLogbook> CreateLogbookAsync(
@@ -635,7 +655,11 @@ public sealed class QsoLogbookRepository : IQsoLogbookRepository, IDisposable
         return (calls, grids);
     }
 
-    public void Dispose() => _gate.Dispose();
+    public void Dispose()
+    {
+        _getOrCreateGate.Dispose();
+        _gate.Dispose();
+    }
 
     private async Task EnsureInitializedAsync(CancellationToken cancellationToken)
     {

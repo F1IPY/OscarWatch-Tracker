@@ -4192,9 +4192,6 @@ Aktuell: {1} ({2})</value>
   <data name="Ft4.Status.NothingToLog">
     <value>Nichts zu loggen. Beantworten Sie zuerst eine Decodierung oder starten Sie ein QSO.</value>
   </data>
-  <data name="Ft4.Status.NeedLogbook">
-    <value>Legen Sie zuerst unter Extras → OscarWatch Logbook ein Logbuch an.</value>
-  </data>
   <data name="Ft4.Status.LoggedManual">
     <value>QSO mit {0} geloggt (manuell)</value>
   </data>

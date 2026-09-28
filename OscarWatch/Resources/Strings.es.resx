@@ -4188,9 +4188,6 @@ Está utilizando la versión {0}.
   <data name="Ft4.Status.NothingToLog">
     <value>Nada que registrar. Responde a una decodificación o inicia un QSO primero.</value>
   </data>
-  <data name="Ft4.Status.NeedLogbook">
-    <value>Crea un logbook en Herramientas → OscarWatch Logbook primero.</value>
-  </data>
   <data name="Ft4.Status.LoggedManual">
     <value>QSO con {0} registrado (manual)</value>
   </data>

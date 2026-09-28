@@ -242,12 +242,13 @@ public partial class QsoLogbookViewModel : ViewModelBase, IDisposable
         if (Logbooks.Count == 0)
         {
             var gs = _settings.Current.GroundStation;
-            await CreateLogbookInternalAsync(new QsoLogbookCreateRequest
+            var created = await _repository.GetOrCreateLogbookAsync(new QsoLogbookCreateRequest
             {
                 Name = _l.Get("Logbook.DefaultName"),
-                MyCallsign = "",
                 MyGridSquare = gs.GridSquare
             }).ConfigureAwait(true);
+            await ReloadLogbooksAsync().ConfigureAwait(true);
+            SelectedLogbook = Logbooks.FirstOrDefault(l => l.Id == created.Id);
         }
 
         _liveTimer.Start();

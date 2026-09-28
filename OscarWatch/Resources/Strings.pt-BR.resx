@@ -4188,9 +4188,6 @@ Mais recente: {1} ({2})</value>
   <data name="Ft4.Status.NothingToLog">
     <value>Nada para registar. Responda a uma descodificação ou inicie um QSO primeiro.</value>
   </data>
-  <data name="Ft4.Status.NeedLogbook">
-    <value>Crie um logbook em Ferramentas → OscarWatch Logbook primeiro.</value>
-  </data>
   <data name="Ft4.Status.LoggedManual">
     <value>QSO com {0} registado (manual)</value>
   </data>

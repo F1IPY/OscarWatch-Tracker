@@ -585,6 +585,31 @@ public class QsoLogbookRepositoryTests : IDisposable
     }
 
     [Fact]
+    public async Task GetOrCreateLogbookAsync_creates_once_then_reuses_the_existing_logbook()
+    {
+        await _repository.InitializeAsync();
+
+        var created = await _repository.GetOrCreateLogbookAsync(new QsoLogbookCreateRequest
+        {
+            Name = "Main logbook",
+            MyGridSquare = "IO87"
+        });
+
+        var again = await _repository.GetOrCreateLogbookAsync(new QsoLogbookCreateRequest
+        {
+            Name = "Should not be used",
+            MyGridSquare = "JN00"
+        });
+
+        Assert.Equal(created.Id, again.Id);
+        Assert.Equal("Main logbook", again.Name);
+        Assert.Equal("IO87", again.MyGridSquare);
+
+        var listed = await _repository.ListLogbooksAsync();
+        Assert.Single(listed);
+    }
+
+    [Fact]
     public async Task DeleteLogbookAsync_removes_qsos_via_foreign_key_cascade()
     {
         await _repository.InitializeAsync();

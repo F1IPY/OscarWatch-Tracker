@@ -137,6 +137,8 @@ public class QsoLogbookCorrespondentLookupTests
         public Task InitializeAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task<IReadOnlyList<QsoLogbook>> ListLogbooksAsync(CancellationToken cancellationToken = default) =>
             Task.FromResult<IReadOnlyList<QsoLogbook>>([]);
+        public Task<QsoLogbook> GetOrCreateLogbookAsync(QsoLogbookCreateRequest request, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
         public Task<QsoLogbook> CreateLogbookAsync(QsoLogbookCreateRequest request, CancellationToken cancellationToken = default) =>
             throw new NotSupportedException();
         public Task<QsoLogbook> UpdateLogbookAsync(QsoLogbookUpdateRequest request, CancellationToken cancellationToken = default) =>

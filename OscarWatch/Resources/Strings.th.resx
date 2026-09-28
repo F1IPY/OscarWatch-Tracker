@@ -4192,9 +4192,6 @@ LOS: {2}
   <data name="Ft4.Status.NothingToLog">
     <value>ไม่มีอะไรให้บันทึก ตอบการถอดรหัสหรือเริ่ม QSO ก่อน</value>
   </data>
-  <data name="Ft4.Status.NeedLogbook">
-    <value>สร้างสมุดปูมใน เครื่องมือ → OscarWatch Logbook ก่อน</value>
-  </data>
   <data name="Ft4.Status.LoggedManual">
     <value>บันทึก QSO กับ {0} แล้ว (ด้วยตนเอง)</value>
   </data>

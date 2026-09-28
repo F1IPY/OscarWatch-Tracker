@@ -1729,14 +1729,12 @@ public sealed class Ft4ModemService : IDisposable
 
         try
         {
-            var books = await _logbook.ListLogbooksAsync().ConfigureAwait(false);
-            var book = books.FirstOrDefault();
-            if (book is null)
+            var station = _settings.Current.GroundStation;
+            var book = await _logbook.GetOrCreateLogbookAsync(new QsoLogbookCreateRequest
             {
-                Status = _l.Get("Ft4.Status.NeedLogbook");
-                Changed?.Invoke();
-                return;
-            }
+                Name = _l.Get("Logbook.DefaultName"),
+                MyGridSquare = station.GridSquare
+            }).ConfigureAwait(false);
 
             var snap = _snapshot.GetCurrent();
             var cloudlogUpload = book.CloudlogAutoUpload && book.CloudlogStationProfileId.HasValue

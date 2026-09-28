@@ -13,6 +13,12 @@ public interface IQsoLogbookRepository
 
     Task<IReadOnlyList<QsoLogbook>> ListLogbooksAsync(CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Returns the newest logbook, or creates one from <paramref name="request"/> when none exist.
+    /// Concurrent callers share a single create.
+    /// </summary>
+    Task<QsoLogbook> GetOrCreateLogbookAsync(QsoLogbookCreateRequest request, CancellationToken cancellationToken = default);
+
     Task<QsoLogbook> CreateLogbookAsync(QsoLogbookCreateRequest request, CancellationToken cancellationToken = default);
 
     Task<QsoLogbook> UpdateLogbookAsync(QsoLogbookUpdateRequest request, CancellationToken cancellationToken = default);
