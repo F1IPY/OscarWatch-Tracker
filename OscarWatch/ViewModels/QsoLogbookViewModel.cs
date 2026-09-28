@@ -753,6 +753,7 @@ public partial class QsoLogbookViewModel : ViewModelBase, IDisposable
             ClearDxccBadge();
             if (!IsEditingQso)
             {
+                ClearCorrespondentFields();
                 await ReloadQsosAsync().ConfigureAwait(true);
                 if (generation != _callLookupGeneration)
                     return;
@@ -800,20 +801,44 @@ public partial class QsoLogbookViewModel : ViewModelBase, IDisposable
         if (previous is null)
         {
             CallHint = "";
+            if (!IsEditingQso)
+                ClearCorrespondentFields();
             await LookupCallbookIfNeededAsync(trimmed, generation).ConfigureAwait(true);
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(Grid) && !string.IsNullOrWhiteSpace(previous.GridSquare))
-            Grid = previous.GridSquare;
-        if (string.IsNullOrWhiteSpace(Name) && !string.IsNullOrWhiteSpace(previous.Name))
-            Name = previous.Name;
+        ApplyCorrespondentFromPrevious(previous);
 
         CallHint = string.IsNullOrWhiteSpace(previous.GridSquare)
             ? _l.Get("Logbook.CallHint.Previous")
             : _l.Get("Logbook.CallHint.PreviousWithGrid", previous.GridSquare);
 
         await LookupCallbookIfNeededAsync(trimmed, generation).ConfigureAwait(true);
+    }
+
+    /// <summary>
+    /// A new contact takes name and locator from the latest QSO for this call.
+    /// An edit keeps values already on the contact and only fills blanks.
+    /// </summary>
+    private void ApplyCorrespondentFromPrevious(QsoRecord previous)
+    {
+        if (IsEditingQso)
+        {
+            if (string.IsNullOrWhiteSpace(Grid) && !string.IsNullOrWhiteSpace(previous.GridSquare))
+                Grid = previous.GridSquare;
+            if (string.IsNullOrWhiteSpace(Name) && !string.IsNullOrWhiteSpace(previous.Name))
+                Name = previous.Name;
+            return;
+        }
+
+        Grid = previous.GridSquare.Trim();
+        Name = previous.Name.Trim();
+    }
+
+    private void ClearCorrespondentFields()
+    {
+        Name = "";
+        Grid = "";
     }
 
     private async Task LookupCallbookIfNeededAsync(string call, int generation)
