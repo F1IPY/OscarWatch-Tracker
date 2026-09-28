@@ -62,6 +62,21 @@ public sealed class KenwoodTs2000DriverTests
     }
 
     [Fact]
+    public void TryReadRfPowerWatts_reads_pc_command()
+    {
+        var transport = new RecordingKenwoodCatTransport { RfPowerWatts = 25 };
+        var driver = new KenwoodTs2000Driver(transport);
+        driver.Open();
+        transport.SentCommands.Clear();
+
+        Assert.True(driver.SupportsRfPowerRead);
+        Assert.True(driver.TryReadRfPowerWatts(out var watts));
+        Assert.Equal(25.0, watts);
+        Assert.Contains("PC;", transport.SentCommands);
+        Assert.DoesNotContain(transport.SentCommands, c => c.StartsWith("PC", StringComparison.Ordinal) && c != "PC;");
+    }
+
+    [Fact]
     public void ApplySatellitePassFrequencies_sends_pass_programming_and_hold_polls()
     {
         var transport = new RecordingKenwoodCatTransport();

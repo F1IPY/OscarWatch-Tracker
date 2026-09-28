@@ -68,6 +68,28 @@ public sealed class KenwoodCatCodecTests
         Assert.Equal("TN01;", KenwoodCatCodec.BuildToneFrequencyCommand(index));
     }
 
+    [Theory]
+    [InlineData("PC050;", 50)]
+    [InlineData("PC005;", 5)]
+    [InlineData("PC100;", 100)]
+    public void TryParsePowerWatts_reads_pc_reply(string reply, int expected)
+    {
+        Assert.Equal("PC;", KenwoodCatCodec.BuildReadPowerCommand());
+        Assert.True(KenwoodCatCodec.IsReadCommand("PC;"));
+        Assert.True(KenwoodCatCodec.TryParsePowerWatts(reply, out var watts));
+        Assert.Equal(expected, watts);
+    }
+
+    [Theory]
+    [InlineData("PC;")]
+    [InlineData("PC000;")]
+    [InlineData("PC101;")]
+    [InlineData("?;")]
+    public void TryParsePowerWatts_rejects_unusable_replies(string reply)
+    {
+        Assert.False(KenwoodCatCodec.TryParsePowerWatts(reply, out _));
+    }
+
     [Fact]
     public void TryParseVfoSelect_reads_FR_reply()
     {

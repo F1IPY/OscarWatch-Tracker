@@ -203,6 +203,14 @@
         "downlink_mode": "USB",
         "uplink_mode": "USB",
         "doppler": "NOR"
+      },
+      {
+        "type": "FT4",
+        "downlink": 145857,
+        "uplink": 435118,
+        "downlink_mode": "DATA-USB",
+        "uplink_mode": "DATA-LSB",
+        "doppler": "REV"
       }
     ]
   },

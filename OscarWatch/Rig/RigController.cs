@@ -2693,7 +2693,7 @@ public sealed class RigController : IRigController, IDisposable
             if (driver is null || !driver.SupportsRfPowerRead)
                 return null;
 
-            // Yaesu FT-991 / FT-991A (and shared newcat): PC; returns watts directly.
+            // Yaesu FT-991 / FT-991A and Kenwood TS-2000: PC; returns watts directly.
             if (driver.TryReadRfPowerWatts(out var wattsDirect))
                 return wattsDirect;
 

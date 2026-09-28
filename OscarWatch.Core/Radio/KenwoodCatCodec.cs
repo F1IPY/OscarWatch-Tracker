@@ -82,7 +82,8 @@ public static class KenwoodCatCodec
         return body.Equals("SA", StringComparison.OrdinalIgnoreCase)
             || body.Equals("RX", StringComparison.OrdinalIgnoreCase)
             || body.Equals("FR", StringComparison.OrdinalIgnoreCase)
-            || body.Equals("ID", StringComparison.OrdinalIgnoreCase);
+            || body.Equals("ID", StringComparison.OrdinalIgnoreCase)
+            || body.Equals("PC", StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>
@@ -168,6 +169,44 @@ public static class KenwoodCatCodec
 
     /// <summary>DC P1=0 P2=1 — TX main, CTRL sub (tone/CTCSS and <c>MD</c> on sub band).</summary>
     public static string BuildControlSubCommand() => "DC01;";
+
+    /// <summary>
+    /// Read set RF power (watts) for the current transmit band.
+    /// Answer is <c>PCnnn;</c> with nnn = 005–100. OscarWatch never sends a <c>PC</c> set.
+    /// </summary>
+    public static string BuildReadPowerCommand() => "PC;";
+
+    /// <summary>Parse <c>PCnnn;</c> (or bare digits) into watts. Manual range is 005–100.</summary>
+    public static bool TryParsePowerWatts(ReadOnlySpan<char> response, out int watts)
+    {
+        watts = 0;
+        if (response.IsEmpty)
+            return false;
+
+        var span = response.Trim();
+        if (span.EndsWith(";"))
+            span = span[..^1];
+
+        if (span.Length >= 2
+            && (span[0] is 'P' or 'p')
+            && (span[1] is 'C' or 'c'))
+            span = span[2..];
+
+        span = span.Trim();
+        if (span.IsEmpty)
+            return false;
+
+        if (!int.TryParse(span, System.Globalization.NumberStyles.Integer,
+                System.Globalization.CultureInfo.InvariantCulture, out var value))
+            return false;
+
+        // Manual: 005–100. Accept a slightly wider range for firmware quirks.
+        if (value is < 1 or > 100)
+            return false;
+
+        watts = value;
+        return true;
+    }
 
     public static bool TryParseFrequencyHz(ReadOnlySpan<char> response, out long hz)
     {
