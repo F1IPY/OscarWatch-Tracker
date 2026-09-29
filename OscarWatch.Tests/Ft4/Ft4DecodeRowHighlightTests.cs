@@ -33,4 +33,47 @@ public sealed class Ft4DecodeRowHighlightTests
 
         Assert.NotSame(calling, row.RowBackground);
     }
+
+    [Fact]
+    public void Chosen_text_colour_is_applied_and_kept()
+    {
+        var row = new Ft4DecodeRowViewModel(Line("CQ G4ABC IO91", "CQ", "G4ABC", "IO91"));
+
+        row.RefreshHighlight(
+            "MM9SQL", null,
+            "#66E6B15A", "#665CB88A", "#664D9DE8", "#66C07AD0", "#6678C8E0",
+            null, null,
+            cqText: "#FFCC3333");
+        var ink = row.RowForeground;
+        Assert.NotNull(ink);
+        Assert.True(row.HasRowForeground);
+
+        row.RefreshHighlight(
+            "MM9SQL", null,
+            "#66E6B15A", "#665CB88A", "#664D9DE8", "#66C07AD0", "#6678C8E0",
+            null, null,
+            cqText: "#FFCC3333");
+        Assert.Same(ink, row.RowForeground);
+
+        row.RefreshHighlight(
+            "MM9SQL", null,
+            "#66E6B15A", "#665CB88A", "#664D9DE8", "#66C07AD0", "#6678C8E0",
+            null, null,
+            cqText: "#FF2244AA");
+        Assert.NotSame(ink, row.RowForeground);
+    }
+
+    [Fact]
+    public void Empty_text_colour_keeps_the_theme()
+    {
+        var row = new Ft4DecodeRowViewModel(Line("CQ G4ABC IO91", "CQ", "G4ABC", "IO91"));
+
+        row.RefreshHighlight(
+            "MM9SQL", null,
+            "#66E6B15A", "#665CB88A", "#664D9DE8", "#66C07AD0", "#6678C8E0",
+            null, null);
+
+        Assert.Null(row.RowForeground);
+        Assert.False(row.HasRowForeground);
+    }
 }

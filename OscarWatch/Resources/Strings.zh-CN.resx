@@ -4041,8 +4041,14 @@
   <data name="Ft4.Decode.Cq">
     <value>CQ</value>
   </data>
+  <data name="Ft4.Decode.Background">
+    <value>背景</value>
+  </data>
+  <data name="Ft4.Decode.Text">
+    <value>文字</value>
+  </data>
   <data name="Ft4.Decode.ColourNote">
-    <value>解码行背景色：发给你的、当前QSO对方、CQ、日志中尚无的呼号、尚未记录的4字符网格。用颜色选择器设置；透明度越低颜色越深。</value>
+    <value>解码行背景色：发给你的、当前QSO对方、CQ、日志中尚无的呼号、尚未记录的4字符网格。用颜色选择器设置；透明度越低颜色越深。文字颜色在你选择之前跟随主题。发射行和回波行保持各自的颜色。</value>
   </data>
   <data name="Ft4.Decode.NewCall">
     <value>新呼号</value>

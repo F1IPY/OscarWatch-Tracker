@@ -4041,8 +4041,14 @@ Latest: {1} ({2})</value>
   <data name="Ft4.Decode.Cq">
     <value>CQ</value>
   </data>
+  <data name="Ft4.Decode.Background">
+    <value>Background</value>
+  </data>
+  <data name="Ft4.Decode.Text">
+    <value>Text</value>
+  </data>
   <data name="Ft4.Decode.ColourNote">
-    <value>Background shades for decode lines: directed to you, the current QSO partner, CQ calls, a callsign not yet in the logbook, or a 4-character grid you have not logged. Use the colour selectors; the lower the transparency, the stronger the shade.</value>
+    <value>Background shades for decode lines: directed to you, the current QSO partner, CQ calls, a callsign not yet in the logbook, or a 4-character grid you have not logged. Use the colour selectors; the lower the transparency, the stronger the shade. Text follows the theme until you choose a colour. Transmit and echo lines keep their own colours.</value>
   </data>
   <data name="Ft4.Decode.NewCall">
     <value>New call</value>

@@ -4041,8 +4041,14 @@ Mais recente: {1} ({2})</value>
   <data name="Ft4.Decode.Cq">
     <value>CQ</value>
   </data>
+  <data name="Ft4.Decode.Background">
+    <value>Fundo</value>
+  </data>
+  <data name="Ft4.Decode.Text">
+    <value>Texto</value>
+  </data>
   <data name="Ft4.Decode.ColourNote">
-    <value>Fundos das linhas de decodificação: dirigidas a você, a estação do QSO atual, chamadas CQ, um indicativo ainda não no logbook, ou um grid de 4 caracteres que você ainda não registrou. Use o seletor de cor; menos transparência deixa o tom mais forte.</value>
+    <value>Fundos das linhas de decodificação: dirigidas a você, a estação do QSO atual, chamadas CQ, um indicativo ainda não no logbook, ou um grid de 4 caracteres que você ainda não registrou. Use o seletor de cor; menos transparência deixa o tom mais forte. A cor do texto segue o tema até você escolher uma. As linhas de transmissão e eco mantêm as próprias cores.</value>
   </data>
   <data name="Ft4.Decode.NewCall">
     <value>Indicativo novo</value>

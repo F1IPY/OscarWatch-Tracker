@@ -1,4 +1,5 @@
 using System.Globalization;
+using Avalonia;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
 using OscarWatch.Core.Ft4;
@@ -22,10 +23,60 @@ public sealed class Ft4HexColorConverter : IValueConverter
         return Colors.Transparent;
     }
 
+    /// <summary>True when <paramref name="normalizedHex"/> is the current theme text colour.</summary>
+    public static bool IsThemeForeground(string? normalizedHex)
+    {
+        if (string.IsNullOrEmpty(normalizedHex))
+            return false;
+
+        var theme = ThemeForeground();
+        return theme is not null
+            && string.Equals(normalizedHex, ToHex(theme.Value), StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static Color ThemeForegroundOrWhite() => ThemeForeground() ?? Colors.White;
+
+    private static Color? ThemeForeground()
+    {
+        if (Application.Current?.TryGetResource("ThemeForegroundBrush", Application.Current.ActualThemeVariant, out var value) == true
+            && value is SolidColorBrush { Color: var color })
+        {
+            return color;
+        }
+
+        return null;
+    }
+
+    private static string ToHex(Color color) =>
+        $"#{color.A:X2}{color.R:X2}{color.G:X2}{color.B:X2}";
+
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value is not Color color)
             return null;
+        return $"#{color.A:X2}{color.R:X2}{color.G:X2}{color.B:X2}";
+    }
+}
+
+/// <summary>
+/// Text-colour picker. An empty setting follows the theme, so the swatch shows that colour.
+/// </summary>
+public sealed class Ft4TextColorConverter : IValueConverter
+{
+    public static readonly Ft4TextColorConverter Instance = new();
+
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        var normalized = Ft4DecodeHighlight.NormalizeColour(value as string);
+        if (normalized is not null && Color.TryParse(normalized, out var color))
+            return color;
+        return Ft4HexColorConverter.ThemeForegroundOrWhite();
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is not Color color)
+            return "";
         return $"#{color.A:X2}{color.R:X2}{color.G:X2}{color.B:X2}";
     }
 }

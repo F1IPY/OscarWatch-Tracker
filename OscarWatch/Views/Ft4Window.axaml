@@ -216,7 +216,13 @@
               <DataTemplate x:DataType="vm:Ft4DecodeRowViewModel">
                 <Grid ColumnDefinitions="76,48,48,72,*,52" ColumnSpacing="10" Margin="4,2"
                       Background="{Binding RowBackground}">
+                  <Grid.Styles>
+                    <Style Selector="TextBlock.ft4-ink">
+                      <Setter Property="Foreground" Value="{Binding RowForeground}" />
+                    </Style>
+                  </Grid.Styles>
                   <TextBlock Grid.Column="0"
+                             Classes.ft4-ink="{Binding HasRowForeground}"
                              Text="{Binding Message.SlotUtc, StringFormat={}{0:HH:mm:ss}}" />
                   <TextBlock Grid.Column="1"
                              Text="{loc:Localize Key=Ft4.Decodes.Tx}"
@@ -229,6 +235,7 @@
                              Foreground="#6DB3F2"
                              IsVisible="{Binding Message.IsOwnEcho}" />
                   <TextBlock Grid.Column="2"
+                             Classes.ft4-ink="{Binding HasRowForeground}"
                              Text="{Binding Message.TimeSec, StringFormat={}{0:+0.0;-0.0}}"
                              IsVisible="{Binding Message.IsReceiveActivity}" />
                   <TextBlock Grid.Column="2"
@@ -240,6 +247,7 @@
                              Opacity="0.45"
                              IsVisible="{Binding Message.IsTransmitted}" />
                   <TextBlock Grid.Column="3"
+                             Classes.ft4-ink="{Binding HasRowForeground}"
                              Text="{Binding Message.SnrDb, StringFormat={}{0:+0;-0} dB}"
                              IsVisible="{Binding Message.IsReceiveActivity}" />
                   <TextBlock Grid.Column="3"
@@ -261,9 +269,11 @@
                              IsVisible="{Binding Message.IsOwnEcho}"
                              Foreground="#6DB3F2" />
                   <TextBlock Grid.Column="4"
+                             Classes.ft4-ink="{Binding HasRowForeground}"
                              Text="{Binding Message.Text}"
                              IsVisible="{Binding Message.IsReceiveActivity}" />
                   <TextBlock Grid.Column="5"
+                             Classes.ft4-ink="{Binding HasRowForeground}"
                              Text="{Binding Message.FreqHz, StringFormat={}{0:0}}"
                              Opacity="0.9"
                              HorizontalAlignment="Right" />

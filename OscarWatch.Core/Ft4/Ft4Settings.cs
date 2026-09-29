@@ -143,6 +143,21 @@ public sealed class Ft4Settings
     /// <summary>Row background for a received CQ. #RRGGBB or #AARRGGBB.</summary>
     public string CqColour { get; set; } = Ft4DecodeHighlight.DefaultCqColour;
 
+    /// <summary>Text colour for a decode addressed to this station. Empty follows the theme.</summary>
+    public string CallingMeTextColour { get; set; } = "";
+
+    /// <summary>Text colour for the station in the current QSO. Empty follows the theme.</summary>
+    public string ReplyingTextColour { get; set; } = "";
+
+    /// <summary>Text colour for a receive decode whose callsign is not in the logbook. Empty follows the theme.</summary>
+    public string NewCallTextColour { get; set; } = "";
+
+    /// <summary>Text colour when the callsign was worked but the 4-character grid is new. Empty follows the theme.</summary>
+    public string NewGridTextColour { get; set; } = "";
+
+    /// <summary>Text colour for a received CQ. Empty follows the theme.</summary>
+    public string CqTextColour { get; set; } = "";
+
     /// <summary>Window size/position.</summary>
     public int? WindowWidth { get; set; }
     public int? WindowHeight { get; set; }

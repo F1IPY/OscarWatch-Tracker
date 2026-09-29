@@ -41,6 +41,11 @@ public sealed class Ft4SettingsTests
         Assert.Equal(Ft4DecodeHighlight.DefaultNewCallColour, settings.NewCallColour);
         Assert.Equal(Ft4DecodeHighlight.DefaultNewGridColour, settings.NewGridColour);
         Assert.Equal(Ft4DecodeHighlight.DefaultCqColour, settings.CqColour);
+        Assert.Equal("", settings.CallingMeTextColour);
+        Assert.Equal("", settings.ReplyingTextColour);
+        Assert.Equal("", settings.NewCallTextColour);
+        Assert.Equal("", settings.NewGridTextColour);
+        Assert.Equal("", settings.CqTextColour);
     }
 
     [Fact]

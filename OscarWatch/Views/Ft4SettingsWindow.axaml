@@ -279,42 +279,68 @@
                        Text="{loc:Localize Key=Ft4.DecodeFontSize.Note}" />
             <TextBlock Classes="ft4-note"
                        Text="{loc:Localize Key=Ft4.Decode.ColourNote}" />
-            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10" RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="8">
-              <TextBlock Grid.Row="0" Grid.Column="0"
-                         Text="{loc:Localize Key=Ft4.Decode.CallingMe}"
-                         VerticalAlignment="Center" />
-              <ColorPicker Grid.Row="0" Grid.Column="1"
-                           HorizontalAlignment="Left"
-                           IsAlphaEnabled="True"
-                           Color="{Binding CallingMeColour, Mode=TwoWay, Converter={x:Static ft4ui:Ft4HexColorConverter.Instance}}" />
+            <Grid ColumnDefinitions="Auto,Auto,Auto" ColumnSpacing="10" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="8">
+              <TextBlock Grid.Row="0" Grid.Column="1"
+                         Classes="ft4-note"
+                         Text="{loc:Localize Key=Ft4.Decode.Background}" />
+              <TextBlock Grid.Row="0" Grid.Column="2"
+                         Classes="ft4-note"
+                         Text="{loc:Localize Key=Ft4.Decode.Text}" />
               <TextBlock Grid.Row="1" Grid.Column="0"
-                         Text="{loc:Localize Key=Ft4.Decode.Replying}"
+                         Text="{loc:Localize Key=Ft4.Decode.CallingMe}"
                          VerticalAlignment="Center" />
               <ColorPicker Grid.Row="1" Grid.Column="1"
                            HorizontalAlignment="Left"
                            IsAlphaEnabled="True"
-                           Color="{Binding ReplyingColour, Mode=TwoWay, Converter={x:Static ft4ui:Ft4HexColorConverter.Instance}}" />
+                           Color="{Binding CallingMeColour, Mode=TwoWay, Converter={x:Static ft4ui:Ft4HexColorConverter.Instance}}" />
+              <ColorPicker Grid.Row="1" Grid.Column="2"
+                           HorizontalAlignment="Left"
+                           IsAlphaEnabled="False"
+                           Color="{Binding CallingMeTextColour, Mode=TwoWay, Converter={x:Static ft4ui:Ft4TextColorConverter.Instance}}" />
               <TextBlock Grid.Row="2" Grid.Column="0"
-                         Text="{loc:Localize Key=Ft4.Decode.Cq}"
+                         Text="{loc:Localize Key=Ft4.Decode.Replying}"
                          VerticalAlignment="Center" />
               <ColorPicker Grid.Row="2" Grid.Column="1"
                            HorizontalAlignment="Left"
                            IsAlphaEnabled="True"
-                           Color="{Binding CqColour, Mode=TwoWay, Converter={x:Static ft4ui:Ft4HexColorConverter.Instance}}" />
+                           Color="{Binding ReplyingColour, Mode=TwoWay, Converter={x:Static ft4ui:Ft4HexColorConverter.Instance}}" />
+              <ColorPicker Grid.Row="2" Grid.Column="2"
+                           HorizontalAlignment="Left"
+                           IsAlphaEnabled="False"
+                           Color="{Binding ReplyingTextColour, Mode=TwoWay, Converter={x:Static ft4ui:Ft4TextColorConverter.Instance}}" />
               <TextBlock Grid.Row="3" Grid.Column="0"
-                         Text="{loc:Localize Key=Ft4.Decode.NewCall}"
+                         Text="{loc:Localize Key=Ft4.Decode.Cq}"
                          VerticalAlignment="Center" />
               <ColorPicker Grid.Row="3" Grid.Column="1"
                            HorizontalAlignment="Left"
                            IsAlphaEnabled="True"
-                           Color="{Binding NewCallColour, Mode=TwoWay, Converter={x:Static ft4ui:Ft4HexColorConverter.Instance}}" />
+                           Color="{Binding CqColour, Mode=TwoWay, Converter={x:Static ft4ui:Ft4HexColorConverter.Instance}}" />
+              <ColorPicker Grid.Row="3" Grid.Column="2"
+                           HorizontalAlignment="Left"
+                           IsAlphaEnabled="False"
+                           Color="{Binding CqTextColour, Mode=TwoWay, Converter={x:Static ft4ui:Ft4TextColorConverter.Instance}}" />
               <TextBlock Grid.Row="4" Grid.Column="0"
-                         Text="{loc:Localize Key=Ft4.Decode.NewGrid}"
+                         Text="{loc:Localize Key=Ft4.Decode.NewCall}"
                          VerticalAlignment="Center" />
               <ColorPicker Grid.Row="4" Grid.Column="1"
                            HorizontalAlignment="Left"
                            IsAlphaEnabled="True"
+                           Color="{Binding NewCallColour, Mode=TwoWay, Converter={x:Static ft4ui:Ft4HexColorConverter.Instance}}" />
+              <ColorPicker Grid.Row="4" Grid.Column="2"
+                           HorizontalAlignment="Left"
+                           IsAlphaEnabled="False"
+                           Color="{Binding NewCallTextColour, Mode=TwoWay, Converter={x:Static ft4ui:Ft4TextColorConverter.Instance}}" />
+              <TextBlock Grid.Row="5" Grid.Column="0"
+                         Text="{loc:Localize Key=Ft4.Decode.NewGrid}"
+                         VerticalAlignment="Center" />
+              <ColorPicker Grid.Row="5" Grid.Column="1"
+                           HorizontalAlignment="Left"
+                           IsAlphaEnabled="True"
                            Color="{Binding NewGridColour, Mode=TwoWay, Converter={x:Static ft4ui:Ft4HexColorConverter.Instance}}" />
+              <ColorPicker Grid.Row="5" Grid.Column="2"
+                           HorizontalAlignment="Left"
+                           IsAlphaEnabled="False"
+                           Color="{Binding NewGridTextColour, Mode=TwoWay, Converter={x:Static ft4ui:Ft4TextColorConverter.Instance}}" />
             </Grid>
           </StackPanel>
         </ScrollViewer>

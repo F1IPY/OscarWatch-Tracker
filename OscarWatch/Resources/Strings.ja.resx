@@ -4041,8 +4041,14 @@
   <data name="Ft4.Decode.Cq">
     <value>CQ</value>
   </data>
+  <data name="Ft4.Decode.Background">
+    <value>背景</value>
+  </data>
+  <data name="Ft4.Decode.Text">
+    <value>文字</value>
+  </data>
   <data name="Ft4.Decode.ColourNote">
-    <value>デコード行の背景色: 自局宛て、現在のQSO相手、CQ、ログにないコールサイン、未ログの4文字グリッド。色選択で設定。透明度を下げると濃くなります。</value>
+    <value>デコード行の背景色: 自局宛て、現在のQSO相手、CQ、ログにないコールサイン、未ログの4文字グリッド。色選択で設定。透明度を下げると濃くなります。文字色は選ぶまでテーマに従います。送信とエコーの行は専用の色のままです。</value>
   </data>
   <data name="Ft4.Decode.NewCall">
     <value>新規コール</value>

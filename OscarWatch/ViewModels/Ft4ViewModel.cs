@@ -89,6 +89,11 @@ public partial class Ft4ViewModel : ViewModelBase, IDisposable
             ?? Ft4DecodeHighlight.DefaultNewGridColour;
         _cqColour = Ft4DecodeHighlight.NormalizeColour(ft4.CqColour)
             ?? Ft4DecodeHighlight.DefaultCqColour;
+        _callingMeTextColour = Ft4DecodeHighlight.NormalizeColour(ft4.CallingMeTextColour) ?? "";
+        _replyingTextColour = Ft4DecodeHighlight.NormalizeColour(ft4.ReplyingTextColour) ?? "";
+        _newCallTextColour = Ft4DecodeHighlight.NormalizeColour(ft4.NewCallTextColour) ?? "";
+        _newGridTextColour = Ft4DecodeHighlight.NormalizeColour(ft4.NewGridTextColour) ?? "";
+        _cqTextColour = Ft4DecodeHighlight.NormalizeColour(ft4.CqTextColour) ?? "";
         _preferEvenSlot = false;
         _pttInvert = ft4.PttInvert;
         _selectedPttMethod = PttMethodOptions.FirstOrDefault(o => o.Value == ft4.PttMethod)
@@ -201,6 +206,11 @@ public partial class Ft4ViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private string _newCallColour = Ft4DecodeHighlight.DefaultNewCallColour;
     [ObservableProperty] private string _newGridColour = Ft4DecodeHighlight.DefaultNewGridColour;
     [ObservableProperty] private string _cqColour = Ft4DecodeHighlight.DefaultCqColour;
+    [ObservableProperty] private string _callingMeTextColour = "";
+    [ObservableProperty] private string _replyingTextColour = "";
+    [ObservableProperty] private string _newCallTextColour = "";
+    [ObservableProperty] private string _newGridTextColour = "";
+    [ObservableProperty] private string _cqTextColour = "";
     [ObservableProperty] private string? _qsoPartnerCall;
     [ObservableProperty] private string? _selectedEchoCalibrationSatellite;
     [ObservableProperty] private double _echoCalibrationHz;
@@ -373,6 +383,51 @@ public partial class Ft4ViewModel : ViewModelBase, IDisposable
             hex => CqColour = hex,
             hex => _settings.Current.Ft4.CqColour = hex);
 
+    partial void OnCallingMeTextColourChanged(string value) =>
+        CommitDecodeColour(
+            value,
+            "",
+            () => CallingMeTextColour,
+            hex => CallingMeTextColour = hex,
+            hex => _settings.Current.Ft4.CallingMeTextColour = hex,
+            followTheme: true);
+
+    partial void OnReplyingTextColourChanged(string value) =>
+        CommitDecodeColour(
+            value,
+            "",
+            () => ReplyingTextColour,
+            hex => ReplyingTextColour = hex,
+            hex => _settings.Current.Ft4.ReplyingTextColour = hex,
+            followTheme: true);
+
+    partial void OnNewCallTextColourChanged(string value) =>
+        CommitDecodeColour(
+            value,
+            "",
+            () => NewCallTextColour,
+            hex => NewCallTextColour = hex,
+            hex => _settings.Current.Ft4.NewCallTextColour = hex,
+            followTheme: true);
+
+    partial void OnNewGridTextColourChanged(string value) =>
+        CommitDecodeColour(
+            value,
+            "",
+            () => NewGridTextColour,
+            hex => NewGridTextColour = hex,
+            hex => _settings.Current.Ft4.NewGridTextColour = hex,
+            followTheme: true);
+
+    partial void OnCqTextColourChanged(string value) =>
+        CommitDecodeColour(
+            value,
+            "",
+            () => CqTextColour,
+            hex => CqTextColour = hex,
+            hex => _settings.Current.Ft4.CqTextColour = hex,
+            followTheme: true);
+
     partial void OnQsoPartnerCallChanged(string? value) => RefreshDecodeHighlights();
 
     private int _colourCommitDepth;
@@ -382,12 +437,15 @@ public partial class Ft4ViewModel : ViewModelBase, IDisposable
         string fallback,
         Func<string> current,
         Action<string> setCurrent,
-        Action<string> store)
+        Action<string> store,
+        bool followTheme = false)
     {
         if (_colourCommitDepth > 0)
             return;
 
         var normalized = Ft4DecodeHighlight.NormalizeColour(value) ?? fallback;
+        if (followTheme && Ft4HexColorConverter.IsThemeForeground(normalized))
+            normalized = "";
         _colourCommitDepth++;
         try
         {
@@ -1226,7 +1284,12 @@ public partial class Ft4ViewModel : ViewModelBase, IDisposable
             NewGridColour,
             CqColour,
             _workedCalls,
-            _workedGridFields);
+            _workedGridFields,
+            CallingMeTextColour,
+            ReplyingTextColour,
+            NewCallTextColour,
+            NewGridTextColour,
+            CqTextColour);
 
     private void OnLogbookQsosChanged(long logbookId) => _ = RefreshWorkedSetsAsync();
 
