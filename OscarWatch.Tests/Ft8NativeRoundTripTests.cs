@@ -113,6 +113,14 @@ public sealed class Ft8NativeRoundTripTests
     }
 
     [Fact]
+    public void Waterfall_search_covers_the_whole_display()
+    {
+        Ft8Native.ResolveWaterfallSearchBand(out var fMin, out var fMax);
+        Assert.Equal(200, fMin);
+        Assert.Equal(3000, fMax);
+    }
+
+    [Fact]
     public void Search_band_spans_rx_and_tx_when_hold_tx_separates_them()
     {
         Ft8Native.ResolveSearchBand(rxHz: 500, txHz: 2000, out var fMin, out var fMax);

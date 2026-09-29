@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using System.Text;
+using OscarWatch.Core.Ft4;
 
 namespace OscarWatch.Ft4;
 
@@ -219,11 +220,18 @@ internal static class Ft8Native
         }
     }
 
-    /// <summary>Half-width pad around RX/TX audio when building the Costas search band (Hz).</summary>
+    /// <summary>Half-width pad around the TX tone when searching for our own echo (Hz).</summary>
     public const double DefaultSearchHalfWidthHz = 700;
 
+    /// <summary>Decode search covering the whole waterfall, independent of the RX and TX brackets.</summary>
+    public static void ResolveWaterfallSearchBand(out float fMinHz, out float fMaxHz)
+    {
+        fMinHz = (float)Ft4SpectrumAnalyzer.DefaultMinHz;
+        fMaxHz = (float)Ft4SpectrumAnalyzer.DefaultMaxHz;
+    }
+
     /// <summary>
-    /// Search band covering both RX and TX tones (plus pad), clamped to the USB passband.
+    /// Narrow search around the TX tone for own-echo recovery.
     /// </summary>
     public static void ResolveSearchBand(double rxHz, double txHz, out float fMinHz, out float fMaxHz)
     {
