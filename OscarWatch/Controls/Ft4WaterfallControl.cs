@@ -9,8 +9,9 @@ using OscarWatch.Core.Ft4;
 namespace OscarWatch.Controls;
 
 /// <summary>
-/// Scrolling spectrogram for FT4. Frequency left→right (passband), time scrolls down.
-/// Click sets RX, and TX as well unless Hold Tx Freq is on.
+/// Scrolling spectrogram for FT4. Frequency left to right (passband), time scrolls down.
+/// A left click sets RX, and TX as well unless Hold Tx Freq is on.
+/// With Hold Tx Freq, a left click sets RX and a right click sets TX.
 /// </summary>
 public sealed class Ft4WaterfallControl : Control
 {
@@ -78,6 +79,7 @@ public sealed class Ft4WaterfallControl : Control
         MinHeight = 140;
         Cursor = new Cursor(StandardCursorType.Cross);
         PointerPressed += OnPointerPressed;
+        ContextRequested += (_, e) => e.Handled = true;
     }
 
     public double TxAudioHz
@@ -270,13 +272,25 @@ public sealed class Ft4WaterfallControl : Control
 
     private void OnPointerPressed(object? sender, PointerPressedEventArgs e)
     {
+        var props = e.GetCurrentPoint(this).Properties;
+        var right = props.IsRightButtonPressed;
+        var left = props.IsLeftButtonPressed;
+        if (!left && !(right && HoldTxFrequency))
+            return;
+
         var p = e.GetPosition(this);
         var hz = Ft4SpectrumAnalyzer.PixelToHz(p.X, Bounds.Width, MinHz, MaxHz);
         hz = Math.Round(hz / 10.0) * 10.0;
         hz = Math.Clamp(hz, MinHz, MaxHz);
-        RxAudioHz = hz;
-        if (!HoldTxFrequency)
+        if (right && !left && HoldTxFrequency)
             TxAudioHz = hz;
+        else
+        {
+            RxAudioHz = hz;
+            if (!HoldTxFrequency)
+                TxAudioHz = hz;
+        }
+
         FrequencySelected?.Invoke(this, hz);
         e.Handled = true;
         InvalidateVisual();

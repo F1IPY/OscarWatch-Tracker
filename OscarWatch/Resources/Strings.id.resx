@@ -3998,7 +3998,7 @@ Terbaru: {1} ({2})</value>
     <value>Tahan frek. TX</value>
   </data>
   <data name="Ft4.HoldTxFrequency.Note">
-    <value>Pertahankan Hz audio TX saat menjawab (gaya WSJT-X). Nonaktifkan untuk lompat ke frekuensi decode.</value>
+    <value>Pertahankan Hz audio TX saat menjawab (gaya WSJT-X). Nonaktifkan untuk lompat ke frekuensi decode. Saat aktif, klik kiri pada waterfall memindahkan RX dan klik kanan memindahkan TX.</value>
   </data>
   <data name="Ft4.AudioDopplerTx">
     <value>Doppler audio pada TX</value>

@@ -3994,7 +3994,7 @@
     <value>TX周波数保持</value>
   </data>
   <data name="Ft4.HoldTxFrequency.Note">
-    <value>応答時に自分のTX音声Hzを維持します（WSJT-Xと同様）。オフにするとデコード周波数へ移動します。</value>
+    <value>応答時に自分のTX音声Hzを維持します（WSJT-Xと同様）。オフにするとデコード周波数へ移動します。オンのとき、ウォーターフォールの左クリックでRX、右クリックでTXを移動します。</value>
   </data>
   <data name="Ft4.AudioDopplerTx">
     <value>TXオーディオドップラー</value>

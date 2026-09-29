@@ -3994,7 +3994,7 @@ Latest: {1} ({2})</value>
     <value>Hold Tx Freq</value>
   </data>
   <data name="Ft4.HoldTxFrequency.Note">
-    <value>Keep your TX audio Hz when answering (WSJT-X style). Clear to jump to their decode frequency.</value>
+    <value>Keep your TX audio Hz when answering (WSJT-X style). Clear to jump to their decode frequency. While ticked, left-click the waterfall to move RX and right-click to move TX.</value>
   </data>
   <data name="Ft4.AudioDopplerTx">
     <value>Audio Doppler on TX</value>

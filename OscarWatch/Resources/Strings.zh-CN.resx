@@ -3994,7 +3994,7 @@
     <value>保持 TX 频率</value>
   </data>
   <data name="Ft4.HoldTxFrequency.Note">
-    <value>应答时保持您的 TX 音频 Hz（WSJT-X 风格）。取消选中则跳到解码频率。</value>
+    <value>应答时保持您的 TX 音频 Hz（WSJT-X 风格）。取消选中则跳到解码频率。勾选后，左键单击瀑布图移动 RX，右键单击移动 TX。</value>
   </data>
   <data name="Ft4.AudioDopplerTx">
     <value>TX 音频多普勒</value>

@@ -3998,7 +3998,7 @@ LOS: {2}
     <value>คงความถี่ TX</value>
   </data>
   <data name="Ft4.HoldTxFrequency.Note">
-    <value>คง Hz เสียง TX ของคุณเมื่อตอบ (แบบ WSJT-X) ยกเลิกเพื่อกระโดดไปความถี่ที่ถอดรหัส</value>
+    <value>คง Hz เสียง TX ของคุณเมื่อตอบ (แบบ WSJT-X) ยกเลิกเพื่อกระโดดไปความถี่ที่ถอดรหัส เมื่อเปิดไว้ คลิกซ้ายบนวอเตอร์ฟอลย้าย RX และคลิกขวาย้าย TX</value>
   </data>
   <data name="Ft4.AudioDopplerTx">
     <value>ดอปเปลอร์เสียงบน TX</value>

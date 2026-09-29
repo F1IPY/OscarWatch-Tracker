@@ -3994,7 +3994,7 @@ Mais recente: {1} ({2})</value>
     <value>Manter freq. TX</value>
   </data>
   <data name="Ft4.HoldTxFrequency.Note">
-    <value>Mantém o Hz de áudio TX ao responder (estilo WSJT-X). Desmarque para saltar à frequência do decode.</value>
+    <value>Mantém o Hz de áudio TX ao responder (estilo WSJT-X). Desmarque para saltar à frequência do decode. Com a opção marcada, clique esquerdo na cascata move o RX e clique direito move o TX.</value>
   </data>
   <data name="Ft4.AudioDopplerTx">
     <value>Doppler de áudio no TX</value>

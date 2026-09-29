@@ -3998,7 +3998,7 @@ Aktuell: {1} ({2})</value>
     <value>TX-Freq halten</value>
   </data>
   <data name="Ft4.HoldTxFrequency.Note">
-    <value>Behält Ihre TX-Audio-Hz beim Antworten (WSJT-X-Stil). Abwählen springt zur Decode-Frequenz.</value>
+    <value>Behält Ihre TX-Audio-Hz beim Antworten (WSJT-X-Stil). Abwählen springt zur Decode-Frequenz. Ist die Option an, verschiebt ein Linksklick auf den Wasserfall RX und ein Rechtsklick TX.</value>
   </data>
   <data name="Ft4.AudioDopplerTx">
     <value>Audio-Doppler bei TX</value>
