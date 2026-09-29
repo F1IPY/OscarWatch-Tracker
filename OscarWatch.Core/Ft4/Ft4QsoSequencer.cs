@@ -255,11 +255,10 @@ public sealed class Ft4QsoSequencer
             }
             else if (Ft4MessageCodec.IsReport(extra))
             {
-                ReportReceived = Ft4MessageCodec.NormalizeSnrReport(extra);
-                ReportSent ??= Ft4MessageCodec.FormatSnrReport(decode.SnrDb);
-                CurrentTxMessage = _skipRrr()
-                    ? Ft4MessageCodec.BuildRr73(TheirCall, my)
-                    : Ft4MessageCodec.BuildRrr(TheirCall, my);
+                // A plain +NN while we are calling CQ is their first report to us, often
+                // because they are answering a call we did not take. Reply R+NN. Only an
+                // R+NN from them is ready for RR73.
+                ReplyToReport(TheirCall, my, extra, decode.SnrDb);
             }
             return false;
         }
@@ -315,29 +314,44 @@ public sealed class Ft4QsoSequencer
 
         if (Ft4MessageCodec.IsReport(extra))
         {
-            ReportReceived = Ft4MessageCodec.NormalizeSnrReport(extra);
-
-            // After our grid reply to their CQ, a plain +NN means send R+NN next.
-            // R+NN (or a second report after we already sent one) advances to RR73/RRR.
-            if (ReportSent is null && !Ft4MessageCodec.IsRogerReport(extra))
-            {
-                ReportSent = Ft4MessageCodec.FormatSnrReport(decode.SnrDb);
-                CurrentTxMessage = Ft4MessageCodec.BuildReport(
-                    TheirCall,
-                    my,
-                    Ft4MessageCodec.FormatRogerReport(decode.SnrDb));
-                return false;
-            }
-
-            ReportSent ??= Ft4MessageCodec.FormatSnrReport(decode.SnrDb);
-            CurrentTxMessage = _skipRrr()
-                ? Ft4MessageCodec.BuildRr73(TheirCall, my)
-                : Ft4MessageCodec.BuildRrr(TheirCall, my);
+            ReplyToReport(TheirCall, my, extra, decode.SnrDb);
             return false;
         }
 
         return false;
     }
+
+    /// <summary>
+    /// Plain +NN gets R+NN back. An R+NN, or a plain report after we already sent our own
+    /// plain report, advances to RR73 or RRR. A repeated +NN while R+NN is already queued
+    /// stays on R+NN.
+    /// </summary>
+    private void ReplyToReport(string? theirCall, string my, string? extra, float snrDb)
+    {
+        if (string.IsNullOrWhiteSpace(theirCall))
+            return;
+
+        ReportReceived = Ft4MessageCodec.NormalizeSnrReport(extra);
+        var plain = !Ft4MessageCodec.IsRogerReport(extra);
+        if (plain && (ReportSent is null || IsOutgoingRogerReport(CurrentTxMessage)))
+        {
+            ReportSent = Ft4MessageCodec.FormatSnrReport(snrDb);
+            CurrentTxMessage = Ft4MessageCodec.BuildReport(
+                theirCall,
+                my,
+                Ft4MessageCodec.FormatRogerReport(snrDb));
+            return;
+        }
+
+        ReportSent ??= Ft4MessageCodec.FormatSnrReport(snrDb);
+        CurrentTxMessage = _skipRrr()
+            ? Ft4MessageCodec.BuildRr73(theirCall, my)
+            : Ft4MessageCodec.BuildRrr(theirCall, my);
+    }
+
+    private static bool IsOutgoingRogerReport(string message) =>
+        Ft4MessageCodec.TryParse(message, out _, out _, out var extra)
+        && Ft4MessageCodec.IsRogerReport(extra);
 
     /// <summary>
     /// After RR73, TX stops. A repeated report means they did not copy it, so send RR73

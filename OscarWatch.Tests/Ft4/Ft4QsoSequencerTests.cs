@@ -195,6 +195,25 @@ public sealed class Ft4QsoSequencerTests
     }
 
     [Fact]
+    public void Plain_report_answering_our_cq_gets_a_roger_report_before_rr73()
+    {
+        // They called us, we did not answer, they went back to CQ. Our later plain
+        // report must be answered with R+NN, not RR73.
+        var seq = new Ft4QsoSequencer(() => "GW4VXE", () => "IO81", () => true);
+        seq.StartCq(evenSlot: true);
+
+        Assert.False(seq.OnDecoded(Msg("GW4VXE MM9SQL +18", snr: 9f)));
+        Assert.Equal(Ft4QsoPhase.InQso, seq.Phase);
+        Assert.Equal("MM9SQL GW4VXE R+09", seq.CurrentTxMessage);
+
+        Assert.False(seq.OnDecoded(Msg("GW4VXE MM9SQL +18", snr: 12f)));
+        Assert.Equal("MM9SQL GW4VXE R+12", seq.CurrentTxMessage);
+
+        Assert.False(seq.OnDecoded(Msg("GW4VXE MM9SQL R+12")));
+        Assert.Equal("MM9SQL GW4VXE RR73", seq.CurrentTxMessage);
+    }
+
+    [Fact]
     public void Answer_plain_report_sends_roger_report_back()
     {
         var seq = new Ft4QsoSequencer(() => "MM9SQL", () => "IO85", () => true);
