@@ -872,13 +872,33 @@ public partial class Ft4ViewModel : ViewModelBase, IDisposable
         // Rebuild from Settings → Station so portable callsigns (e.g. MM9SQL/M) pack correctly.
         _modem.SetAutoReply(AutoReply);
         _modem.StartCq(PreferEvenSlot);
-        CurrentTxMessage = _modem.Sequencer?.CurrentTxMessage ?? "";
+        // The text box is two-way. Losing focus to this button can push the previous
+        // QSO text back after the CQ has been stored. Put the CQ on screen again
+        // once that write has landed.
+        ShowSequencerTxMessage();
         TxEnabled = _modem.Sequencer?.TransmitEnabled == true;
         StatusLine = string.IsNullOrWhiteSpace(_modem.Status)
             ? _l.Get("Ft4.Status.CallingCq")
             : _modem.Status;
         OnPropertyChanged(nameof(CanManualLog));
         ManualLogCommand.NotifyCanExecuteChanged();
+    }
+
+    private int _txMessagePublish;
+
+    private void ShowSequencerTxMessage()
+    {
+        var publish = ++_txMessagePublish;
+        CurrentTxMessage = _modem.Sequencer?.CurrentTxMessage ?? "";
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (publish != _txMessagePublish)
+                return;
+
+            var live = _modem.Sequencer?.CurrentTxMessage ?? "";
+            if (!string.Equals(CurrentTxMessage, live, StringComparison.Ordinal))
+                CurrentTxMessage = live;
+        }, DispatcherPriority.Background);
     }
 
     private void PushTxMessageToModem()

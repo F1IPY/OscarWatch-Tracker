@@ -16,6 +16,7 @@ public sealed class Ft4QsoSequencer
     private readonly Func<bool> _skipRrr;
     private readonly Func<bool> _holdTxFrequency;
     private readonly Func<bool> _autoReply;
+    private readonly object _gate = new();
     private bool? _autoReplyOverride;
 
     public Ft4QsoSequencer(
@@ -36,7 +37,11 @@ public sealed class Ft4QsoSequencer
     /// The Auto reply checkbox. Overrides the settings read so a tick takes effect
     /// on the next decode, including one already on screen.
     /// </summary>
-    public void SetAutoReply(bool enabled) => _autoReplyOverride = enabled;
+    public void SetAutoReply(bool enabled)
+    {
+        lock (_gate)
+            _autoReplyOverride = enabled;
+    }
 
     private bool AutoReplyOn => _autoReplyOverride ?? _autoReply();
 
@@ -62,6 +67,12 @@ public sealed class Ft4QsoSequencer
 
     public void Reset()
     {
+        lock (_gate)
+            ResetCore();
+    }
+
+    private void ResetCore()
+    {
         Phase = Ft4QsoPhase.Idle;
         TheirCall = null;
         TheirGrid = null;
@@ -78,13 +89,24 @@ public sealed class Ft4QsoSequencer
 
     public void StartCq(bool evenSlot)
     {
-        PreferEvenSlot = evenSlot;
-        CurrentTxMessage = Ft4MessageCodec.BuildCq(_myCall(), _myGrid());
-        BeginFreshCq(keepMessage: true);
+        // Decode and TX-complete run off the UI thread. Without the lock a 73 that
+        // already passed its phase check can write the old contact back over this CQ.
+        lock (_gate)
+        {
+            PreferEvenSlot = evenSlot;
+            CurrentTxMessage = Ft4MessageCodec.BuildCq(_myCall(), _myGrid());
+            BeginFreshCq(keepMessage: true);
+        }
     }
 
     /// <summary>Operator clicked a decode to answer.</summary>
     public void StartAnswer(Ft4DecodedMessage decode, bool oppositeEvenSlot)
+    {
+        lock (_gate)
+            StartAnswerCore(decode, oppositeEvenSlot);
+    }
+
+    private void StartAnswerCore(Ft4DecodedMessage decode, bool oppositeEvenSlot)
     {
         if (!Ft4MessageCodec.TryParse(decode.Text, out var callTo, out var callDe, out var extra)
             || string.IsNullOrWhiteSpace(callDe))
@@ -147,12 +169,21 @@ public sealed class Ft4QsoSequencer
 
     public void HaltTx()
     {
-        TransmitEnabled = false;
-        if (Phase == Ft4QsoPhase.CallingCq)
-            Phase = Ft4QsoPhase.Idle;
+        lock (_gate)
+        {
+            TransmitEnabled = false;
+            if (Phase == Ft4QsoPhase.CallingCq)
+                Phase = Ft4QsoPhase.Idle;
+        }
     }
 
     public void EnableTx()
+    {
+        lock (_gate)
+            EnableTxCore();
+    }
+
+    private void EnableTxCore()
     {
         if (string.IsNullOrWhiteSpace(CurrentTxMessage))
             CurrentTxMessage = Ft4MessageCodec.BuildCq(_myCall(), _myGrid());
@@ -175,6 +206,12 @@ public sealed class Ft4QsoSequencer
     /// so the next caller is answered. Returns false when this is not a CQ.
     /// </summary>
     public bool PrepareAutoReply()
+    {
+        lock (_gate)
+            return PrepareAutoReplyCore();
+    }
+
+    private bool PrepareAutoReplyCore()
     {
         if (!TransmitEnabled || !AutoReplyOn || !IsCqMessage)
             return false;
@@ -199,6 +236,12 @@ public sealed class Ft4QsoSequencer
     /// <summary>Operator-edited TX text from the FT4 window.</summary>
     public void SetTxMessage(string? message)
     {
+        lock (_gate)
+            SetTxMessageCore(message);
+    }
+
+    private void SetTxMessageCore(string? message)
+    {
         var text = (message ?? "").Trim()
             .Replace('\u2215', '/')
             .Replace('\u2044', '/')
@@ -211,6 +254,12 @@ public sealed class Ft4QsoSequencer
     /// and ready to log.
     /// </summary>
     public bool OnDecoded(Ft4DecodedMessage decode)
+    {
+        lock (_gate)
+            return OnDecodedCore(decode);
+    }
+
+    private bool OnDecodedCore(Ft4DecodedMessage decode)
     {
         if (!TransmitEnabled
             && Phase is not Ft4QsoPhase.InQso and not Ft4QsoPhase.CallingCq and not Ft4QsoPhase.Finished)
@@ -394,6 +443,12 @@ public sealed class Ft4QsoSequencer
     /// </summary>
     public bool ForceReport(float? snrDb)
     {
+        lock (_gate)
+            return ForceReportCore(snrDb);
+    }
+
+    private bool ForceReportCore(float? snrDb)
+    {
         if (string.IsNullOrWhiteSpace(TheirCall))
             return false;
 
@@ -412,6 +467,12 @@ public sealed class Ft4QsoSequencer
     /// <summary>Operator asked to send 73 again to the station in the current QSO.</summary>
     public bool Force73()
     {
+        lock (_gate)
+            return Force73Core();
+    }
+
+    private bool Force73Core()
+    {
         if (string.IsNullOrWhiteSpace(TheirCall))
             return false;
 
@@ -428,24 +489,27 @@ public sealed class Ft4QsoSequencer
     /// <summary>Called after a TX message was fully sent.</summary>
     public bool OnTxCompleted()
     {
-        if (Phase != Ft4QsoPhase.InQso)
+        lock (_gate)
+        {
+            if (Phase != Ft4QsoPhase.InQso)
+                return false;
+
+            var msg = CurrentTxMessage;
+            if (_skipRrr() && msg.EndsWith(" RR73", StringComparison.Ordinal))
+            {
+                FinishContact();
+                return CanLog();
+            }
+
+            if (msg.EndsWith(" 73", StringComparison.Ordinal)
+                && !msg.EndsWith(" RR73", StringComparison.Ordinal))
+            {
+                FinishContact();
+                return CanLog();
+            }
+
             return false;
-
-        var msg = CurrentTxMessage;
-        if (_skipRrr() && msg.EndsWith(" RR73", StringComparison.Ordinal))
-        {
-            FinishContact();
-            return CanLog();
         }
-
-        if (msg.EndsWith(" 73", StringComparison.Ordinal)
-            && !msg.EndsWith(" RR73", StringComparison.Ordinal))
-        {
-            FinishContact();
-            return CanLog();
-        }
-
-        return false;
     }
 
     private void FinishContact()
