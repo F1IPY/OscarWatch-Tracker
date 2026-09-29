@@ -72,6 +72,7 @@ public partial class Ft4ViewModel : ViewModelBase, IDisposable
         _audioDopplerTx = ft4.AudioDopplerTx;
         _audioDopplerRx = ft4.AudioDopplerRx;
         _parallelTxEchoDecode = ft4.ParallelTxEchoDecode;
+        _txWatchdogMinutes = Ft4TxWatchdog.ClampMinutes(ft4.TxWatchdogMinutes);
         _pskReporterEnabled = ft4.PskReporterEnabled;
         _modem.RxAudioHz = _rxAudioHz;
         _pttLeadMs = Math.Clamp(ft4.PttLeadMs, 0, 2000);
@@ -185,6 +186,8 @@ public partial class Ft4ViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private bool _audioDopplerTx = true;
     [ObservableProperty] private bool _audioDopplerRx = true;
     [ObservableProperty] private bool _parallelTxEchoDecode = true;
+
+    [ObservableProperty] private int _txWatchdogMinutes = Ft4TxWatchdog.DefaultMinutes;
     [ObservableProperty] private bool _pskReporterEnabled;
     [ObservableProperty] private int _pttLeadMs = 200;
     [ObservableProperty] private int _pttTailMs = 100;
@@ -252,6 +255,19 @@ public partial class Ft4ViewModel : ViewModelBase, IDisposable
     partial void OnParallelTxEchoDecodeChanged(bool value)
     {
         _settings.Current.Ft4.ParallelTxEchoDecode = value;
+        _settings.RequestSave();
+    }
+
+    partial void OnTxWatchdogMinutesChanged(int value)
+    {
+        var clamped = Ft4TxWatchdog.ClampMinutes(value);
+        if (clamped != value)
+        {
+            TxWatchdogMinutes = clamped;
+            return;
+        }
+
+        _settings.Current.Ft4.TxWatchdogMinutes = clamped;
         _settings.RequestSave();
     }
 

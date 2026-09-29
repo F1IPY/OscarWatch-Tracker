@@ -56,7 +56,7 @@ public sealed class Ft4ModemService : IDisposable
     private readonly HashSet<string> _postedDecodeKeys = new(StringComparer.Ordinal);
     private readonly Dictionary<string, Ft4DecodedMessage> _postedEchoes = new(StringComparer.Ordinal);
     private readonly object _decodePostGate = new();
-    private DateTime _lastRelevantDecodeUtc = DateTime.UtcNow;
+    private DateTime _txWatchdogResetUtc = DateTime.UtcNow;
     private int _tuning; // 0 off, 1 on
     private Ft4QsoSequencer? _sequencer;
 
@@ -267,7 +267,7 @@ public sealed class Ft4ModemService : IDisposable
             _postedEchoes.Clear();
             _lastEchoCalibrationSlot = DateTime.MinValue;
         }
-        _lastRelevantDecodeUtc = DateTime.UtcNow;
+        _txWatchdogResetUtc = DateTime.UtcNow;
         RefreshClockFromGps();
 
         // OrbitDeck: hold CAT dial within each slot; audio-domain corrects within-slot drift.
@@ -318,7 +318,7 @@ public sealed class Ft4ModemService : IDisposable
 
         _sequencer?.StartCq(evenSlot);
         _lastLoggedKey = null;
-        _lastRelevantDecodeUtc = DateTime.UtcNow;
+        _txWatchdogResetUtc = DateTime.UtcNow;
         if (!TryAcceptRecentCaller(out var answered))
             Status = _l.Get("Ft4.Status.CallingCq");
         else
@@ -340,7 +340,7 @@ public sealed class Ft4ModemService : IDisposable
         if (!enabled || !TryAcceptRecentCaller(out var answered))
             return;
 
-        _lastRelevantDecodeUtc = DateTime.UtcNow;
+        _txWatchdogResetUtc = DateTime.UtcNow;
         Status = _l.Get("Ft4.Status.Answering", answered);
         Changed?.Invoke();
     }
@@ -389,7 +389,7 @@ public sealed class Ft4ModemService : IDisposable
         if (!_sequencer.ForceReport(snrDb))
             return false;
 
-        _lastRelevantDecodeUtc = DateTime.UtcNow;
+        _txWatchdogResetUtc = DateTime.UtcNow;
         Status = _l.Get("Ft4.Status.SendingReport", _sequencer.TheirCall);
         Changed?.Invoke();
         return true;
@@ -405,7 +405,7 @@ public sealed class Ft4ModemService : IDisposable
         if (!_sequencer.Force73())
             return false;
 
-        _lastRelevantDecodeUtc = DateTime.UtcNow;
+        _txWatchdogResetUtc = DateTime.UtcNow;
         Status = _l.Get("Ft4.Status.Sending73", _sequencer.TheirCall);
         Changed?.Invoke();
         return true;
@@ -419,7 +419,7 @@ public sealed class Ft4ModemService : IDisposable
 
         _sequencer?.EnableTx();
         // Reset idle timeout so re-arming after a watchdog halt does not trip again immediately.
-        _lastRelevantDecodeUtc = DateTime.UtcNow;
+        _txWatchdogResetUtc = DateTime.UtcNow;
         if (TryAcceptRecentCaller(out var answered))
             Status = _l.Get("Ft4.Status.Answering", answered);
         else
@@ -560,7 +560,7 @@ public sealed class Ft4ModemService : IDisposable
         var even = Ft4SlotClock.IsEvenSlot(decode.SlotUtc, Ft4SlotClock.Ft4SlotSeconds);
         _sequencer.StartAnswer(decode, oppositeEvenSlot: !even);
         _lastLoggedKey = null;
-        _lastRelevantDecodeUtc = DateTime.UtcNow;
+        _txWatchdogResetUtc = DateTime.UtcNow;
         Status = _l.Get("Ft4.Status.Answering", decode.Text);
         Changed?.Invoke();
     }
@@ -748,13 +748,17 @@ public sealed class Ft4ModemService : IDisposable
                 // Early RX decode once the FT4 burst should be in the buffer (~6 s).
                 MaybeQueueEarlyDecode(now);
 
-                // Watchdog: stop TX if nothing relevant for 3 minutes.
-                if (!IsTuning
-                    && _sequencer is { TransmitEnabled: true }
-                    && DateTime.UtcNow - _lastRelevantDecodeUtc > TimeSpan.FromMinutes(3))
+                // Watchdog: stop TX if nobody has replied to this station.
+                var watchdogMinutes = Ft4TxWatchdog.ClampMinutes(_settings.Current.Ft4.TxWatchdogMinutes);
+                if (Ft4TxWatchdog.ShouldHalt(
+                        _sequencer is { TransmitEnabled: true },
+                        IsTuning,
+                        watchdogMinutes,
+                        DateTime.UtcNow,
+                        _txWatchdogResetUtc))
                 {
                     HaltTx();
-                    Status = _l.Get("Ft4.Status.WatchdogStopped");
+                    Status = _l.Get("Ft4.Status.WatchdogStopped", watchdogMinutes);
                     Changed?.Invoke();
                 }
 
@@ -1387,9 +1391,6 @@ public sealed class Ft4ModemService : IDisposable
             if (ownOnly && !isOwn)
                 continue;
 
-            if (isOwn)
-                _lastRelevantDecodeUtc = DateTime.UtcNow;
-
             if (!string.IsNullOrWhiteSpace(callDe))
                 Ft8Native.RememberCallsign(callDe);
 
@@ -1504,7 +1505,8 @@ public sealed class Ft4ModemService : IDisposable
             {
                 var wasCallingCq = _sequencer.Phase == Ft4QsoPhase.CallingCq;
                 var finished = _sequencer.OnDecoded(msg);
-                _lastRelevantDecodeUtc = DateTime.UtcNow;
+                if (Ft4TxWatchdog.IsReply(callTo, callDe, my))
+                    _txWatchdogResetUtc = DateTime.UtcNow;
                 if (wasCallingCq && _sequencer.Phase == Ft4QsoPhase.InQso)
                 {
                     Log.Information(

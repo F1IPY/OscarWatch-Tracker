@@ -128,8 +128,9 @@
       <p>
         Press <strong>Halt Tx</strong> at any time to stop transmitting straight away. Closing the FT4 window
         while it is transmitting asks you to confirm. If you go ahead, the transmission stops at once.
-        If nothing relevant is heard for 3 minutes, OscarWatch stops transmitting on its own so it never
-        calls endlessly.
+        If nobody replies to you for the TX watchdog time (3 minutes unless you change it under
+        <strong>Settings → Modem</strong>), OscarWatch stops transmitting. Other stations on the passband,
+        and your own echo, do not count as a reply. Set the watchdog to 0 to leave transmit running.
       </p>
 
       <h2 id="window">The FT4 window</h2>
@@ -317,6 +318,8 @@
         <li><strong>Audio Doppler on TX / RX</strong>: correct the small drift within each slot (leave on).</li>
         <li><strong>Parallel TX echo decode</strong>: look for your echo in two ways at once during your transmit slots,
           so it appears sooner. It uses more processor time for a moment; turn it off only if the PC struggles.</li>
+        <li><strong>TX watchdog (minutes)</strong>: stop transmitting if nobody replies to you for this long.
+          0 turns it off.</li>
       </ul>
 
       <h3>Echo calibration</h3>

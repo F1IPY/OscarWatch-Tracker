@@ -4008,6 +4008,12 @@
   <data name="Ft4.ParallelTxEchoDecode.Note">
     <value>在发射时隙同时运行正常解码与迟到回波处理，以便更快显示本台回波。该时隙会占用更多 CPU。除非电脑吃力，否则请保持开启。</value>
   </data>
+  <data name="Ft4.TxWatchdogMinutes">
+    <value>发射看门狗（分钟）</value>
+  </data>
+  <data name="Ft4.TxWatchdogMinutes.Note">
+    <value>若在这段时间内没有人应答您，则停止发射。其他电台和您自己的回波不算。0 表示关闭。</value>
+  </data>
   <data name="Ft4.PskReporter">
     <value>向 PSK Reporter 报告解码</value>
   </data>
@@ -4171,7 +4177,7 @@
     <value>请先输入或生成 TX 消息</value>
   </data>
   <data name="Ft4.Status.WatchdogStopped">
-    <value>发射已停止（看门狗）</value>
+    <value>发射已停止：{0} 分钟内无人应答</value>
   </data>
   <data name="Ft4.Status.ModemError">
     <value>调制解调器错误：{0}</value>

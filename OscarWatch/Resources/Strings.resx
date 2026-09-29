@@ -4008,6 +4008,12 @@ Latest: {1} ({2})</value>
   <data name="Ft4.ParallelTxEchoDecode.Note">
     <value>On transmit slots, run the normal decode and a late-echo pass together so your own copy appears sooner. Uses more CPU for that slot. Leave on unless the PC struggles.</value>
   </data>
+  <data name="Ft4.TxWatchdogMinutes">
+    <value>TX watchdog (minutes)</value>
+  </data>
+  <data name="Ft4.TxWatchdogMinutes.Note">
+    <value>Stop transmitting if nobody replies to you for this many minutes. Other stations and your own echo do not count. 0 turns the watchdog off.</value>
+  </data>
   <data name="Ft4.PskReporter">
     <value>Report decodes to PSK Reporter</value>
   </data>
@@ -4171,7 +4177,7 @@ Latest: {1} ({2})</value>
     <value>Enter or generate a TX message first</value>
   </data>
   <data name="Ft4.Status.WatchdogStopped">
-    <value>Transmit stopped (watchdog)</value>
+    <value>Transmit stopped: no reply for {0} minutes</value>
   </data>
   <data name="Ft4.Status.ModemError">
     <value>Modem error: {0}</value>

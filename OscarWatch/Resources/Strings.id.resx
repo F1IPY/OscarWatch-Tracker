@@ -4012,6 +4012,12 @@ Terbaru: {1} ({2})</value>
   <data name="Ft4.ParallelTxEchoDecode.Note">
     <value>Pada slot TX, decode biasa dan pass gema terlambat dijalankan bersama agar salinan Anda muncul lebih cepat. Memakai lebih banyak CPU pada slot itu. Biarkan aktif kecuali PC kewalahan.</value>
   </data>
+  <data name="Ft4.TxWatchdogMinutes">
+    <value>Pengawas TX (menit)</value>
+  </data>
+  <data name="Ft4.TxWatchdogMinutes.Note">
+    <value>Hentikan transmisi jika tidak ada yang membalas Anda selama menit ini. Stasiun lain dan gema Anda sendiri tidak dihitung. 0 mematikan pengawas.</value>
+  </data>
   <data name="Ft4.PskReporter">
     <value>Laporkan decode ke PSK Reporter</value>
   </data>
@@ -4175,7 +4181,7 @@ Terbaru: {1} ({2})</value>
     <value>Masukkan atau buat pesan TX terlebih dahulu</value>
   </data>
   <data name="Ft4.Status.WatchdogStopped">
-    <value>Transmisi dihentikan (watchdog)</value>
+    <value>Transmisi dihentikan: tidak ada balasan selama {0} menit</value>
   </data>
   <data name="Ft4.Status.ModemError">
     <value>Kesalahan modem: {0}</value>

@@ -4008,6 +4008,12 @@ Está utilizando la versión {0}.
   <data name="Ft4.ParallelTxEchoDecode.Note">
     <value>En ranuras de transmisión, ejecuta el decode normal y un pase de eco tardío juntos para que tu propia copia aparezca antes. Usa más CPU en esa ranura. Déjalo activo salvo que el PC vaya justo.</value>
   </data>
+  <data name="Ft4.TxWatchdogMinutes">
+    <value>Vigilancia de TX (minutos)</value>
+  </data>
+  <data name="Ft4.TxWatchdogMinutes.Note">
+    <value>Detiene la transmisión si nadie le responde durante estos minutos. Otras estaciones y su propio eco no cuentan. 0 desactiva la vigilancia.</value>
+  </data>
   <data name="Ft4.PskReporter">
     <value>Enviar decodificaciones a PSK Reporter</value>
   </data>
@@ -4171,7 +4177,7 @@ Está utilizando la versión {0}.
     <value>Escriba o genere un mensaje TX primero</value>
   </data>
   <data name="Ft4.Status.WatchdogStopped">
-    <value>Transmisión detenida (watchdog)</value>
+    <value>Transmisión detenida: nadie respondió en {0} minutos</value>
   </data>
   <data name="Ft4.Status.ModemError">
     <value>Error del módem: {0}</value>

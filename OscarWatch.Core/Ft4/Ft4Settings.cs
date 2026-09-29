@@ -95,6 +95,11 @@ public sealed class Ft4Settings
     /// </summary>
     public bool ParallelTxEchoDecode { get; set; } = true;
 
+    /// <summary>
+    /// Minutes of transmit with no reply before TX is halted. 0 disables the watchdog.
+    /// </summary>
+    public int TxWatchdogMinutes { get; set; } = Ft4TxWatchdog.DefaultMinutes;
+
     /// <summary>When true, receive decodes are reported to PSK Reporter. Off by default.</summary>
     public bool PskReporterEnabled { get; set; }
 

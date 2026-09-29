@@ -4012,6 +4012,12 @@ LOS: {2}
   <data name="Ft4.ParallelTxEchoDecode.Note">
     <value>ในช่วงส่ง จะถอดรหัสปกติและรอบเอคโค่ที่มาช้าพร้อมกัน เพื่อให้เห็นสำเนาของตัวเองเร็วขึ้น ใช้ CPU มากขึ้นในช่วงนั้น เปิดไว้ได้ เว้นแต่เครื่องช้า</value>
   </data>
+  <data name="Ft4.TxWatchdogMinutes">
+    <value>ตัวเฝ้า TX (นาที)</value>
+  </data>
+  <data name="Ft4.TxWatchdogMinutes.Note">
+    <value>หยุดส่งหากไม่มีใครตอบคุณเป็นเวลานี้ สถานีอื่นและเสียงสะท้อนของคุณไม่นับ 0 ปิดตัวเฝ้า</value>
+  </data>
   <data name="Ft4.PskReporter">
     <value>รายงานการถอดรหัสไปยัง PSK Reporter</value>
   </data>
@@ -4175,7 +4181,7 @@ LOS: {2}
     <value>กรุณาใส่หรือสร้างข้อความ TX ก่อน</value>
   </data>
   <data name="Ft4.Status.WatchdogStopped">
-    <value>หยุดส่งแล้ว (watchdog)</value>
+    <value>หยุดส่งแล้ว: ไม่มีผู้ตอบเป็นเวลา {0} นาที</value>
   </data>
   <data name="Ft4.Status.ModemError">
     <value>ข้อผิดพลาดโมเด็ม: {0}</value>
