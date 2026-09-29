@@ -203,6 +203,71 @@ public sealed class YaesuFt847DriverTests
 
         Assert.Contains(transport.SentFrames, f => f.SequenceEqual(encodeOn));
         Assert.DoesNotContain(transport.SentFrames, f => f.SequenceEqual(decodeOn));
+        AssertEncodeOnFollowsSatMode(transport.SentFrames, encodeOn);
+    }
+
+    [Fact]
+    public void Pass_init_ISS_reasserts_ctcss_encoder_after_wide_fm()
+    {
+        var transport = new RecordingYaesuCatTransport();
+        var controller = new RigController(_ => new YaesuFt847Driver(transport));
+        var settings = new RigSettings
+        {
+            Enabled = true,
+            Type = RigType.YaesuFt847,
+            Port = "COM1",
+            CatDelayMs = 0,
+            Region = RigRegion.EU
+        };
+
+        var mode = new SatelliteTransponderMode
+        {
+            Type = "Cross band repeater",
+            DownlinkKHz = 437_800,
+            UplinkKHz = 145_990,
+            DownlinkMode = "FM",
+            UplinkMode = "FM",
+            Doppler = "NOR",
+            CtcssHz = 67.0
+        };
+
+        controller.Update(settings, new RigTrackingContext
+        {
+            TrackState = new SatelliteTrackState
+            {
+                Name = "ISS",
+                NoradId = "25544",
+                Subpoint = new GeoCoordinate(0, 0),
+                LookAngles = new LookAngles(180, 30, 800, 0)
+            },
+            Mode = mode,
+            Corrected = DopplerFrequencyCalculator.Compute(mode, 0, 0),
+            SelectedCtcssHz = 67.0
+        });
+
+        var encodeOn = YaesuFt847CatCodec.BuildCtcssOnCommand(
+            encoderOnly: true,
+            YaesuFt847VfoTarget.SatTx,
+            satelliteMode: true);
+
+        AssertEncodeOnFollowsSatMode(transport.SentFrames, encodeOn);
+    }
+
+    private static void AssertEncodeOnFollowsSatMode(List<byte[]> frames, byte[] encodeOn)
+    {
+        var lastMode = -1;
+        var lastEncode = -1;
+        for (var i = 0; i < frames.Count; i++)
+        {
+            var frame = frames[i];
+            if (frame.Length == 5 && frame[4] is 0x17 or 0x27)
+                lastMode = i;
+            if (frame.SequenceEqual(encodeOn))
+                lastEncode = i;
+        }
+
+        Assert.True(lastMode >= 0, "Expected SAT RX/TX FM mode frames.");
+        Assert.True(lastEncode > lastMode, "CTCSS encoder must be sent after the SAT mode commands.");
     }
 
     [Fact]
