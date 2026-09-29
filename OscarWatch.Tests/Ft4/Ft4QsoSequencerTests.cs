@@ -35,6 +35,29 @@ public sealed class Ft4QsoSequencerTests
     }
 
     [Fact]
+    public void Repeated_report_after_rr73_resends_rr73()
+    {
+        var seq = new Ft4QsoSequencer(() => "MM9SQL", () => "IO85", () => true);
+        seq.StartCq(evenSlot: true);
+        seq.OnDecoded(Msg("MM9SQL G1YEF IO91"));
+        seq.OnDecoded(Msg("MM9SQL G1YEF R-17"));
+        Assert.Equal("G1YEF MM9SQL RR73", seq.CurrentTxMessage);
+        Assert.True(seq.OnTxCompleted());
+        Assert.Equal(Ft4QsoPhase.Finished, seq.Phase);
+        Assert.False(seq.TransmitEnabled);
+
+        Assert.False(seq.OnDecoded(Msg("MM9SQL G1YEF R-17")));
+        Assert.Equal(Ft4QsoPhase.InQso, seq.Phase);
+        Assert.True(seq.TransmitEnabled);
+        Assert.Equal("G1YEF MM9SQL RR73", seq.CurrentTxMessage);
+        Assert.Null(seq.QsoCompletedUtc);
+
+        Assert.True(seq.OnDecoded(Msg("MM9SQL G1YEF 73")));
+        Assert.Equal(Ft4QsoPhase.Finished, seq.Phase);
+        Assert.False(seq.TransmitEnabled);
+    }
+
+    [Fact]
     public void Cq_on_odd_slots_stays_odd_after_reply()
     {
         var seq = new Ft4QsoSequencer(() => "MM9SQL", () => "IO85", () => true);

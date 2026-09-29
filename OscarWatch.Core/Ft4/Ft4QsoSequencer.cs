@@ -212,7 +212,8 @@ public sealed class Ft4QsoSequencer
     /// </summary>
     public bool OnDecoded(Ft4DecodedMessage decode)
     {
-        if (!TransmitEnabled && Phase is not Ft4QsoPhase.InQso and not Ft4QsoPhase.CallingCq)
+        if (!TransmitEnabled
+            && Phase is not Ft4QsoPhase.InQso and not Ft4QsoPhase.CallingCq and not Ft4QsoPhase.Finished)
             return false;
 
         if (!Ft4MessageCodec.TryParse(decode.Text, out var callTo, out var callDe, out var extra)
@@ -220,6 +221,13 @@ public sealed class Ft4QsoSequencer
             return false;
 
         var my = _myCall();
+
+        if (Phase == Ft4QsoPhase.Finished)
+        {
+            // They missed RR73 and are still sending a report. Send it again.
+            ResumeClosingIfTheyRepeatReport(callTo, callDe, extra, my);
+            return false;
+        }
 
         if (Phase == Ft4QsoPhase.CallingCq
             && Ft4MessageCodec.IsAddressedTo(callTo, my)
@@ -329,6 +337,30 @@ public sealed class Ft4QsoSequencer
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// After RR73, TX stops. A repeated report means they did not copy it, so send RR73
+    /// (or RRR) again. Their 73 leaves the contact finished.
+    /// </summary>
+    private void ResumeClosingIfTheyRepeatReport(string? callTo, string callDe, string? extra, string my)
+    {
+        if (TheirCall is null || string.IsNullOrWhiteSpace(my))
+            return;
+        if (!callDe.Equals(TheirCall, StringComparison.OrdinalIgnoreCase))
+            return;
+        if (!Ft4MessageCodec.IsAddressedTo(callTo, my))
+            return;
+        if (!Ft4MessageCodec.IsReport(extra))
+            return;
+
+        ReportReceived ??= Ft4MessageCodec.NormalizeSnrReport(extra);
+        CurrentTxMessage = _skipRrr()
+            ? Ft4MessageCodec.BuildRr73(TheirCall, my)
+            : Ft4MessageCodec.BuildRrr(TheirCall, my);
+        Phase = Ft4QsoPhase.InQso;
+        TransmitEnabled = true;
+        QsoCompletedUtc = null;
     }
 
     /// <summary>True while our next TX is still the first grid reply to their CQ.</summary>
