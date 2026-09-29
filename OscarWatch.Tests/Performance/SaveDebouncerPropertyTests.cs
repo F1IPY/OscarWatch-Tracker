@@ -139,7 +139,8 @@ public sealed class SaveDebouncerPropertyTests : IDisposable
 
             // Wait for both the error to be reported AND SavePending to become true
             // (the continuation sets _savePending = true after the exception is observed)
-            var deadline = DateTime.UtcNow.AddSeconds(3);
+            // The debounced save retries a locked or blocked file a few times before reporting.
+            var deadline = DateTime.UtcNow.AddSeconds(8);
             while ((reportedError is null || !service.SavePending) && DateTime.UtcNow < deadline)
                 Thread.Sleep(50);
 
@@ -201,12 +202,9 @@ public sealed class SaveDebouncerPropertyTests : IDisposable
         string? json = null;
         while (DateTime.UtcNow < deadline)
         {
-            if (File.Exists(path))
-            {
-                json = await File.ReadAllTextAsync(path);
-                if (json.Contains("Second"))
-                    break;
-            }
+            json = TryReadShared(path);
+            if (json is not null && json.Contains("Second"))
+                break;
 
             await Task.Delay(50);
         }
@@ -214,5 +212,30 @@ public sealed class SaveDebouncerPropertyTests : IDisposable
         Assert.False(string.IsNullOrEmpty(json));
         Assert.Contains("Second", json);
         Assert.DoesNotContain("First", json);
+    }
+
+    /// <summary>
+    /// Read without denying replace. An exclusive read on Windows makes File.Replace fail,
+    /// and a failed debounced save used to leave the earlier snapshot on disk.
+    /// </summary>
+    private static string? TryReadShared(string path)
+    {
+        try
+        {
+            if (!File.Exists(path))
+                return null;
+
+            using var stream = new FileStream(
+                path,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.ReadWrite | FileShare.Delete);
+            using var reader = new StreamReader(stream);
+            return reader.ReadToEnd();
+        }
+        catch (IOException)
+        {
+            return null;
+        }
     }
 }

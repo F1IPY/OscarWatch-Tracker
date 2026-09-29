@@ -469,7 +469,7 @@ public sealed class SettingsServiceTests
             var service = new SettingsService(settingsPath);
             service.RequestSave();
 
-            var deadline = DateTime.UtcNow.AddSeconds(5);
+            var deadline = DateTime.UtcNow.AddSeconds(8);
             while (reported is null && DateTime.UtcNow < deadline)
                 await Task.Delay(50);
 

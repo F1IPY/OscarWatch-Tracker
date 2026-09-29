@@ -22,12 +22,15 @@ public sealed class SettingsService : ISettingsService, IDisposable
     internal const int MaxTimestampedBackups = 10;
     private const int MinimumPersistedJsonLength = 32;
     private readonly SemaphoreSlim _saveGate = new(1, 1);
+    private readonly object _saveScheduleLock = new();
     private Timer? _saveTimer;
-    private volatile bool _savePending;
+    private bool _savePending;
+    private int _saveGeneration;
     private bool _canPersist = true;
     private bool _allowFactoryOverwrite;
     private string? _loadError;
     private const int SaveQuietPeriodMs = 500;
+    private const int MaxDebouncedSaveAttempts = 5;
 
     public SettingsService(string? settingsPath = null)
     {
@@ -174,7 +177,10 @@ public sealed class SettingsService : ISettingsService, IDisposable
         await Task.Run(() => Load(), cancellationToken).ConfigureAwait(false);
     }
 
-    public async Task SaveAsync(CancellationToken cancellationToken = default)
+    public Task SaveAsync(CancellationToken cancellationToken = default) =>
+        SaveCoreAsync(cancellationToken, reportFailure: true);
+
+    private async Task SaveCoreAsync(CancellationToken cancellationToken, bool reportFailure)
     {
         await _saveGate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
@@ -183,7 +189,8 @@ public sealed class SettingsService : ISettingsService, IDisposable
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            ReportSaveFailed(ex);
+            if (reportFailure)
+                ReportSaveFailed(ex);
             throw;
         }
         finally
@@ -201,37 +208,120 @@ public sealed class SettingsService : ISettingsService, IDisposable
             return;
         }
 
-        _savePending = true;
-        _saveTimer?.Change(SaveQuietPeriodMs, Timeout.Infinite);
+        lock (_saveScheduleLock)
+        {
+            _saveGeneration++;
+            _savePending = true;
+            ArmSaveTimer(SaveQuietPeriodMs);
+        }
     }
 
     private void OnSaveTimerElapsed(object? state)
     {
-        if (!_savePending) return;
-        _savePending = false;
-        _ = SaveAsync().ContinueWith(t =>
+        int generation;
+        lock (_saveScheduleLock)
         {
-            if (t.IsFaulted)
+            if (!_savePending)
+                return;
+
+            generation = _saveGeneration;
+            _savePending = false;
+        }
+
+        _ = SaveFromTimerAsync(generation);
+    }
+
+    /// <summary>
+    /// Writes the debounced snapshot. If the file is briefly locked, retry.
+    /// A failed attempt used to set the pending flag and then stop, so the latest
+    /// request was never written until something else called <see cref="RequestSave"/>.
+    /// </summary>
+    private async Task SaveFromTimerAsync(int generation)
+    {
+        for (var attempt = 1; attempt <= MaxDebouncedSaveAttempts; attempt++)
+        {
+            var canRetry = attempt < MaxDebouncedSaveAttempts;
+            try
             {
-                _savePending = true; // Retry on next trigger
-                _ = t.Exception; // Observe the exception (already reported by SaveAsync)
+                await SaveCoreAsync(CancellationToken.None, reportFailure: false).ConfigureAwait(false);
+                return;
             }
-        }, TaskScheduler.Default);
+            catch (OperationCanceledException)
+            {
+                return;
+            }
+            catch (Exception ex) when (canRetry && ex is IOException or UnauthorizedAccessException)
+            {
+                lock (_saveScheduleLock)
+                {
+                    if (_saveGeneration != generation)
+                        return;
+                }
+
+                await Task.Delay(50 * attempt).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                ReportSaveFailed(ex);
+                lock (_saveScheduleLock)
+                {
+                    if (_saveGeneration == generation)
+                        _savePending = true;
+                }
+
+                return;
+            }
+        }
     }
 
     public async Task FlushAsync(CancellationToken cancellationToken = default)
     {
-        _saveTimer?.Change(Timeout.Infinite, Timeout.Infinite);
+        lock (_saveScheduleLock)
+        {
+            _saveGeneration++;
+            DisarmSaveTimer();
+        }
+
         if (!_canPersist)
         {
-            _savePending = false;
+            lock (_saveScheduleLock)
+                _savePending = false;
             return;
         }
 
-        if (_savePending)
+        var pending = false;
+        lock (_saveScheduleLock)
         {
-            _savePending = false;
+            if (_savePending)
+            {
+                _savePending = false;
+                pending = true;
+            }
+        }
+
+        if (pending)
             await SaveAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private void ArmSaveTimer(int dueMs)
+    {
+        try
+        {
+            _saveTimer?.Change(dueMs, Timeout.Infinite);
+        }
+        catch (ObjectDisposedException)
+        {
+        }
+    }
+
+    private void DisarmSaveTimer()
+    {
+        try
+        {
+            _saveTimer?.Change(Timeout.Infinite, Timeout.Infinite);
+        }
+        catch (ObjectDisposedException)
+        {
         }
     }
 
