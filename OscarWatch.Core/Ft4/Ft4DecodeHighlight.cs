@@ -5,6 +5,7 @@ public enum Ft4DecodeHighlightKind
     None = 0,
     CallingMe,
     Replying,
+    Cq,
     NewCall,
     NewGrid
 }
@@ -12,8 +13,8 @@ public enum Ft4DecodeHighlightKind
 /// <summary>
 /// Which decode rows are painted. A station addressing us is "calling me".
 /// Once that station is the QSO partner, their lines are "replying" instead.
-/// Otherwise, receive lines for a callsign or grid not yet in the logbook use
-/// "new call" / "new grid".
+/// A received CQ uses its own shade. Otherwise, receive lines for a callsign or
+/// grid not yet in the logbook use "new call" / "new grid".
 /// </summary>
 public static class Ft4DecodeHighlight
 {
@@ -21,6 +22,7 @@ public static class Ft4DecodeHighlight
     public const string DefaultReplyingColour = "#665CB88A";
     public const string DefaultNewCallColour = "#664D9DE8";
     public const string DefaultNewGridColour = "#66C07AD0";
+    public const string DefaultCqColour = "#6678C8E0";
 
     public static Ft4DecodeHighlightKind Classify(
         Ft4DecodedMessage message,
@@ -51,6 +53,9 @@ public static class Ft4DecodeHighlight
         var de = Ft4MessageCodec.NormalizeCall(message.CallDe ?? "");
         if (de.Length == 0 || (mine.Length > 0 && de.Equals(mine, StringComparison.Ordinal)))
             return Ft4DecodeHighlightKind.None;
+
+        if (Ft4MessageCodec.IsCq(message.CallTo))
+            return Ft4DecodeHighlightKind.Cq;
 
         if (workedCalls is not null && !workedCalls.Contains(de))
             return Ft4DecodeHighlightKind.NewCall;

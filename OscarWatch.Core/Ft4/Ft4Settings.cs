@@ -140,6 +140,9 @@ public sealed class Ft4Settings
     /// <summary>Row background when the callsign was worked but the 4-character grid is new.</summary>
     public string NewGridColour { get; set; } = Ft4DecodeHighlight.DefaultNewGridColour;
 
+    /// <summary>Row background for a received CQ. #RRGGBB or #AARRGGBB.</summary>
+    public string CqColour { get; set; } = Ft4DecodeHighlight.DefaultCqColour;
+
     /// <summary>Window size/position.</summary>
     public int? WindowWidth { get; set; }
     public int? WindowHeight { get; set; }

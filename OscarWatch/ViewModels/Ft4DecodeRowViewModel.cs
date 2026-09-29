@@ -27,6 +27,7 @@ public sealed partial class Ft4DecodeRowViewModel : ObservableObject
         string replyingColour,
         string newCallColour,
         string newGridColour,
+        string cqColour,
         IReadOnlySet<string>? workedCalls,
         IReadOnlySet<string>? workedGridFields)
     {
@@ -42,6 +43,7 @@ public sealed partial class Ft4DecodeRowViewModel : ObservableObject
             Ft4DecodeHighlightKind.CallingMe => callingMeColour,
             Ft4DecodeHighlightKind.NewCall => newCallColour,
             Ft4DecodeHighlightKind.NewGrid => newGridColour,
+            Ft4DecodeHighlightKind.Cq => cqColour,
             _ => null
         };
 

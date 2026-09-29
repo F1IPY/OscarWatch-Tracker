@@ -4042,8 +4042,11 @@ Terbaru: {1} ({2})</value>
   <data name="Ft4.Decode.Replying">
     <value>Membalas</value>
   </data>
+  <data name="Ft4.Decode.Cq">
+    <value>CQ</value>
+  </data>
   <data name="Ft4.Decode.ColourNote">
-    <value>Latar baris decode: ditujukan kepada Anda, stasiun QSO saat ini, callsign yang belum ada di logbook, atau grid 4 karakter yang belum Anda catat. Gunakan pemilih warna; transparansi lebih rendah memberi warna lebih kuat.</value>
+    <value>Latar baris decode: ditujukan kepada Anda, stasiun QSO saat ini, panggilan CQ, callsign yang belum ada di logbook, atau grid 4 karakter yang belum Anda catat. Gunakan pemilih warna; transparansi lebih rendah memberi warna lebih kuat.</value>
   </data>
   <data name="Ft4.Decode.NewCall">
     <value>Callsign baru</value>

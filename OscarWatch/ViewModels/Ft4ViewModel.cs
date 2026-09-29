@@ -87,6 +87,8 @@ public partial class Ft4ViewModel : ViewModelBase, IDisposable
             ?? Ft4DecodeHighlight.DefaultNewCallColour;
         _newGridColour = Ft4DecodeHighlight.NormalizeColour(ft4.NewGridColour)
             ?? Ft4DecodeHighlight.DefaultNewGridColour;
+        _cqColour = Ft4DecodeHighlight.NormalizeColour(ft4.CqColour)
+            ?? Ft4DecodeHighlight.DefaultCqColour;
         _preferEvenSlot = false;
         _pttInvert = ft4.PttInvert;
         _selectedPttMethod = PttMethodOptions.FirstOrDefault(o => o.Value == ft4.PttMethod)
@@ -198,6 +200,7 @@ public partial class Ft4ViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private string _replyingColour = Ft4DecodeHighlight.DefaultReplyingColour;
     [ObservableProperty] private string _newCallColour = Ft4DecodeHighlight.DefaultNewCallColour;
     [ObservableProperty] private string _newGridColour = Ft4DecodeHighlight.DefaultNewGridColour;
+    [ObservableProperty] private string _cqColour = Ft4DecodeHighlight.DefaultCqColour;
     [ObservableProperty] private string? _qsoPartnerCall;
     [ObservableProperty] private string? _selectedEchoCalibrationSatellite;
     [ObservableProperty] private double _echoCalibrationHz;
@@ -361,6 +364,14 @@ public partial class Ft4ViewModel : ViewModelBase, IDisposable
             () => NewGridColour,
             hex => NewGridColour = hex,
             hex => _settings.Current.Ft4.NewGridColour = hex);
+
+    partial void OnCqColourChanged(string value) =>
+        CommitDecodeColour(
+            value,
+            Ft4DecodeHighlight.DefaultCqColour,
+            () => CqColour,
+            hex => CqColour = hex,
+            hex => _settings.Current.Ft4.CqColour = hex);
 
     partial void OnQsoPartnerCallChanged(string? value) => RefreshDecodeHighlights();
 
@@ -1213,6 +1224,7 @@ public partial class Ft4ViewModel : ViewModelBase, IDisposable
             ReplyingColour,
             NewCallColour,
             NewGridColour,
+            CqColour,
             _workedCalls,
             _workedGridFields);
 

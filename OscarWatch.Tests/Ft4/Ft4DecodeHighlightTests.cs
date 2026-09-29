@@ -54,7 +54,7 @@ public sealed class Ft4DecodeHighlightTests
     [Fact]
     public void Unworked_callsign_is_new_call()
     {
-        var msg = Line("CQ G4ABC JO01", "CQ", "G4ABC", "JO01");
+        var msg = Line("K2MO G4ABC JO01", "K2MO", "G4ABC", "JO01");
         Assert.Equal(
             Ft4DecodeHighlightKind.NewCall,
             Ft4DecodeHighlight.Classify(msg, "MM9SQL", null, Calls(), Grids()));
@@ -66,10 +66,22 @@ public sealed class Ft4DecodeHighlightTests
     [Fact]
     public void Worked_call_with_new_grid_is_new_grid()
     {
-        var msg = Line("CQ G4ABC JO01", "CQ", "G4ABC", "JO01");
+        var msg = Line("M0XYZ G4ABC JO01", "M0XYZ", "G4ABC", "JO01");
         Assert.Equal(
             Ft4DecodeHighlightKind.NewGrid,
             Ft4DecodeHighlight.Classify(msg, "MM9SQL", null, Calls("G4ABC"), Grids("IO91")));
+    }
+
+    [Fact]
+    public void Cq_uses_its_own_highlight()
+    {
+        var msg = Line("CQ G4ABC JO01", "CQ", "G4ABC", "JO01");
+        Assert.Equal(
+            Ft4DecodeHighlightKind.Cq,
+            Ft4DecodeHighlight.Classify(msg, "MM9SQL", null, Calls(), Grids()));
+        Assert.Equal(
+            Ft4DecodeHighlightKind.Cq,
+            Ft4DecodeHighlight.Classify(msg, "MM9SQL", null, Calls("G4ABC"), Grids("JO01")));
     }
 
     [Fact]

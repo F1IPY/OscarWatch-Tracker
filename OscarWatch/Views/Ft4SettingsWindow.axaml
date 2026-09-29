@@ -279,7 +279,7 @@
                        Text="{loc:Localize Key=Ft4.DecodeFontSize.Note}" />
             <TextBlock Classes="ft4-note"
                        Text="{loc:Localize Key=Ft4.Decode.ColourNote}" />
-            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="8">
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10" RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="8">
               <TextBlock Grid.Row="0" Grid.Column="0"
                          Text="{loc:Localize Key=Ft4.Decode.CallingMe}"
                          VerticalAlignment="Center" />
@@ -295,16 +295,23 @@
                            IsAlphaEnabled="True"
                            Color="{Binding ReplyingColour, Mode=TwoWay, Converter={x:Static ft4ui:Ft4HexColorConverter.Instance}}" />
               <TextBlock Grid.Row="2" Grid.Column="0"
-                         Text="{loc:Localize Key=Ft4.Decode.NewCall}"
+                         Text="{loc:Localize Key=Ft4.Decode.Cq}"
                          VerticalAlignment="Center" />
               <ColorPicker Grid.Row="2" Grid.Column="1"
                            HorizontalAlignment="Left"
                            IsAlphaEnabled="True"
-                           Color="{Binding NewCallColour, Mode=TwoWay, Converter={x:Static ft4ui:Ft4HexColorConverter.Instance}}" />
+                           Color="{Binding CqColour, Mode=TwoWay, Converter={x:Static ft4ui:Ft4HexColorConverter.Instance}}" />
               <TextBlock Grid.Row="3" Grid.Column="0"
-                         Text="{loc:Localize Key=Ft4.Decode.NewGrid}"
+                         Text="{loc:Localize Key=Ft4.Decode.NewCall}"
                          VerticalAlignment="Center" />
               <ColorPicker Grid.Row="3" Grid.Column="1"
+                           HorizontalAlignment="Left"
+                           IsAlphaEnabled="True"
+                           Color="{Binding NewCallColour, Mode=TwoWay, Converter={x:Static ft4ui:Ft4HexColorConverter.Instance}}" />
+              <TextBlock Grid.Row="4" Grid.Column="0"
+                         Text="{loc:Localize Key=Ft4.Decode.NewGrid}"
+                         VerticalAlignment="Center" />
+              <ColorPicker Grid.Row="4" Grid.Column="1"
                            HorizontalAlignment="Left"
                            IsAlphaEnabled="True"
                            Color="{Binding NewGridColour, Mode=TwoWay, Converter={x:Static ft4ui:Ft4HexColorConverter.Instance}}" />

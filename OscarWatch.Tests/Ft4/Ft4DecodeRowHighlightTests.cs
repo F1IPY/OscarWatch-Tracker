@@ -15,9 +15,9 @@ public sealed class Ft4DecodeRowHighlightTests
         var worked = new HashSet<string>(StringComparer.Ordinal);
         var grids = new HashSet<string>(StringComparer.Ordinal);
 
-        row.RefreshHighlight("MM9SQL", null, "#66E6B15A", "#665CB88A", "#664D9DE8", "#66C07AD0", worked, grids);
+        row.RefreshHighlight("MM9SQL", null, "#66E6B15A", "#665CB88A", "#664D9DE8", "#66C07AD0", "#6678C8E0", worked, grids);
         var first = row.RowBackground;
-        row.RefreshHighlight("MM9SQL", null, "#66E6B15A", "#665CB88A", "#664D9DE8", "#66C07AD0", worked, grids);
+        row.RefreshHighlight("MM9SQL", null, "#66E6B15A", "#665CB88A", "#664D9DE8", "#66C07AD0", "#6678C8E0", worked, grids);
 
         Assert.Same(first, row.RowBackground);
     }
@@ -27,9 +27,9 @@ public sealed class Ft4DecodeRowHighlightTests
     {
         var row = new Ft4DecodeRowViewModel(Line("MM9SQL G4ABC IO91", "MM9SQL", "G4ABC", "IO91"));
 
-        row.RefreshHighlight("MM9SQL", null, "#66E6B15A", "#665CB88A", "#664D9DE8", "#66C07AD0", null, null);
+        row.RefreshHighlight("MM9SQL", null, "#66E6B15A", "#665CB88A", "#664D9DE8", "#66C07AD0", "#6678C8E0", null, null);
         var calling = row.RowBackground;
-        row.RefreshHighlight("MM9SQL", "G4ABC", "#66E6B15A", "#665CB88A", "#664D9DE8", "#66C07AD0", null, null);
+        row.RefreshHighlight("MM9SQL", "G4ABC", "#66E6B15A", "#665CB88A", "#664D9DE8", "#66C07AD0", "#6678C8E0", null, null);
 
         Assert.NotSame(calling, row.RowBackground);
     }

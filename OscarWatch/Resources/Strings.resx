@@ -4038,8 +4038,11 @@ Latest: {1} ({2})</value>
   <data name="Ft4.Decode.Replying">
     <value>Replying</value>
   </data>
+  <data name="Ft4.Decode.Cq">
+    <value>CQ</value>
+  </data>
   <data name="Ft4.Decode.ColourNote">
-    <value>Background shades for decode lines: directed to you, the current QSO partner, a callsign not yet in the logbook, or a 4-character grid you have not logged. Use the colour selectors; the lower the transparency, the stronger the shade.</value>
+    <value>Background shades for decode lines: directed to you, the current QSO partner, CQ calls, a callsign not yet in the logbook, or a 4-character grid you have not logged. Use the colour selectors; the lower the transparency, the stronger the shade.</value>
   </data>
   <data name="Ft4.Decode.NewCall">
     <value>New call</value>
