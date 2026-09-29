@@ -4054,6 +4054,27 @@ Terbaru: {1} ({2})</value>
   <data name="Ft4.Settings.EchoSection">
     <value>Kalibrasi gema</value>
   </data>
+  <data name="Ft4.Settings.Group.Contacts">
+    <value>Kontak</value>
+  </data>
+  <data name="Ft4.Settings.Group.Doppler">
+    <value>Doppler</value>
+  </data>
+  <data name="Ft4.Settings.Group.DopplerNote">
+    <value>Biarkan aktif. Mereka mengoreksi drift di dalam setiap slot FT4 dan mencari gema Anda lebih cepat.</value>
+  </data>
+  <data name="Ft4.Settings.Group.Reporting">
+    <value>Laporan</value>
+  </data>
+  <data name="Ft4.Settings.Group.Waterfall">
+    <value>Waterfall</value>
+  </data>
+  <data name="Ft4.Settings.Group.DecodeList">
+    <value>Daftar decode</value>
+  </data>
+  <data name="Ft4.Settings.Group.ControlLine">
+    <value>Jalur kontrol</value>
+  </data>
   <data name="Ft4.EchoCalibration.Note">
     <value>Saat gema uplink Anda sendiri didekode, OscarWatch menyesuaikan trim per satelit ini secara otomatis. Anda dapat mengedit atau menghapusnya di sini.</value>
   </data>

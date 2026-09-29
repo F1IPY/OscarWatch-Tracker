@@ -4054,6 +4054,27 @@ Aktuell: {1} ({2})</value>
   <data name="Ft4.Settings.EchoSection">
     <value>Echo-Kalibrierung</value>
   </data>
+  <data name="Ft4.Settings.Group.Contacts">
+    <value>Kontakte</value>
+  </data>
+  <data name="Ft4.Settings.Group.Doppler">
+    <value>Doppler</value>
+  </data>
+  <data name="Ft4.Settings.Group.DopplerNote">
+    <value>An lassen. Sie gleichen die Drift innerhalb jedes FT4-Slots aus und suchen das eigene Echo früher.</value>
+  </data>
+  <data name="Ft4.Settings.Group.Reporting">
+    <value>Meldungen</value>
+  </data>
+  <data name="Ft4.Settings.Group.Waterfall">
+    <value>Wasserfall</value>
+  </data>
+  <data name="Ft4.Settings.Group.DecodeList">
+    <value>Decode-Liste</value>
+  </data>
+  <data name="Ft4.Settings.Group.ControlLine">
+    <value>Steuerleitung</value>
+  </data>
   <data name="Ft4.EchoCalibration.Note">
     <value>Wenn Ihr eigenes Uplink-Echo dekodiert wird, passt OscarWatch diesen satellitenbezogenen Trim automatisch an. Hier können Sie ihn bearbeiten oder löschen.</value>
   </data>

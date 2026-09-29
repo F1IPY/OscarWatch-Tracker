@@ -7,10 +7,10 @@
         x:Class="OscarWatch.Views.Ft4SettingsWindow"
         x:DataType="vm:Ft4ViewModel"
         Title="{loc:Localize Key=Window.Ft4Settings.Title}"
-        Width="560"
-        Height="480"
-        MinWidth="520"
-        MinHeight="360"
+        Width="600"
+        Height="560"
+        MinWidth="540"
+        MinHeight="420"
         WindowStartupLocation="CenterOwner"
         CanResize="True">
   <DockPanel Margin="14">
@@ -31,6 +31,18 @@
         <Style Selector="TabItem">
           <Setter Property="FontSize" Value="13" />
           <Setter Property="Padding" Value="12,6" />
+        </Style>
+        <Style Selector="TextBlock.ft4-section">
+          <Setter Property="FontSize" Value="13" />
+          <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style Selector="TextBlock.ft4-note">
+          <Setter Property="FontSize" Value="12" />
+          <Setter Property="TextWrapping" Value="Wrap" />
+          <Setter Property="Foreground" Value="{DynamicResource ThemeSecondaryForegroundBrush}" />
+        </Style>
+        <Style Selector="Separator.ft4-rule">
+          <Setter Property="Margin" Value="0,6,0,2" />
         </Style>
       </TabControl.Styles>
 
@@ -126,31 +138,34 @@
                              Width="120" />
             </Grid>
 
-            <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto"
-                  ColumnSpacing="10"
-                  IsVisible="{Binding ShowHandshakePttOptions}">
-              <TextBlock Grid.Column="0"
-                         Text="{loc:Localize Key=Ft4.Ptt.Line}"
-                         VerticalAlignment="Center" />
-              <ComboBox Grid.Column="1"
-                        ItemsSource="{Binding PttLineOptions}"
-                        SelectedItem="{Binding SelectedPttLine}"
-                        MinWidth="90" />
-              <CheckBox Grid.Column="2"
-                        Content="{loc:Localize Key=Ft4.Ptt.Invert}"
-                        IsChecked="{Binding PttInvert}"
-                        VerticalAlignment="Center" />
-              <TextBlock Grid.Column="3"
-                         Text="{loc:Localize Key=Ft4.Ptt.SeparatePort}"
-                         VerticalAlignment="Center"
-                         HorizontalAlignment="Right"
-                         IsVisible="{Binding ShowSeparatePttPort}" />
-              <ComboBox Grid.Column="4"
-                        ItemsSource="{Binding PttPortOptions}"
-                        SelectedItem="{Binding SeparatePttPort}"
-                        MinWidth="120"
-                        IsVisible="{Binding ShowSeparatePttPort}" />
-            </Grid>
+            <StackPanel Spacing="8" IsVisible="{Binding ShowHandshakePttOptions}">
+              <Separator Classes="ft4-rule" />
+              <TextBlock Classes="ft4-section"
+                         Text="{loc:Localize Key=Ft4.Settings.Group.ControlLine}" />
+              <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto" ColumnSpacing="10">
+                <TextBlock Grid.Column="0"
+                           Text="{loc:Localize Key=Ft4.Ptt.Line}"
+                           VerticalAlignment="Center" />
+                <ComboBox Grid.Column="1"
+                          ItemsSource="{Binding PttLineOptions}"
+                          SelectedItem="{Binding SelectedPttLine}"
+                          MinWidth="90" />
+                <CheckBox Grid.Column="2"
+                          Content="{loc:Localize Key=Ft4.Ptt.Invert}"
+                          IsChecked="{Binding PttInvert}"
+                          VerticalAlignment="Center" />
+                <TextBlock Grid.Column="3"
+                           Text="{loc:Localize Key=Ft4.Ptt.SeparatePort}"
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Right"
+                           IsVisible="{Binding ShowSeparatePttPort}" />
+                <ComboBox Grid.Column="4"
+                          ItemsSource="{Binding PttPortOptions}"
+                          SelectedItem="{Binding SeparatePttPort}"
+                          MinWidth="120"
+                          IsVisible="{Binding ShowSeparatePttPort}" />
+              </Grid>
+            </StackPanel>
 
             <TextBlock Text="{Binding SeparatePttConflictText}"
                        TextWrapping="Wrap"
@@ -164,32 +179,19 @@
       <TabItem Header="{loc:Localize Key=Ft4.Settings.ModemSection}">
         <ScrollViewer Margin="8,10,4,4" VerticalScrollBarVisibility="Auto">
           <StackPanel Spacing="8">
+            <TextBlock Classes="ft4-section"
+                       Text="{loc:Localize Key=Ft4.Settings.Group.Contacts}" />
             <CheckBox Content="{loc:Localize Key=Ft4.AutoReply}"
                       IsChecked="{Binding AutoReply, Mode=TwoWay}" />
-            <TextBlock Text="{loc:Localize Key=Ft4.AutoReply.Note}"
-                       TextWrapping="Wrap"
-                       FontSize="11"
-                       Opacity="0.85"
-                       Margin="24,0,0,0" />
+            <TextBlock Classes="ft4-note"
+                       Margin="24,0,0,0"
+                       Text="{loc:Localize Key=Ft4.AutoReply.Note}" />
             <CheckBox Content="{loc:Localize Key=Ft4.HoldTxFrequency}"
                       IsChecked="{Binding HoldTxFrequency}" />
-            <TextBlock Text="{loc:Localize Key=Ft4.HoldTxFrequency.Note}"
-                       TextWrapping="Wrap"
-                       FontSize="11"
-                       Opacity="0.85"
-                       Margin="24,0,0,0" />
-            <CheckBox Content="{loc:Localize Key=Ft4.AudioDopplerTx}"
-                      IsChecked="{Binding AudioDopplerTx}" />
-            <CheckBox Content="{loc:Localize Key=Ft4.AudioDopplerRx}"
-                      IsChecked="{Binding AudioDopplerRx}" />
-            <CheckBox Content="{loc:Localize Key=Ft4.ParallelTxEchoDecode}"
-                      IsChecked="{Binding ParallelTxEchoDecode}" />
-            <TextBlock Text="{loc:Localize Key=Ft4.ParallelTxEchoDecode.Note}"
-                       TextWrapping="Wrap"
-                       FontSize="11"
-                       Opacity="0.85"
-                       Margin="24,0,0,0" />
-            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10" Margin="0,4,0,0">
+            <TextBlock Classes="ft4-note"
+                       Margin="24,0,0,0"
+                       Text="{loc:Localize Key=Ft4.HoldTxFrequency.Note}" />
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
               <TextBlock Grid.Column="0"
                          Text="{loc:Localize Key=Ft4.TxWatchdogMinutes}"
                          VerticalAlignment="Center" />
@@ -202,17 +204,32 @@
                              HorizontalAlignment="Left"
                              Width="120" />
             </Grid>
-            <TextBlock Text="{loc:Localize Key=Ft4.TxWatchdogMinutes.Note}"
-                       TextWrapping="Wrap"
-                       FontSize="11"
-                       Opacity="0.85" />
+            <TextBlock Classes="ft4-note"
+                       Text="{loc:Localize Key=Ft4.TxWatchdogMinutes.Note}" />
+
+            <Separator Classes="ft4-rule" />
+            <TextBlock Classes="ft4-section"
+                       Text="{loc:Localize Key=Ft4.Settings.Group.Doppler}" />
+            <TextBlock Classes="ft4-note"
+                       Text="{loc:Localize Key=Ft4.Settings.Group.DopplerNote}" />
+            <CheckBox Content="{loc:Localize Key=Ft4.AudioDopplerTx}"
+                      IsChecked="{Binding AudioDopplerTx}" />
+            <CheckBox Content="{loc:Localize Key=Ft4.AudioDopplerRx}"
+                      IsChecked="{Binding AudioDopplerRx}" />
+            <CheckBox Content="{loc:Localize Key=Ft4.ParallelTxEchoDecode}"
+                      IsChecked="{Binding ParallelTxEchoDecode}" />
+            <TextBlock Classes="ft4-note"
+                       Margin="24,0,0,0"
+                       Text="{loc:Localize Key=Ft4.ParallelTxEchoDecode.Note}" />
+
+            <Separator Classes="ft4-rule" />
+            <TextBlock Classes="ft4-section"
+                       Text="{loc:Localize Key=Ft4.Settings.Group.Reporting}" />
             <CheckBox Content="{loc:Localize Key=Ft4.PskReporter}"
                       IsChecked="{Binding PskReporterEnabled}" />
-            <TextBlock Text="{loc:Localize Key=Ft4.PskReporter.Note}"
-                       TextWrapping="Wrap"
-                       FontSize="11"
-                       Opacity="0.85"
-                       Margin="24,0,0,0" />
+            <TextBlock Classes="ft4-note"
+                       Margin="24,0,0,0"
+                       Text="{loc:Localize Key=Ft4.PskReporter.Note}" />
           </StackPanel>
         </ScrollViewer>
       </TabItem>
@@ -220,6 +237,8 @@
       <TabItem Header="{loc:Localize Key=Ft4.Settings.AppearanceSection}">
         <ScrollViewer Margin="8,10,4,4" VerticalScrollBarVisibility="Auto">
           <StackPanel Spacing="8">
+            <TextBlock Classes="ft4-section"
+                       Text="{loc:Localize Key=Ft4.Settings.Group.Waterfall}" />
             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
               <TextBlock Grid.Column="0"
                          Text="{loc:Localize Key=Ft4.WaterfallRange}"
@@ -237,11 +256,13 @@
                         Value="{Binding WaterfallRangeDb, Mode=TwoWay}" />
               </DockPanel>
             </Grid>
-            <TextBlock Text="{loc:Localize Key=Ft4.WaterfallRange.Note}"
-                       TextWrapping="Wrap"
-                       FontSize="11"
-                       Opacity="0.85" />
-            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10" Margin="0,8,0,0">
+            <TextBlock Classes="ft4-note"
+                       Text="{loc:Localize Key=Ft4.WaterfallRange.Note}" />
+
+            <Separator Classes="ft4-rule" />
+            <TextBlock Classes="ft4-section"
+                       Text="{loc:Localize Key=Ft4.Settings.Group.DecodeList}" />
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
               <TextBlock Grid.Column="0"
                          Text="{loc:Localize Key=Ft4.DecodeFontSize}"
                          VerticalAlignment="Center" />
@@ -254,15 +275,10 @@
                              HorizontalAlignment="Left"
                              Width="120" />
             </Grid>
-            <TextBlock Text="{loc:Localize Key=Ft4.DecodeFontSize.Note}"
-                       TextWrapping="Wrap"
-                       FontSize="11"
-                       Opacity="0.85" />
-            <TextBlock Text="{loc:Localize Key=Ft4.Decode.ColourNote}"
-                       TextWrapping="Wrap"
-                       FontSize="11"
-                       Opacity="0.85"
-                       Margin="0,8,0,0" />
+            <TextBlock Classes="ft4-note"
+                       Text="{loc:Localize Key=Ft4.DecodeFontSize.Note}" />
+            <TextBlock Classes="ft4-note"
+                       Text="{loc:Localize Key=Ft4.Decode.ColourNote}" />
             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="8">
               <TextBlock Grid.Row="0" Grid.Column="0"
                          Text="{loc:Localize Key=Ft4.Decode.CallingMe}"
@@ -300,10 +316,8 @@
       <TabItem Header="{loc:Localize Key=Ft4.Settings.EchoSection}">
         <ScrollViewer Margin="8,10,4,4" VerticalScrollBarVisibility="Auto">
           <StackPanel Spacing="8">
-            <TextBlock Text="{loc:Localize Key=Ft4.EchoCalibration.Note}"
-                       TextWrapping="Wrap"
-                       FontSize="11"
-                       Opacity="0.85" />
+            <TextBlock Classes="ft4-note"
+                       Text="{loc:Localize Key=Ft4.EchoCalibration.Note}" />
             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10" RowSpacing="8"
                   RowDefinitions="Auto,Auto,Auto">
               <TextBlock Grid.Row="0" Grid.Column="0"
@@ -338,10 +352,8 @@
                         MinWidth="100" />
               </StackPanel>
             </Grid>
-            <TextBlock Text="{loc:Localize Key=Ft4.EchoCalibration.NoSatellite}"
-                       TextWrapping="Wrap"
-                       FontSize="11"
-                       Opacity="0.85"
+            <TextBlock Classes="ft4-note"
+                       Text="{loc:Localize Key=Ft4.EchoCalibration.NoSatellite}"
                        IsVisible="{Binding !HasEchoCalibrationSatellite}" />
           </StackPanel>
         </ScrollViewer>

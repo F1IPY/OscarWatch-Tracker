@@ -4050,6 +4050,27 @@ Mais recente: {1} ({2})</value>
   <data name="Ft4.Settings.EchoSection">
     <value>Calibração de eco</value>
   </data>
+  <data name="Ft4.Settings.Group.Contacts">
+    <value>Contatos</value>
+  </data>
+  <data name="Ft4.Settings.Group.Doppler">
+    <value>Doppler</value>
+  </data>
+  <data name="Ft4.Settings.Group.DopplerNote">
+    <value>Deixe ligados. Corrigem o desvio dentro de cada janela FT4 e procuram o seu eco mais cedo.</value>
+  </data>
+  <data name="Ft4.Settings.Group.Reporting">
+    <value>Relatos</value>
+  </data>
+  <data name="Ft4.Settings.Group.Waterfall">
+    <value>Cascata</value>
+  </data>
+  <data name="Ft4.Settings.Group.DecodeList">
+    <value>Lista de decodes</value>
+  </data>
+  <data name="Ft4.Settings.Group.ControlLine">
+    <value>Linha de controle</value>
+  </data>
   <data name="Ft4.EchoCalibration.Note">
     <value>Quando o eco do seu uplink é decodificado, o OscarWatch ajusta este trim por satélite automaticamente. Você pode editar ou limpar aqui.</value>
   </data>

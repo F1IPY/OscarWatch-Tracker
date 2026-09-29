@@ -4050,6 +4050,27 @@
   <data name="Ft4.Settings.EchoSection">
     <value>エコー校正</value>
   </data>
+  <data name="Ft4.Settings.Group.Contacts">
+    <value>交信</value>
+  </data>
+  <data name="Ft4.Settings.Group.Doppler">
+    <value>ドップラー</value>
+  </data>
+  <data name="Ft4.Settings.Group.DopplerNote">
+    <value>オンのままにしてください。各FT4スロット内のずれを補正し、自分のエコーを早く探します。</value>
+  </data>
+  <data name="Ft4.Settings.Group.Reporting">
+    <value>レポート</value>
+  </data>
+  <data name="Ft4.Settings.Group.Waterfall">
+    <value>ウォーターフォール</value>
+  </data>
+  <data name="Ft4.Settings.Group.DecodeList">
+    <value>デコード一覧</value>
+  </data>
+  <data name="Ft4.Settings.Group.ControlLine">
+    <value>制御線</value>
+  </data>
   <data name="Ft4.EchoCalibration.Note">
     <value>自分のアップリンクエコーが復号されると、OscarWatchはこの衛星ごとのトリムを自動調整します。ここで編集または消去できます。</value>
   </data>

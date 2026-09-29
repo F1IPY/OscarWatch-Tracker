@@ -4050,6 +4050,27 @@ Latest: {1} ({2})</value>
   <data name="Ft4.Settings.EchoSection">
     <value>Echo calibration</value>
   </data>
+  <data name="Ft4.Settings.Group.Contacts">
+    <value>Contacts</value>
+  </data>
+  <data name="Ft4.Settings.Group.Doppler">
+    <value>Doppler</value>
+  </data>
+  <data name="Ft4.Settings.Group.DopplerNote">
+    <value>Leave these on. They correct drift inside each FT4 slot and look for your own echo sooner.</value>
+  </data>
+  <data name="Ft4.Settings.Group.Reporting">
+    <value>Reporting</value>
+  </data>
+  <data name="Ft4.Settings.Group.Waterfall">
+    <value>Waterfall</value>
+  </data>
+  <data name="Ft4.Settings.Group.DecodeList">
+    <value>Decode list</value>
+  </data>
+  <data name="Ft4.Settings.Group.ControlLine">
+    <value>Control line</value>
+  </data>
   <data name="Ft4.EchoCalibration.Note">
     <value>When your own uplink echo is decoded, OscarWatch adjusts this per-satellite uplink trim automatically. You can edit or clear it here.</value>
   </data>

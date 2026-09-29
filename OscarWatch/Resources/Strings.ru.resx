@@ -4054,6 +4054,27 @@ LOS: {2}
   <data name="Ft4.Settings.EchoSection">
     <value>Калибровка эха</value>
   </data>
+  <data name="Ft4.Settings.Group.Contacts">
+    <value>Связи</value>
+  </data>
+  <data name="Ft4.Settings.Group.Doppler">
+    <value>Доплер</value>
+  </data>
+  <data name="Ft4.Settings.Group.DopplerNote">
+    <value>Оставьте включёнными. Они убирают уход частоты внутри слота FT4 и раньше ищут своё эхо.</value>
+  </data>
+  <data name="Ft4.Settings.Group.Reporting">
+    <value>Отчёты</value>
+  </data>
+  <data name="Ft4.Settings.Group.Waterfall">
+    <value>Водопад</value>
+  </data>
+  <data name="Ft4.Settings.Group.DecodeList">
+    <value>Список декодов</value>
+  </data>
+  <data name="Ft4.Settings.Group.ControlLine">
+    <value>Линия управления</value>
+  </data>
   <data name="Ft4.EchoCalibration.Note">
     <value>Когда декодируется ваше собственное эхо аплинка, OscarWatch автоматически подстраивает эту поправку для спутника. Здесь её можно изменить или сбросить.</value>
   </data>

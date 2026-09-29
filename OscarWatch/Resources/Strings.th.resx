@@ -4054,6 +4054,27 @@ LOS: {2}
   <data name="Ft4.Settings.EchoSection">
     <value>การปรับเทียบเสียงสะท้อน</value>
   </data>
+  <data name="Ft4.Settings.Group.Contacts">
+    <value>การติดต่อ</value>
+  </data>
+  <data name="Ft4.Settings.Group.Doppler">
+    <value>ดอปเพลอร์</value>
+  </data>
+  <data name="Ft4.Settings.Group.DopplerNote">
+    <value>เปิดไว้ พวกนี้ชดเชยการเลื่อนในแต่ละช่วง FT4 และหาเสียงสะท้อนของคุณเร็วขึ้น</value>
+  </data>
+  <data name="Ft4.Settings.Group.Reporting">
+    <value>การรายงาน</value>
+  </data>
+  <data name="Ft4.Settings.Group.Waterfall">
+    <value>วอเตอร์ฟอล</value>
+  </data>
+  <data name="Ft4.Settings.Group.DecodeList">
+    <value>รายการถอดรหัส</value>
+  </data>
+  <data name="Ft4.Settings.Group.ControlLine">
+    <value>สายควบคุม</value>
+  </data>
   <data name="Ft4.EchoCalibration.Note">
     <value>เมื่อถอดรหัสเสียงสะท้อนอัปลิงก์ของคุณ OscarWatch จะปรับค่า trim ตามดาวเทียมโดยอัตโนมัติ คุณสามารถแก้ไขหรือล้างได้ที่นี่</value>
   </data>

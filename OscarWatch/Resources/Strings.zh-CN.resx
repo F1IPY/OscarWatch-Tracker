@@ -4050,6 +4050,27 @@
   <data name="Ft4.Settings.EchoSection">
     <value>回波校准</value>
   </data>
+  <data name="Ft4.Settings.Group.Contacts">
+    <value>联络</value>
+  </data>
+  <data name="Ft4.Settings.Group.Doppler">
+    <value>多普勒</value>
+  </data>
+  <data name="Ft4.Settings.Group.DopplerNote">
+    <value>请保持开启。它们校正每个 FT4 时隙内的漂移，并更快寻找本台回波。</value>
+  </data>
+  <data name="Ft4.Settings.Group.Reporting">
+    <value>报告</value>
+  </data>
+  <data name="Ft4.Settings.Group.Waterfall">
+    <value>瀑布图</value>
+  </data>
+  <data name="Ft4.Settings.Group.DecodeList">
+    <value>解码列表</value>
+  </data>
+  <data name="Ft4.Settings.Group.ControlLine">
+    <value>控制线</value>
+  </data>
   <data name="Ft4.EchoCalibration.Note">
     <value>解码到您自己的上行回波时，OscarWatch 会自动调整此按卫星的微调。可在此编辑或清除。</value>
   </data>
