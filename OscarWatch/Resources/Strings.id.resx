@@ -2507,7 +2507,7 @@ Lanjutkan?</value>
     <value>Lead Doppler untuk latensi CAT</value>
   </data>
   <data name="Settings.Radio.DopplerCatLeadNote">
-    <value>Jika aktif, CAT dan baris Radio memprediksi Doppler ke depan pada kaki curam dan pasca-TCA (saat laju jarak berubah cepat). Dekat TCA, lead mereda saat laju jarak mendekati nol. AOS yang landai memakai laju saat ini. Baris Sat tetap menampilkan frekuensi pesawat ruang angkasa saat ini. Haluskan dengan waktu dan kekuatan lead di bawah.</value>
+    <value>Jika aktif, CAT dan baris Radio memprediksi Doppler ke depan pada kaki curam dan pasca-TCA (saat laju jarak berubah cepat). Dekat TCA, lead mereda saat laju jarak mendekati nol. AOS yang landai memakai laju saat ini. Baris Sat tetap menampilkan frekuensi pesawat ruang angkasa saat ini. Haluskan dengan waktu dan kekuatan lead di bawah. DATA-USB, DATA-LSB, dan DATA-FM memakai laju saat ini, tanpa lead. SSB, CW, dan FM tetap mengikuti kotak ini.</value>
   </data>
   <data name="Settings.Radio.DopplerCatLeadMs">
     <value>Waktu lead (ms)</value>

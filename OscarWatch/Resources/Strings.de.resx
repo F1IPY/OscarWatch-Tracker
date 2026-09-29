@@ -2507,7 +2507,7 @@ Fortfahren?</value>
     <value>Lead-Doppler für CAT-Latenz</value>
   </data>
   <data name="Settings.Radio.DopplerCatLeadNote">
-    <value>Wenn aktiviert, sagen CAT und die Radio-Zeile den Doppler auf steilen Abschnitten und nach TCA voraus (wenn sich die Entfernungsrate schnell ändert). Nahe TCA nimmt der Lead ab, wenn die Entfernungsrate gegen null geht. Beim flachen AOS gilt die aktuelle Rate. Die Sat-Zeile zeigt weiterhin die aktuelle Bordfrequenz. Feinabstimmung mit Lead-Zeit und -Stärke unten.</value>
+    <value>Wenn aktiviert, sagen CAT und die Radio-Zeile den Doppler auf steilen Abschnitten und nach TCA voraus (wenn sich die Entfernungsrate schnell ändert). Nahe TCA nimmt der Lead ab, wenn die Entfernungsrate gegen null geht. Beim flachen AOS gilt die aktuelle Rate. Die Sat-Zeile zeigt weiterhin die aktuelle Bordfrequenz. Feinabstimmung mit Lead-Zeit und -Stärke unten. DATA-USB, DATA-LSB und DATA-FM nutzen die aktuelle Rate statt Lead. SSB, CW und FM behalten dieses Kontrollkästchen.</value>
   </data>
   <data name="Settings.Radio.DopplerCatLeadMs">
     <value>Lead-Zeit (ms)</value>

@@ -2503,7 +2503,7 @@ Continuar?</value>
     <value>Antecipar Doppler para latência CAT</value>
   </data>
   <data name="Settings.Radio.DopplerCatLeadNote">
-    <value>Quando ativado, o CAT e a linha Rádio preveem o Doppler à frente nos trechos íngremes e pós-TCA. Perto do TCA, a antecipação reduz quando a taxa de distância se aproxima de zero. Ajuste fino com tempo e intensidade abaixo.</value>
+    <value>Quando ativado, o CAT e a linha Rádio preveem o Doppler à frente nos trechos íngremes e pós-TCA. Perto do TCA, a antecipação reduz quando a taxa de distância se aproxima de zero. Ajuste fino com tempo e intensidade abaixo. DATA-USB, DATA-LSB e DATA-FM usam a taxa atual em vez da antecipação. SSB, CW e FM mantêm esta caixa.</value>
   </data>
   <data name="Settings.Radio.DopplerCatLeadMs">
     <value>Tempo de antecipação (ms)</value>

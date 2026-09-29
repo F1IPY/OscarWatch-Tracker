@@ -2503,7 +2503,7 @@
     <value>为多普勒 CAT 延迟做超前补偿</value>
   </data>
   <data name="Settings.Radio.DopplerCatLeadNote">
-    <value>启用后，CAT 与 Radio 行在陡变及过顶后区段预测超前多普勒；过顶附近随距离变化率趋近零而减弱。可在下方微调超前时间与强度。</value>
+    <value>启用后，CAT 与 Radio 行在陡变及过顶后区段预测超前多普勒；过顶附近随距离变化率趋近零而减弱。可在下方微调超前时间与强度。DATA-USB、DATA-LSB 和 DATA-FM 使用当前变化率，不使用超前。SSB、CW 和 FM 仍遵循此复选框。</value>
   </data>
   <data name="Settings.Radio.DopplerCatLeadMs">
     <value>超前时间 (ms)</value>

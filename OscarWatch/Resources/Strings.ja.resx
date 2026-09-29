@@ -1642,7 +1642,7 @@
     <value>CAT遅延に合わせてドップラーを先行</value>
   </data>
   <data name="Settings.Radio.DopplerCatLeadNote">
-    <value>有効時、急な区間とTCA後でCAT/Radio行がドップラーを先読みします。TCA付近はレンジレートがゼロに近づくと先読みを弱めます。下で先読み時間と強度を微調整できます。</value>
+    <value>有効時、急な区間とTCA後でCAT/Radio行がドップラーを先読みします。TCA付近はレンジレートがゼロに近づくと先読みを弱めます。下で先読み時間と強度を微調整できます。DATA-USB、DATA-LSB、DATA-FM は先読みせず現在のレートを使います。SSB、CW、FM はこのチェックのままです。</value>
   </data>
   <data name="Settings.Radio.DopplerCatLeadMs">
     <value>先読み時間 (ms)</value>

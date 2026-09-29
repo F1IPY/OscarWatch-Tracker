@@ -40,6 +40,32 @@ public class DopplerCatLeadTests
         Assert.Equal(0, propagator.CallCount);
     }
 
+    [Theory]
+    [InlineData("DATA-USB", "DATA-LSB")]
+    [InlineData("DATA-FM", "DATA-FM")]
+    [InlineData("FM-DATA", "FM")]
+    [InlineData("USB", "DATA-LSB")]
+    public void Data_modes_ignore_lead_and_return_snapshot(string downlinkMode, string uplinkMode)
+    {
+        var utc = new DateTime(2026, 6, 1, 12, 0, 0, DateTimeKind.Utc);
+        var propagator = new StubPropagator(utc, snapshotRate: -3.5, slopeSampleRate: -2.0, rxLeadRate: 1.0, txLeadRate: 2.0);
+        var settings = new RigSettings { DopplerCatLeadEnabled = true, CatDelayMs = 100, DopplerCatLeadMs = 40 };
+
+        var result = DopplerCatLead.ResolveRangeRates(
+            propagator,
+            settings,
+            Site,
+            StateWithRate(-3.5),
+            utc,
+            downlinkMode,
+            uplinkMode);
+
+        Assert.Equal(-3.5, result.RxRangeRateKmPerSec);
+        Assert.Equal(-3.5, result.TxRangeRateKmPerSec);
+        Assert.Equal(0, result.LeadBlend);
+        Assert.Equal(0, propagator.CallCount);
+    }
+
     [Fact]
     public void Explicit_lead_ms_works_when_cat_delay_is_zero()
     {

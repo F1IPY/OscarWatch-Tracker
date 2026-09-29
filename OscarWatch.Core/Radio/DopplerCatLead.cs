@@ -73,12 +73,18 @@ public static class DopplerCatLead
         RigSettings settings,
         GroundStation site,
         SatelliteTrackState state,
-        DateTime utc)
+        DateTime utc,
+        string? downlinkMode = null,
+        string? uplinkMode = null)
     {
         var fallback = state.LookAngles?.RangeRateKmPerSec ?? 0;
+        // DATA-* keeps the current range rate. Slot and packet modes want the true frequency,
+        // and the checkbox stays as set for SSB, CW, and FM.
         if (!settings.DopplerCatLeadEnabled
             || propagator is null
-            || state.LookAngles is null)
+            || state.LookAngles is null
+            || TransponderCatModes.IsData(downlinkMode)
+            || TransponderCatModes.IsData(uplinkMode))
         {
             return new DopplerLeadRangeRates(fallback, fallback, 0);
         }

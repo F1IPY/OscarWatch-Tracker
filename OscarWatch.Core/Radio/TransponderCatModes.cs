@@ -30,4 +30,13 @@ public static class TransponderCatModes
 
     public static bool IsDigitalFm(string mode) =>
         Normalize(mode) == "DATA-FM";
+
+    /// <summary>
+    /// Catalogue data mode (DATA-USB, DATA-LSB, DATA-FM). FM-DATA is treated as DATA-FM.
+    /// </summary>
+    public static bool IsData(string? mode)
+    {
+        var normalized = Normalize(mode ?? "");
+        return normalized is "DATA-USB" or "DATA-LSB" or "DATA-FM";
+    }
 }

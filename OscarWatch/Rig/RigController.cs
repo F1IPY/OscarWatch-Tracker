@@ -2312,7 +2312,9 @@ public sealed class RigController : IRigController, IDisposable
             _cachedSettings,
             site,
             context.TrackState,
-            DateTime.UtcNow);
+            DateTime.UtcNow,
+            context.Mode.DownlinkMode,
+            context.Mode.UplinkMode);
     }
 
     private int ResolveWriteThresholdHz(RigSettings settings, RigTrackingContext context)

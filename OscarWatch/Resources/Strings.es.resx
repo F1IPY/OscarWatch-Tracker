@@ -2503,7 +2503,7 @@
     <value>Anticipar Doppler por latencia CAT</value>
   </data>
   <data name="Settings.Radio.DopplerCatLeadNote">
-    <value>Cuando está habilitado, CAT y la fila Radio predicen el Doppler por adelantado en tramos pronunciados y tras el TCA (cuando la velocidad radial cambia rápido). Cerca del TCA, la anticipación disminuye a medida que la velocidad radial se acerca a cero. Un AOS suave usa la velocidad actual. La fila Sat sigue mostrando la frecuencia actual de la nave. Ajusta con tiempo e intensidad de anticipación abajo.</value>
+    <value>Cuando está habilitado, CAT y la fila Radio predicen el Doppler por adelantado en tramos pronunciados y tras el TCA (cuando la velocidad radial cambia rápido). Cerca del TCA, la anticipación disminuye a medida que la velocidad radial se acerca a cero. Un AOS suave usa la velocidad actual. La fila Sat sigue mostrando la frecuencia actual de la nave. Ajusta con tiempo e intensidad de anticipación abajo. DATA-USB, DATA-LSB y DATA-FM usan la velocidad actual en lugar de la anticipación. SSB, CW y FM conservan esta casilla.</value>
   </data>
   <data name="Settings.Radio.DopplerCatLeadMs">
     <value>Tiempo de anticipación (ms)</value>

@@ -56,7 +56,14 @@ public static class DopplerDiagnostics
                 context.Mode.UplinkKHz,
                 context.DopplerStrategy,
                 context.Mode.IsBeaconOnly);
-            lead = DopplerCatLead.ResolveRangeRates(propagator, settings, site, context.TrackState, utc);
+            lead = DopplerCatLead.ResolveRangeRates(
+                propagator,
+                settings,
+                site,
+                context.TrackState,
+                utc,
+                context.Mode.DownlinkMode,
+                context.Mode.UplinkMode);
         }
 
         var rxHz = (long)Math.Round(corrected.RadioReceiveKHz * 1000.0);

@@ -461,7 +461,9 @@ public partial class FrequencyOverlayViewModel : ViewModelBase
             _settings.Current.Rig,
             _settings.Current.GroundStation,
             state,
-            DateTime.UtcNow);
+            DateTime.UtcNow,
+            SelectedMode?.DownlinkMode,
+            SelectedMode?.UplinkMode);
 
     private void ApplyFrequencyDisplay(SatelliteTrackState state)
     {
@@ -476,7 +478,9 @@ public partial class FrequencyOverlayViewModel : ViewModelBase
     private void UpdateDopplerLeadIndicator(double leadBlend, double? elevationDeg)
     {
         var aboveHorizon = elevationDeg is >= 0;
-        ShowDopplerLeadIndicator = _settings.Current.Rig.DopplerCatLeadEnabled && aboveHorizon;
+        var dataMode = TransponderCatModes.IsData(SelectedMode?.DownlinkMode)
+            || TransponderCatModes.IsData(SelectedMode?.UplinkMode);
+        ShowDopplerLeadIndicator = _settings.Current.Rig.DopplerCatLeadEnabled && aboveHorizon && !dataMode;
         if (!ShowDopplerLeadIndicator)
         {
             _dopplerLeadActiveLatched = false;

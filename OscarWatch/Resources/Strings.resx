@@ -2503,7 +2503,7 @@ Continue?</value>
     <value>Lead Doppler for CAT latency</value>
   </data>
   <data name="Settings.Radio.DopplerCatLeadNote">
-    <value>When enabled, CAT and the Radio row predict Doppler ahead on steep and post-TCA legs (when range rate is changing quickly). Near TCA, lead tapers off as range rate approaches zero. Gentle AOS uses the current rate. The Sat row still shows the current spacecraft frequency. Fine-tune with lead time and strength below.</value>
+    <value>When enabled, CAT and the Radio row predict Doppler ahead on steep and post-TCA legs (when range rate is changing quickly). Near TCA, lead tapers off as range rate approaches zero. Gentle AOS uses the current rate. The Sat row still shows the current spacecraft frequency. Fine-tune with lead time and strength below. DATA-USB, DATA-LSB, and DATA-FM use the current rate instead of lead. SSB, CW, and FM keep this checkbox.</value>
   </data>
   <data name="Settings.Radio.DopplerCatLeadMs">
     <value>Lead time (ms)</value>
