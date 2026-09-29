@@ -4020,6 +4020,12 @@
   <data name="Ft4.DecodeFontSize.Note">
     <value>解码列表字体大小（10–28）。较大字号便于视力较弱时阅读。</value>
   </data>
+  <data name="Ft4.WaterfallRange">
+    <value>瀑布图范围</value>
+  </data>
+  <data name="Ft4.WaterfallRange.Note">
+    <value>自动噪声底之上显示的分贝数。范围越小，信号越突出。默认值为 40 dB。</value>
+  </data>
   <data name="Ft4.Decode.CallingMe">
     <value>呼叫我</value>
   </data>

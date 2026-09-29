@@ -4024,6 +4024,12 @@ Terbaru: {1} ({2})</value>
   <data name="Ft4.DecodeFontSize.Note">
     <value>Ukuran font daftar decode (10–28). Ukuran lebih besar membantu penglihatan lemah.</value>
   </data>
+  <data name="Ft4.WaterfallRange">
+    <value>Rentang waterfall</value>
+  </data>
+  <data name="Ft4.WaterfallRange.Note">
+    <value>Desibel di atas lantai derau otomatis. Rentang yang lebih kecil membuat sinyal lebih menonjol. Bawaan adalah 40 dB.</value>
+  </data>
   <data name="Ft4.Decode.CallingMe">
     <value>Memanggil saya</value>
   </data>

@@ -138,6 +138,9 @@
         The waterfall shows the receive audio from about 200 to 3000 Hz, with newer signals at the top.
         Each FT4 signal is a short bright stripe. The scale along the bottom is the <strong>audio
         frequency</strong> in Hz, which is the position of a signal within the radio's passband.
+        The noise floor is tracked automatically. <strong>Waterfall range</strong> under
+        <strong>Settings → Appearance</strong> sets how many decibels above that floor are drawn.
+        A smaller range makes traces stand out more. The default is 40 dB.
       </p>
       <ul>
         <li><strong>Green bracket</strong>: where OscarWatch listens hardest (RX). During a contact it follows
@@ -318,7 +321,10 @@
       <p>Shows the saved uplink adjustment for each satellite, in Hz. You can edit it, clear it, or clear all.</p>
 
       <h3>Appearance</h3>
-      <p>Decode text size and the shading colours used in the decode list.</p>
+      <p>
+        Decode text size, the shading colours used in the decode list, and the waterfall range
+        (how many decibels above the automatic noise floor are drawn).
+      </p>
 
       <h2 id="logging">Logging</h2>
       <p>

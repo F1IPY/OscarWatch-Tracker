@@ -34,6 +34,7 @@ public sealed class Ft4SettingsTests
         Assert.True(settings.AudioDopplerRx);
         Assert.True(settings.ParallelTxEchoDecode);
         Assert.Equal(12, settings.DecodeFontSize);
+        Assert.Equal(Ft4Settings.DefaultWaterfallRangeDb, settings.WaterfallRangeDb);
         Assert.Equal(Ft4DecodeHighlight.DefaultCallingMeColour, settings.CallingMeColour);
         Assert.Equal(Ft4DecodeHighlight.DefaultReplyingColour, settings.ReplyingColour);
         Assert.Equal(Ft4DecodeHighlight.DefaultNewCallColour, settings.NewCallColour);
@@ -72,5 +73,13 @@ public sealed class Ft4SettingsTests
 
         Assert.Equal("CABLE Output (VB-Audio Virtual Cable)", settings.InputDeviceId);
         Assert.Equal("Speakers (Realtek)", settings.OutputDeviceId);
+    }
+
+    [Fact]
+    public void Waterfall_range_clamps_to_the_operator_span()
+    {
+        Assert.Equal(40, Ft4Settings.ClampWaterfallRangeDb(40));
+        Assert.Equal(Ft4Settings.MinWaterfallRangeDb, Ft4Settings.ClampWaterfallRangeDb(0));
+        Assert.Equal(Ft4Settings.MaxWaterfallRangeDb, Ft4Settings.ClampWaterfallRangeDb(200));
     }
 }

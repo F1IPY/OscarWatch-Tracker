@@ -107,6 +107,22 @@ public sealed class Ft4Settings
     /// <summary>Font size for the decode / activity list (points). Default 12.</summary>
     public double DecodeFontSize { get; set; } = 12;
 
+    /// <summary>dB span above the automatic waterfall noise floor. Default 40.</summary>
+    public const double DefaultWaterfallRangeDb = 40;
+
+    public const double MinWaterfallRangeDb = 15;
+
+    public const double MaxWaterfallRangeDb = 80;
+
+    /// <summary>
+    /// How many decibels above the automatic noise floor the waterfall paints.
+    /// A smaller span makes signals stand out more. The floor itself still tracks.
+    /// </summary>
+    public double WaterfallRangeDb { get; set; } = DefaultWaterfallRangeDb;
+
+    public static double ClampWaterfallRangeDb(double value) =>
+        Math.Clamp(value, MinWaterfallRangeDb, MaxWaterfallRangeDb);
+
     /// <summary>Row background for a decode addressed to this station. #RRGGBB or #AARRGGBB.</summary>
     public string CallingMeColour { get; set; } = Ft4DecodeHighlight.DefaultCallingMeColour;
 

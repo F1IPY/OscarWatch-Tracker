@@ -4024,6 +4024,12 @@ LOS: {2}
   <data name="Ft4.DecodeFontSize.Note">
     <value>Размер шрифта списка декодов (10–28). Больший размер удобнее при слабом зрении.</value>
   </data>
+  <data name="Ft4.WaterfallRange">
+    <value>Диапазон водопада</value>
+  </data>
+  <data name="Ft4.WaterfallRange.Note">
+    <value>Децибелы над автоматически определяемым уровнем шума. Меньший диапазон делает сигналы заметнее. По умолчанию 40 дБ.</value>
+  </data>
   <data name="Ft4.Decode.CallingMe">
     <value>Вызывает меня</value>
   </data>

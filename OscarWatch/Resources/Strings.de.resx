@@ -4024,6 +4024,12 @@ Aktuell: {1} ({2})</value>
   <data name="Ft4.DecodeFontSize.Note">
     <value>Schriftgröße der Decode-Liste (10–28). Größere Werte helfen bei eingeschränkter Sehkraft.</value>
   </data>
+  <data name="Ft4.WaterfallRange">
+    <value>Wasserfall-Bereich</value>
+  </data>
+  <data name="Ft4.WaterfallRange.Note">
+    <value>Dezibel über dem automatisch nachgeführten Rauschboden. Ein kleinerer Bereich hebt Signale stärker hervor. Voreinstellung ist 40 dB.</value>
+  </data>
   <data name="Ft4.Decode.CallingMe">
     <value>Ruft mich</value>
   </data>

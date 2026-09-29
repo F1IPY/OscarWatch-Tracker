@@ -58,6 +58,7 @@
                                   TxAudioHz="{Binding TxAudioHz, Mode=TwoWay}"
                                   RxAudioHz="{Binding RxAudioHz, Mode=TwoWay}"
                                   HoldTxFrequency="{Binding HoldTxFrequency}"
+                                  DisplayRangeDb="{Binding WaterfallRangeDb}"
                                   StatusText="{Binding WaterfallStatusText}" />
 
     <DockPanel Margin="10">

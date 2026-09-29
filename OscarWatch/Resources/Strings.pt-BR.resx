@@ -4020,6 +4020,12 @@ Mais recente: {1} ({2})</value>
   <data name="Ft4.DecodeFontSize.Note">
     <value>Tamanho da fonte da lista de decodes (10–28). Tamanhos maiores ajudam com visão reduzida.</value>
   </data>
+  <data name="Ft4.WaterfallRange">
+    <value>Faixa da cascata</value>
+  </data>
+  <data name="Ft4.WaterfallRange.Note">
+    <value>Decibéis acima do piso de ruído automático. Uma faixa menor faz os sinais se destacarem mais. O padrão é 40 dB.</value>
+  </data>
   <data name="Ft4.Decode.CallingMe">
     <value>Me chamando</value>
   </data>

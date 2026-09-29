@@ -77,6 +77,7 @@ public partial class Ft4ViewModel : ViewModelBase, IDisposable
         _pttLeadMs = Math.Clamp(ft4.PttLeadMs, 0, 2000);
         _pttTailMs = Math.Clamp(ft4.PttTailMs, 0, 2000);
         _decodeFontSize = Math.Clamp(ft4.DecodeFontSize, 10, 28);
+        _waterfallRangeDb = Ft4Settings.ClampWaterfallRangeDb(ft4.WaterfallRangeDb);
         _callingMeColour = Ft4DecodeHighlight.NormalizeColour(ft4.CallingMeColour)
             ?? Ft4DecodeHighlight.DefaultCallingMeColour;
         _replyingColour = Ft4DecodeHighlight.NormalizeColour(ft4.ReplyingColour)
@@ -188,6 +189,8 @@ public partial class Ft4ViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private int _pttLeadMs = 200;
     [ObservableProperty] private int _pttTailMs = 100;
     [ObservableProperty] private double _decodeFontSize = 12;
+
+    [ObservableProperty] private double _waterfallRangeDb = Ft4Settings.DefaultWaterfallRangeDb;
     [ObservableProperty] private string _callingMeColour = Ft4DecodeHighlight.DefaultCallingMeColour;
     [ObservableProperty] private string _replyingColour = Ft4DecodeHighlight.DefaultReplyingColour;
     [ObservableProperty] private string _newCallColour = Ft4DecodeHighlight.DefaultNewCallColour;
@@ -295,6 +298,19 @@ public partial class Ft4ViewModel : ViewModelBase, IDisposable
         }
 
         _settings.Current.Ft4.DecodeFontSize = clamped;
+        _settings.RequestSave();
+    }
+
+    partial void OnWaterfallRangeDbChanged(double value)
+    {
+        var clamped = Ft4Settings.ClampWaterfallRangeDb(value);
+        if (Math.Abs(clamped - value) > 0.01)
+        {
+            WaterfallRangeDb = clamped;
+            return;
+        }
+
+        _settings.Current.Ft4.WaterfallRangeDb = clamped;
         _settings.RequestSave();
     }
 

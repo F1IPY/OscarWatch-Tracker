@@ -4020,6 +4020,12 @@ Latest: {1} ({2})</value>
   <data name="Ft4.DecodeFontSize.Note">
     <value>Font size for the decode list (10–28). Larger sizes help with poorer vision.</value>
   </data>
+  <data name="Ft4.WaterfallRange">
+    <value>Waterfall range</value>
+  </data>
+  <data name="Ft4.WaterfallRange.Note">
+    <value>Decibels above the automatic noise floor. A smaller range makes signals stand out more. Default is 40 dB.</value>
+  </data>
   <data name="Ft4.Decode.CallingMe">
     <value>Calling me</value>
   </data>

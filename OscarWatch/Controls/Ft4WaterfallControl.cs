@@ -19,12 +19,17 @@ public sealed class Ft4WaterfallControl : Control
 
     private WriteableBitmap? _bitmap;
     private readonly float[] _latest = new float[SpectrumColumns];
+    private readonly float[] _rows = new float[HistoryRows * SpectrumColumns];
+    private int _filledRows;
     private bool _hasSpectrum;
     private bool _levelsPrimed;
     private double _noiseFloor = -80;
 
-    /// <summary>Fixed dB span above the noise floor (WSJT-X-style). Avoids peak-auto gain blow-out.</summary>
-    public const double DisplayRangeDb = 40.0;
+    /// <summary>dB span above the noise floor. Avoids peak-auto gain blow-out.</summary>
+    public static readonly StyledProperty<double> DisplayRangeDbProperty =
+        AvaloniaProperty.Register<Ft4WaterfallControl, double>(
+            nameof(DisplayRangeDb),
+            Ft4Settings.DefaultWaterfallRangeDb);
 
     public static readonly StyledProperty<double> TxAudioHzProperty =
         AvaloniaProperty.Register<Ft4WaterfallControl, double>(nameof(TxAudioHz), 1500);
@@ -63,6 +68,8 @@ public sealed class Ft4WaterfallControl : Control
             MinHzProperty,
             MaxHzProperty,
             StatusTextProperty);
+        DisplayRangeDbProperty.Changed.AddClassHandler<Ft4WaterfallControl>((control, _) =>
+            control.RepaintSpectrum());
         FocusableProperty.OverrideDefaultValue<Ft4WaterfallControl>(true);
     }
 
@@ -111,6 +118,13 @@ public sealed class Ft4WaterfallControl : Control
     {
         get => GetValue(StatusTextProperty);
         set => SetValue(StatusTextProperty, value);
+    }
+
+    /// <summary>Decibels above the automatic noise floor painted on the waterfall.</summary>
+    public double DisplayRangeDb
+    {
+        get => GetValue(DisplayRangeDbProperty);
+        set => SetValue(DisplayRangeDbProperty, value);
     }
 
     private void SetSpectrum(float[]? value)
@@ -170,31 +184,61 @@ public sealed class Ft4WaterfallControl : Control
 
     private void PushRow(ReadOnlySpan<float> bins)
     {
+        var occupied = Math.Min(_filledRows, HistoryRows - 1);
+        if (occupied > 0)
+            Array.Copy(_rows, 0, _rows, SpectrumColumns, occupied * SpectrumColumns);
+
+        for (var x = 0; x < SpectrumColumns; x++)
+            _rows[x] = bins[x];
+
+        if (_filledRows < HistoryRows)
+            _filledRows++;
+
+        RepaintSpectrum();
+    }
+
+    private void RepaintSpectrum()
+    {
+        if (_filledRows == 0)
+            return;
+
         EnsureBitmap();
+        var range = Ft4Settings.ClampWaterfallRangeDb(DisplayRangeDb);
         using var fb = _bitmap!.Lock();
         unsafe
         {
             var ptr = (byte*)fb.Address.ToPointer();
             var stride = fb.RowBytes;
-            // Scroll down one row.
-            Buffer.MemoryCopy(ptr, ptr + stride, stride * (HistoryRows - 1), stride * (HistoryRows - 1));
-            var row = ptr;
-            for (var x = 0; x < SpectrumColumns; x++)
+            for (var y = 0; y < HistoryRows; y++)
             {
-                var color = MapColor(bins[x]);
-                row[x * 4 + 0] = color.B;
-                row[x * 4 + 1] = color.G;
-                row[x * 4 + 2] = color.R;
-                row[x * 4 + 3] = 255;
+                var row = ptr + (y * stride);
+                if (y >= _filledRows)
+                {
+                    new Span<byte>(row, SpectrumColumns * 4).Clear();
+                    continue;
+                }
+
+                var sample = y * SpectrumColumns;
+                for (var x = 0; x < SpectrumColumns; x++)
+                {
+                    var color = MapColor(_rows[sample + x], range);
+                    var pixel = row + (x * 4);
+                    pixel[0] = color.B;
+                    pixel[1] = color.G;
+                    pixel[2] = color.R;
+                    pixel[3] = 255;
+                }
             }
         }
+
+        InvalidateVisual();
     }
 
-    private Color MapColor(float db)
+    private Color MapColor(float db, double rangeDb)
     {
-        // Map noise floor → +DisplayRangeDb into 0…1. Strong tones clip at white without
+        // Map noise floor → +range into 0…1. Strong tones clip at white without
         // dragging the whole passband up (the previous peak-tracker caused that).
-        var t = (db - _noiseFloor) / DisplayRangeDb;
+        var t = (db - _noiseFloor) / rangeDb;
         t = Math.Clamp(t, 0, 1);
         // Mild gamma so mid-level noise stays blue/cyan rather than yellow.
         t = Math.Pow(t, 1.15);
