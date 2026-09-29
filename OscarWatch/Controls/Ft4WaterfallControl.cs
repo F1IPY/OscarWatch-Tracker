@@ -162,8 +162,12 @@ public sealed class Ft4WaterfallControl : Control
             return;
         }
 
-        // Slow EMA so a quiet moment does not slam the scale, and a loud tone does not raise the floor.
-        _noiseFloor = _noiseFloor * 0.95 + floor * 0.05;
+        // The range slider sets contrast. This tracker only follows the band, and a quiet
+        // gap must not lift the whole scale. New rows are coloured once; history is not
+        // restretched on every update (that made the picture pump).
+        var delta = floor - _noiseFloor;
+        var step = delta > 0 ? 0.02 : 0.008;
+        _noiseFloor += delta * step;
     }
 
     private void EnsureBitmap()
@@ -196,9 +200,26 @@ public sealed class Ft4WaterfallControl : Control
         if (_filledRows < HistoryRows)
             _filledRows++;
 
-        RepaintSpectrum();
+        ScrollAndPaintNewest(bins);
     }
 
+    private void ScrollAndPaintNewest(ReadOnlySpan<float> bins)
+    {
+        EnsureBitmap();
+        var range = Ft4Settings.ClampWaterfallRangeDb(DisplayRangeDb);
+        using var fb = _bitmap!.Lock();
+        unsafe
+        {
+            var ptr = (byte*)fb.Address.ToPointer();
+            var stride = fb.RowBytes;
+            Buffer.MemoryCopy(ptr, ptr + stride, stride * (HistoryRows - 1), stride * (HistoryRows - 1));
+            PaintSamples(ptr, bins, range);
+        }
+
+        InvalidateVisual();
+    }
+
+    /// <summary>Recolour stored rows when the operator changes the range. Not used for live updates.</summary>
     private void RepaintSpectrum()
     {
         if (_filledRows == 0)
@@ -220,20 +241,24 @@ public sealed class Ft4WaterfallControl : Control
                     continue;
                 }
 
-                var sample = y * SpectrumColumns;
-                for (var x = 0; x < SpectrumColumns; x++)
-                {
-                    var color = MapColor(_rows[sample + x], range);
-                    var pixel = row + (x * 4);
-                    pixel[0] = color.B;
-                    pixel[1] = color.G;
-                    pixel[2] = color.R;
-                    pixel[3] = 255;
-                }
+                PaintSamples(row, _rows.AsSpan(y * SpectrumColumns, SpectrumColumns), range);
             }
         }
 
         InvalidateVisual();
+    }
+
+    private unsafe void PaintSamples(byte* row, ReadOnlySpan<float> bins, double range)
+    {
+        for (var x = 0; x < SpectrumColumns; x++)
+        {
+            var color = MapColor(bins[x], range);
+            var pixel = row + (x * 4);
+            pixel[0] = color.B;
+            pixel[1] = color.G;
+            pixel[2] = color.R;
+            pixel[3] = 255;
+        }
     }
 
     private Color MapColor(float db, double rangeDb)
