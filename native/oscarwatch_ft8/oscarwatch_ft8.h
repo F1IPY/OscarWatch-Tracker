@@ -55,6 +55,7 @@ OW_FT8_API int ow_ft8_encode_pcm(
 /// @param f_max_hz upper audio search bound (Hz)
 /// @param out_decodes output array
 /// @param out_capacity max entries in out_decodes
+/// @param deep non-zero for the horizon budget (more candidates, longer LDPC)
 /// @return number of decoded messages, or negative on error
 OW_FT8_API int ow_ft8_decode_pcm(
     const float* samples,
@@ -64,7 +65,8 @@ OW_FT8_API int ow_ft8_decode_pcm(
     float f_min_hz,
     float f_max_hz,
     ow_ft8_decode_t* out_decodes,
-    int out_capacity);
+    int out_capacity,
+    int deep);
 
 /// Remember a callsign for hash-table resolution during later decodes.
 OW_FT8_API void ow_ft8_remember_callsign(const char* callsign);

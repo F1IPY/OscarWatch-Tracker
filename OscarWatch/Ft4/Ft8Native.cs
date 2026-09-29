@@ -105,7 +105,8 @@ internal static class Ft8Native
         float fMinHz,
         float fMaxHz,
         [Out] Decode[] outDecodes,
-        int outCapacity);
+        int outCapacity,
+        int deep);
 
     [DllImport(LibraryName, CallingConvention = CallingConvention.Cdecl)]
     private static extern void ow_ft8_remember_callsign(
@@ -245,7 +246,15 @@ internal static class Ft8Native
         return DecodeFt4(samples, sampleRate, fMin, fMax);
     }
 
-    public static Decode[] DecodeFt4(float[] samples, int sampleRate, float fMinHz, float fMaxHz)
+    public static Decode[] DecodeFt4(float[] samples, int sampleRate, float fMinHz, float fMaxHz) =>
+        DecodeFt4(samples, sampleRate, fMinHz, fMaxHz, deep: false);
+
+    public static Decode[] DecodeFt4(
+        float[] samples,
+        int sampleRate,
+        float fMinHz,
+        float fMaxHz,
+        bool deep)
     {
         var output = new Decode[50];
         var n = ow_ft8_decode_pcm(
@@ -256,7 +265,8 @@ internal static class Ft8Native
             fMinHz,
             fMaxHz,
             output,
-            output.Length);
+            output.Length,
+            deep ? 1 : 0);
         if (n <= 0)
             return [];
         var result = new Decode[n];

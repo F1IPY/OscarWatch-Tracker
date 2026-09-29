@@ -24,9 +24,13 @@
 
 #define CALLSIGN_HASHTABLE_SIZE 256
 #define kMin_score 10
+#define kMin_score_deep 6
 #define kMax_candidates 60
+#define kMax_candidates_deep 120
 #define kLDPC_iterations_fast 10
 #define kLDPC_iterations 25
+#define kLDPC_iterations_deep_fast 20
+#define kLDPC_iterations_deep 40
 #define kFreq_osr 2
 #define kTime_osr 2
 
@@ -398,7 +402,8 @@ OW_FT8_API int ow_ft8_decode_pcm(
     float f_min_hz,
     float f_max_hz,
     ow_ft8_decode_t* out_decodes,
-    int out_capacity)
+    int out_capacity,
+    int deep)
 {
     ensure_hashtable();
     if (!samples || num_samples <= 0 || sample_rate <= 0 || !out_decodes || out_capacity <= 0)
@@ -425,8 +430,14 @@ OW_FT8_API int ow_ft8_decode_pcm(
         pos += block_size;
     }
 
-    ftx_candidate_t candidate_list[kMax_candidates];
-    int num_candidates = ftx_find_candidates(&mon->wf, kMax_candidates, candidate_list, kMin_score);
+    int deep_pass = deep != 0;
+    int max_candidates = deep_pass ? kMax_candidates_deep : kMax_candidates;
+    int min_score = deep_pass ? kMin_score_deep : kMin_score;
+    int ldpc_fast = deep_pass ? kLDPC_iterations_deep_fast : kLDPC_iterations_fast;
+    int ldpc_full = deep_pass ? kLDPC_iterations_deep : kLDPC_iterations;
+
+    ftx_candidate_t candidate_list[kMax_candidates_deep];
+    int num_candidates = ftx_find_candidates(&mon->wf, max_candidates, candidate_list, min_score);
 
     int num_decoded = 0;
     ftx_message_t decoded[OW_FT8_MAX_DECODES];
@@ -443,8 +454,8 @@ OW_FT8_API int ow_ft8_decode_pcm(
         ftx_message_t message;
         ftx_decode_status_t status;
         /* Sparse satellite slots rarely need full LDPC; try a short pass first. */
-        if (!ftx_decode_candidate(&mon->wf, cand, kLDPC_iterations_fast, &message, &status)
-            && !ftx_decode_candidate(&mon->wf, cand, kLDPC_iterations, &message, &status))
+        if (!ftx_decode_candidate(&mon->wf, cand, ldpc_fast, &message, &status)
+            && !ftx_decode_candidate(&mon->wf, cand, ldpc_full, &message, &status))
         {
             continue;
         }
