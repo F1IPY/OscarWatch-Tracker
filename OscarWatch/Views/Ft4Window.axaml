@@ -227,7 +227,7 @@
                   <TextBlock Grid.Column="1"
                              Text="{loc:Localize Key=Ft4.Decodes.Tx}"
                              FontWeight="SemiBold"
-                             Foreground="{DynamicResource PassInProgressBadgeForegroundBrush}"
+                             Foreground="{Binding TxForeground}"
                              IsVisible="{Binding Message.IsTransmitted}" />
                   <TextBlock Grid.Column="1"
                              Text="{loc:Localize Key=Ft4.Decodes.Echo}"
@@ -262,7 +262,7 @@
                              Text="{Binding Message.Text}"
                              FontWeight="SemiBold"
                              IsVisible="{Binding Message.IsTransmitted}"
-                             Foreground="{DynamicResource PassInProgressBadgeForegroundBrush}" />
+                             Foreground="{Binding TxForeground}" />
                   <TextBlock Grid.Column="4"
                              Text="{Binding Message.Text}"
                              FontWeight="SemiBold"

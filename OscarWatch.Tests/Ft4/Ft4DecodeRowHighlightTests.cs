@@ -1,3 +1,4 @@
+using Avalonia.Media;
 using OscarWatch.Core.Ft4;
 using OscarWatch.ViewModels;
 
@@ -75,5 +76,30 @@ public sealed class Ft4DecodeRowHighlightTests
 
         Assert.Null(row.RowForeground);
         Assert.False(row.HasRowForeground);
+    }
+
+    [Fact]
+    public void Tx_text_colour_is_applied()
+    {
+        var row = new Ft4DecodeRowViewModel(new Ft4DecodedMessage(
+            DateTime.UtcNow,
+            "CQ MM9SQL IO91",
+            1500,
+            0,
+            0,
+            "CQ",
+            "MM9SQL",
+            "IO91",
+            false,
+            true));
+
+        row.RefreshHighlight(
+            "MM9SQL", null,
+            "#66E6B15A", "#665CB88A", "#664D9DE8", "#66C07AD0", "#6678C8E0",
+            null, null,
+            txText: "#FFCC3333");
+
+        var brush = Assert.IsType<SolidColorBrush>(row.TxForeground);
+        Assert.Equal(Color.Parse("#FFCC3333"), brush.Color);
     }
 }

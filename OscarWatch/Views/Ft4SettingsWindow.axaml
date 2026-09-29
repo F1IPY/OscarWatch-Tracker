@@ -279,7 +279,7 @@
                        Text="{loc:Localize Key=Ft4.DecodeFontSize.Note}" />
             <TextBlock Classes="ft4-note"
                        Text="{loc:Localize Key=Ft4.Decode.ColourNote}" />
-            <Grid ColumnDefinitions="Auto,Auto,Auto" ColumnSpacing="10" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="8">
+            <Grid ColumnDefinitions="Auto,Auto,Auto" ColumnSpacing="10" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="8">
               <TextBlock Grid.Row="0" Grid.Column="1"
                          Classes="ft4-note"
                          Text="{loc:Localize Key=Ft4.Decode.Background}" />
@@ -341,6 +341,13 @@
                            HorizontalAlignment="Left"
                            IsAlphaEnabled="False"
                            Color="{Binding NewGridTextColour, Mode=TwoWay, Converter={x:Static ft4ui:Ft4TextColorConverter.Instance}}" />
+              <TextBlock Grid.Row="6" Grid.Column="0"
+                         Text="{loc:Localize Key=Ft4.Decodes.Tx}"
+                         VerticalAlignment="Center" />
+              <ColorPicker Grid.Row="6" Grid.Column="2"
+                           HorizontalAlignment="Left"
+                           IsAlphaEnabled="False"
+                           Color="{Binding TxTextColour, Mode=TwoWay, Converter={x:Static ft4ui:Ft4HexColorConverter.Instance}}" />
             </Grid>
           </StackPanel>
         </ScrollViewer>

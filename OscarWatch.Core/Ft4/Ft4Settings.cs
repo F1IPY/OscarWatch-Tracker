@@ -158,6 +158,9 @@ public sealed class Ft4Settings
     /// <summary>Text colour for a received CQ. Empty follows the theme.</summary>
     public string CqTextColour { get; set; } = "";
 
+    /// <summary>Text colour for a message this station transmitted.</summary>
+    public string TxTextColour { get; set; } = Ft4DecodeHighlight.DefaultTxTextColour;
+
     /// <summary>Window size/position.</summary>
     public int? WindowWidth { get; set; }
     public int? WindowHeight { get; set; }

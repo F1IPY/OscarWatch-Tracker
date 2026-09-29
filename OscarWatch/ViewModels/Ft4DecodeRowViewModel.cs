@@ -20,12 +20,16 @@ public sealed partial class Ft4DecodeRowViewModel : ObservableObject
     /// <summary>Set for a shaded receive line when the operator chose a text colour. Otherwise the row keeps the theme text.</summary>
     [ObservableProperty] private IBrush? _rowForeground;
 
+    /// <summary>Colour of the TX label and the message on a line this station sent.</summary>
+    [ObservableProperty] private IBrush _txForeground = Brushes.White;
+
     public bool HasRowForeground => RowForeground is not null;
 
     partial void OnRowForegroundChanged(IBrush? value) => OnPropertyChanged(nameof(HasRowForeground));
 
     private string? _appliedColourHex;
     private string? _appliedTextHex;
+    private string? _appliedTxHex;
     private bool _highlightApplied;
 
     public void RefreshHighlight(
@@ -42,7 +46,8 @@ public sealed partial class Ft4DecodeRowViewModel : ObservableObject
         string? replyingText = null,
         string? newCallText = null,
         string? newGridText = null,
-        string? cqText = null)
+        string? cqText = null,
+        string? txText = null)
     {
         var kind = Ft4DecodeHighlight.Classify(
             Message,
@@ -68,11 +73,13 @@ public sealed partial class Ft4DecodeRowViewModel : ObservableObject
             Ft4DecodeHighlightKind.Cq => Ft4DecodeHighlight.NormalizeColour(cqText),
             _ => null
         };
+        var txHex = Ft4DecodeHighlight.NormalizeColour(txText) ?? Ft4DecodeHighlight.DefaultTxTextColour;
 
         // Replacing the brush when the colour has not changed repaints every row.
         if (_highlightApplied
             && string.Equals(_appliedColourHex, hex, StringComparison.OrdinalIgnoreCase)
-            && string.Equals(_appliedTextHex, textHex, StringComparison.OrdinalIgnoreCase))
+            && string.Equals(_appliedTextHex, textHex, StringComparison.OrdinalIgnoreCase)
+            && string.Equals(_appliedTxHex, txHex, StringComparison.OrdinalIgnoreCase))
         {
             return;
         }
@@ -80,7 +87,9 @@ public sealed partial class Ft4DecodeRowViewModel : ObservableObject
         _highlightApplied = true;
         _appliedColourHex = hex;
         _appliedTextHex = textHex;
+        _appliedTxHex = txHex;
         RowBackground = Ft4DecodeRowBackgroundConverter.BrushFromHex(hex);
         RowForeground = textHex is null ? null : Ft4DecodeRowBackgroundConverter.BrushFromHex(textHex);
+        TxForeground = Ft4DecodeRowBackgroundConverter.BrushFromHex(txHex);
     }
 }

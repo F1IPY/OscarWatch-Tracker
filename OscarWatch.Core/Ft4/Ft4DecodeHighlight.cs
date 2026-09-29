@@ -24,6 +24,9 @@ public static class Ft4DecodeHighlight
     public const string DefaultNewGridColour = "#66C07AD0";
     public const string DefaultCqColour = "#6678C8E0";
 
+    /// <summary>Text on a line this station transmitted. White, matching the previous fixed colour.</summary>
+    public const string DefaultTxTextColour = "#FFFFFFFF";
+
     public static Ft4DecodeHighlightKind Classify(
         Ft4DecodedMessage message,
         string? myCall,

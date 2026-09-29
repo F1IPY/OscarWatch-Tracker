@@ -94,6 +94,8 @@ public partial class Ft4ViewModel : ViewModelBase, IDisposable
         _newCallTextColour = Ft4DecodeHighlight.NormalizeColour(ft4.NewCallTextColour) ?? "";
         _newGridTextColour = Ft4DecodeHighlight.NormalizeColour(ft4.NewGridTextColour) ?? "";
         _cqTextColour = Ft4DecodeHighlight.NormalizeColour(ft4.CqTextColour) ?? "";
+        _txTextColour = Ft4DecodeHighlight.NormalizeColour(ft4.TxTextColour)
+            ?? Ft4DecodeHighlight.DefaultTxTextColour;
         _preferEvenSlot = false;
         _pttInvert = ft4.PttInvert;
         _selectedPttMethod = PttMethodOptions.FirstOrDefault(o => o.Value == ft4.PttMethod)
@@ -211,6 +213,7 @@ public partial class Ft4ViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private string _newCallTextColour = "";
     [ObservableProperty] private string _newGridTextColour = "";
     [ObservableProperty] private string _cqTextColour = "";
+    [ObservableProperty] private string _txTextColour = Ft4DecodeHighlight.DefaultTxTextColour;
     [ObservableProperty] private string? _qsoPartnerCall;
     [ObservableProperty] private string? _selectedEchoCalibrationSatellite;
     [ObservableProperty] private double _echoCalibrationHz;
@@ -427,6 +430,14 @@ public partial class Ft4ViewModel : ViewModelBase, IDisposable
             hex => CqTextColour = hex,
             hex => _settings.Current.Ft4.CqTextColour = hex,
             followTheme: true);
+
+    partial void OnTxTextColourChanged(string value) =>
+        CommitDecodeColour(
+            value,
+            Ft4DecodeHighlight.DefaultTxTextColour,
+            () => TxTextColour,
+            hex => TxTextColour = hex,
+            hex => _settings.Current.Ft4.TxTextColour = hex);
 
     partial void OnQsoPartnerCallChanged(string? value) => RefreshDecodeHighlights();
 
@@ -1309,7 +1320,8 @@ public partial class Ft4ViewModel : ViewModelBase, IDisposable
             ReplyingTextColour,
             NewCallTextColour,
             NewGridTextColour,
-            CqTextColour);
+            CqTextColour,
+            TxTextColour);
 
     private void OnLogbookQsosChanged(long logbookId) => _ = RefreshWorkedSetsAsync();
 

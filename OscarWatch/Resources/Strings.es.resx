@@ -4048,7 +4048,7 @@ Está utilizando la versión {0}.
     <value>Texto</value>
   </data>
   <data name="Ft4.Decode.ColourNote">
-    <value>Fondos de las líneas de decodificación: dirigidas a ti, la estación del QSO actual, llamadas CQ, un indicativo aún no en el libro de guardia, o un grid de 4 caracteres que no has registrado. Use el selector de color; menos transparencia da un tono más fuerte. El color del texto sigue el tema hasta que elija uno. Las líneas de transmisión y eco conservan sus colores.</value>
+    <value>Fondos de las líneas de decodificación: dirigidas a ti, la estación del QSO actual, llamadas CQ, un indicativo aún no en el libro de guardia, o un grid de 4 caracteres que no has registrado. Use el selector de color; menos transparencia da un tono más fuerte. El color del texto sigue el tema hasta que elija uno. Las líneas de eco conservan su color. Puede elegir el color del texto que transmite.</value>
   </data>
   <data name="Ft4.Decode.NewCall">
     <value>Indicativo nuevo</value>

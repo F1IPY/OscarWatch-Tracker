@@ -4052,7 +4052,7 @@ Aktuell: {1} ({2})</value>
     <value>Text</value>
   </data>
   <data name="Ft4.Decode.ColourNote">
-    <value>Hintergrundfarben für Decode-Zeilen: an dich gerichtet, aktuelle QSO-Station, CQ-Rufe, Rufzeichen noch nicht im Logbuch, oder 4-Zeichen-Grid noch nicht geloggt. Farbwähler nutzen; weniger Transparenz ergibt einen stärkeren Ton. Die Textfarbe folgt dem Design, bis du eine wählst. Sende- und Echozeilen behalten ihre Farben.</value>
+    <value>Hintergrundfarben für Decode-Zeilen: an dich gerichtet, aktuelle QSO-Station, CQ-Rufe, Rufzeichen noch nicht im Logbuch, oder 4-Zeichen-Grid noch nicht geloggt. Farbwähler nutzen; weniger Transparenz ergibt einen stärkeren Ton. Die Textfarbe folgt dem Design, bis du eine wählst. Echozeilen behalten ihre Farbe. Die Farbe des gesendeten Textes kannst du einstellen.</value>
   </data>
   <data name="Ft4.Decode.NewCall">
     <value>Neues Rufzeichen</value>
