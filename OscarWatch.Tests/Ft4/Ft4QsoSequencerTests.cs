@@ -330,6 +330,37 @@ public sealed class Ft4QsoSequencerTests
     }
 
     [Fact]
+    public void Cq_after_73_keeps_cq_and_marks_the_old_contact_historic()
+    {
+        var seq = new Ft4QsoSequencer(() => "MM9SQL", () => "IO85", () => true);
+        seq.StartCq(evenSlot: true);
+        seq.OnDecoded(Msg("MM9SQL G1YEF IO91", snr: 15f));
+        Assert.Equal("G1YEF MM9SQL +15", seq.CurrentTxMessage);
+        seq.OnDecoded(Msg("MM9SQL G1YEF +05"));
+        Assert.True(seq.OnTxCompleted());
+        Assert.NotNull(seq.QsoCompletedUtc);
+
+        var completed = seq.QsoCompletedUtc!.Value;
+        seq.StartCq(evenSlot: true);
+        Assert.Equal("CQ MM9SQL IO85", seq.CurrentTxMessage);
+        Assert.Equal(Ft4QsoPhase.CallingCq, seq.Phase);
+        Assert.Equal(completed, seq.QsoCompletedUtc);
+        Assert.True(seq.IsHistoricDecode(completed.AddSeconds(-20)));
+        Assert.False(seq.IsHistoricDecode(completed.AddSeconds(8)));
+    }
+
+    [Fact]
+    public void Closing_message_while_calling_cq_does_not_start_a_qso()
+    {
+        var seq = new Ft4QsoSequencer(() => "MM9SQL", () => "IO85", () => true);
+        seq.StartCq(evenSlot: true);
+        Assert.False(seq.OnDecoded(Msg("MM9SQL G1YEF 73")));
+        Assert.Equal(Ft4QsoPhase.CallingCq, seq.Phase);
+        Assert.Equal("CQ MM9SQL IO85", seq.CurrentTxMessage);
+        Assert.Null(seq.TheirCall);
+    }
+
+    [Fact]
     public void Force_report_and_73_rearm_a_finished_qso()
     {
         var seq = new Ft4QsoSequencer(() => "MM9SQL", () => "IO85", () => true);

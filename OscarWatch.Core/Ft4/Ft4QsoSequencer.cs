@@ -51,6 +51,12 @@ public sealed class Ft4QsoSequencer
     public string? ReportReceived { get; private set; }
     public string CurrentTxMessage { get; private set; } = "";
     public bool TransmitEnabled { get; private set; }
+
+    /// <summary>
+    /// UTC when the last contact reached 73. Decodes at or before this belong to that
+    /// contact, so a new CQ must not answer them again.
+    /// </summary>
+    public DateTime? QsoCompletedUtc { get; private set; }
     public bool PreferEvenSlot { get; set; }
     public double TxAudioHz { get; set; } = 1500;
 
@@ -63,7 +69,12 @@ public sealed class Ft4QsoSequencer
         ReportReceived = null;
         CurrentTxMessage = "";
         TransmitEnabled = false;
+        QsoCompletedUtc = null;
     }
+
+    /// <summary>True when <paramref name="slotUtc"/> is part of the contact that just finished.</summary>
+    public bool IsHistoricDecode(DateTime slotUtc) =>
+        QsoCompletedUtc is not null && slotUtc <= QsoCompletedUtc.Value;
 
     public void StartCq(bool evenSlot)
     {
@@ -218,6 +229,10 @@ public sealed class Ft4QsoSequencer
             if (!AutoReplyOn)
                 return false;
 
+            // A 73 or RR73 is the end of a contact, not a station calling this CQ.
+            if (Ft4MessageCodec.IsClosing(extra))
+                return false;
+
             TheirCall = Ft4MessageCodec.NormalizeCall(callDe);
             TheirGrid = Ft4MessageCodec.IsGrid(extra) ? extra : TheirGrid;
             // Stay on our CQ frequency (WSJT-X). Only answering a decode moves TX.
@@ -260,8 +275,7 @@ public sealed class Ft4QsoSequencer
         if (_skipRrr() && Ft4MessageCodec.Is73(extra))
         {
             // Their 73 after our RR73: contact done, no further TX.
-            TransmitEnabled = false;
-            Phase = Ft4QsoPhase.Finished;
+            FinishContact();
             return CanLog();
         }
 
@@ -271,8 +285,7 @@ public sealed class Ft4QsoSequencer
                 || CurrentTxMessage.EndsWith(" 73", StringComparison.Ordinal))
             {
                 // We already sent closing; their ack finishes the QSO.
-                TransmitEnabled = false;
-                Phase = Ft4QsoPhase.Finished;
+                FinishContact();
                 return CanLog();
             }
 
@@ -375,20 +388,25 @@ public sealed class Ft4QsoSequencer
         var msg = CurrentTxMessage;
         if (_skipRrr() && msg.EndsWith(" RR73", StringComparison.Ordinal))
         {
-            TransmitEnabled = false;
-            Phase = Ft4QsoPhase.Finished;
+            FinishContact();
             return CanLog();
         }
 
         if (msg.EndsWith(" 73", StringComparison.Ordinal)
             && !msg.EndsWith(" RR73", StringComparison.Ordinal))
         {
-            TransmitEnabled = false;
-            Phase = Ft4QsoPhase.Finished;
+            FinishContact();
             return CanLog();
         }
 
         return false;
+    }
+
+    private void FinishContact()
+    {
+        TransmitEnabled = false;
+        Phase = Ft4QsoPhase.Finished;
+        QsoCompletedUtc = DateTime.UtcNow;
     }
 
     public bool CanLog() =>

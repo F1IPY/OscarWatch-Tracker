@@ -362,6 +362,10 @@ public sealed class Ft4ModemService : IDisposable
         {
             if (msg.SlotUtc < cutoff)
                 break;
+            // Newest first: once we reach the contact that just finished, everything
+            // older is that same contact. A station who calls after 73 is still answered.
+            if (seq.IsHistoricDecode(msg.SlotUtc))
+                break;
             if (!msg.IsReceiveActivity)
                 continue;
 
