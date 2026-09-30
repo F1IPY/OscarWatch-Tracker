@@ -187,12 +187,37 @@ jobs:
             -p:InformationalVersion="${{ steps.version.outputs.version }}" \
             -o "$out"
 
+      - name: Check FT4 native library is in the package
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="${{ runner.temp }}/publish-${{ matrix.rid }}"
+          rid="${{ matrix.rid }}"
+          case "$rid" in
+            win-*) file="oscarwatch_ft8.dll" ;;
+            osx-*) file="oscarwatch_ft8.dylib" ;;
+            linux-*) file="oscarwatch_ft8.so" ;;
+            *) echo "Unknown RID: $rid"; exit 1 ;;
+          esac
+          path="$out/runtimes/$rid/native/$file"
+          if [[ ! -f "$path" ]]; then
+            echo "FT4 native library missing: $path"
+            find "$out" -iname 'oscarwatch_ft8*' -print || true
+            exit 1
+          fi
+          size=$(wc -c < "$path")
+          echo "Found $path ($size bytes)"
+          if [[ "$size" -lt 10000 ]]; then
+            echo "FT4 native library looks too small: $path"
+            exit 1
+          fi
+
       - name: Archive
         id: archive
         shell: pwsh
         run: |
           $src = "${{ runner.temp }}/publish-${{ matrix.rid }}"
-          $version = "${{ steps.version.outputs.value }}"
+          $version = "${{ steps.version.outputs.version }}"
           $rid = "${{ matrix.rid }}"
           if ("${{ matrix.archive_ext }}" -eq "zip") {
             $dest = "${{ runner.temp }}/OscarWatch-${version}-${rid}.zip"

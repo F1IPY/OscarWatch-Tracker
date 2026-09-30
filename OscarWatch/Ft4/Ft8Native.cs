@@ -49,11 +49,12 @@ internal static class Ft8Native
 
     private static string GetRid()
     {
+        var arm64 = RuntimeInformation.ProcessArchitecture == Architecture.Arm64;
         if (OperatingSystem.IsWindows())
-            return Environment.Is64BitProcess ? "win-x64" : "win-x86";
+            return arm64 ? "win-arm64" : "win-x64";
         if (OperatingSystem.IsMacOS())
-            return RuntimeInformation.ProcessArchitecture == Architecture.Arm64 ? "osx-arm64" : "osx-x64";
-        return RuntimeInformation.ProcessArchitecture == Architecture.Arm64 ? "linux-arm64" : "linux-x64";
+            return arm64 ? "osx-arm64" : "osx-x64";
+        return arm64 ? "linux-arm64" : "linux-x64";
     }
 
     public static bool IsAvailable
