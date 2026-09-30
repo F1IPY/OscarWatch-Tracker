@@ -33,6 +33,8 @@ typedef struct
     float fft_norm;      ///< FFT normalization factor
     float* window;       ///< Window function for STFT analysis (nfft samples)
     float* last_frame;   ///< Current STFT analysis frame (nfft samples)
+    kiss_fft_scalar* fft_timedata; ///< STFT time buffer (nfft samples)
+    kiss_fft_cpx* fft_freqdata;    ///< STFT frequency buffer (nfft/2+1 bins)
     ftx_waterfall_t wf;  ///< Waterfall object
     float max_mag;       ///< Maximum detected magnitude (debug stats)
 

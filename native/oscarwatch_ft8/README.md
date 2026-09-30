@@ -17,23 +17,16 @@ The managed loader (`Ft8Native`) looks under `runtimes/<rid>/native/` for the ma
 
 ## Build (this machine)
 
-From the repo root (needs CMake and a C toolchain):
+On this Windows PC the native library is built in WSL with the MinGW cross compiler, not with the Windows `cmake` or MSVC.
 
 ```bash
-# Example: macOS Apple Silicon
-cmake -S native/oscarwatch_ft8 -B native/oscarwatch_ft8/build-osx-arm64
-cmake --build native/oscarwatch_ft8/build-osx-arm64 --config Release
-mkdir -p OscarWatch/runtimes/osx-arm64/native
-cp native/oscarwatch_ft8/build-osx-arm64/oscarwatch_ft8.dylib \
-  OscarWatch/runtimes/osx-arm64/native/
-
-# macOS Intel (cross from Apple Silicon)
-cmake -S native/oscarwatch_ft8 -B native/oscarwatch_ft8/build-osx-x64 \
-  -DCMAKE_OSX_ARCHITECTURES=x86_64
-cmake --build native/oscarwatch_ft8/build-osx-x64 --config Release
-mkdir -p OscarWatch/runtimes/osx-x64/native
-cp native/oscarwatch_ft8/build-osx-x64/oscarwatch_ft8.dylib \
-  OscarWatch/runtimes/osx-x64/native/
+cmake -S native/oscarwatch_ft8 -B native/oscarwatch_ft8/build-win-x64 \
+  -DCMAKE_SYSTEM_NAME=Windows \
+  -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc
+cmake --build native/oscarwatch_ft8/build-win-x64 --config Release
+mkdir -p OscarWatch/runtimes/win-x64/native
+cp native/oscarwatch_ft8/build-win-x64/oscarwatch_ft8.dll \
+  OscarWatch/runtimes/win-x64/native/
 ```
 
 Publish CI builds the library for each RID before `dotnet publish` so release packages include the native binary.

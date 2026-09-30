@@ -1101,7 +1101,7 @@ static int unpackgrid(uint16_t igrid4, uint8_t ir, char* extra, ftx_field_t* ext
         if (ir > 0)
         {
             // In case of ir=1 add an "R " before grid
-            dst = stpcpy(dst, "R ");
+            dst = strcpy(dst, "R ") + 2;
         }
 
         uint16_t n = igrid4;
