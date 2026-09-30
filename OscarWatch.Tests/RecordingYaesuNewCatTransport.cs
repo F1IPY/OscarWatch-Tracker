@@ -22,6 +22,11 @@ internal sealed class RecordingYaesuNewCatTransport : OscarWatch.Rig.IYaesuNewCa
 
         var cmd = Normalize(command);
         SentCommands.Add(cmd);
+        if (!FailSets
+            && cmd.StartsWith("PC", StringComparison.OrdinalIgnoreCase)
+            && cmd != "PC;"
+            && OscarWatch.Core.Radio.YaesuFt991CatCodec.TryParsePowerWatts(cmd, out var watts))
+            RfPowerWatts = watts;
         return !FailSets;
     }
 

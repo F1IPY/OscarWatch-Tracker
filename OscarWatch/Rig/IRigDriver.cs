@@ -62,6 +62,23 @@ public interface IRigDriver : IDisposable
     }
 
     /// <summary>
+    /// True when CAT can set RF power (ICOM CI-V 0x14 0x0A, or Yaesu/Kenwood <c>PCnnn;</c>).
+    /// </summary>
+    bool SupportsRfPowerWrite => false;
+
+    /// <summary>
+    /// Set RF power in watts when the radio accepts a watt value (Yaesu and Kenwood <c>PC</c>).
+    /// Returns false when unsupported, out of range, or the radio did not accept the command.
+    /// </summary>
+    bool TrySetRfPowerWatts(double watts) => false;
+
+    /// <summary>
+    /// Set RF power as a 0–255 relative level (ICOM CI-V 0x14 0x0A). Returns false when
+    /// unsupported or the radio did not acknowledge.
+    /// </summary>
+    bool TrySetRfPowerLevel(int level0To255) => false;
+
+    /// <summary>
     /// Toggle RTS or DTR on the CAT serial port. Returns false when the driver cannot
     /// expose handshake lines (e.g. network Flex, or RTS already used for flow control).
     /// </summary>

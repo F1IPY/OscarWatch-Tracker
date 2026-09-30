@@ -73,6 +73,16 @@ public class YaesuFt991Driver : IRigDriver
         return true;
     }
 
+    public bool SupportsRfPowerWrite => true;
+
+    public bool TrySetRfPowerWatts(double watts)
+    {
+        if (!_transport.IsOpen || !YaesuFt991CatCodec.TryBuildSetPowerCommand(watts, out var command))
+            return false;
+
+        return _transport.SendCommand(command, _catDelayMs);
+    }
+
     public long? ReadFrequencyHz(RigVfo vfo)
     {
         var cached = CachedFrequencyHz(vfo);

@@ -125,6 +125,7 @@ public sealed class DiagnosticsBundleBuilderTests
             watts = 0;
             return false;
         }
+        public bool TrySetUplinkRfPowerWatts(double watts) => false;
         public void Disconnect() { }
         public void DisconnectAndWait() { }
     }

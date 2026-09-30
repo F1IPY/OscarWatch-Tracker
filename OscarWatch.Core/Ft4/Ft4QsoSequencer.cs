@@ -18,6 +18,8 @@ public sealed class Ft4QsoSequencer
     private readonly Func<bool> _autoReply;
     private readonly object _gate = new();
     private bool? _autoReplyOverride;
+    private bool _weSent73;
+    private bool _theySent73;
 
     public Ft4QsoSequencer(
         Func<string> myCall,
@@ -81,6 +83,8 @@ public sealed class Ft4QsoSequencer
         CurrentTxMessage = "";
         TransmitEnabled = false;
         QsoCompletedUtc = null;
+        _weSent73 = false;
+        _theySent73 = false;
     }
 
     /// <summary>True when <paramref name="slotUtc"/> is part of the contact that just finished.</summary>
@@ -120,6 +124,8 @@ public sealed class Ft4QsoSequencer
         PreferEvenSlot = oppositeEvenSlot;
         if (!_holdTxFrequency())
             TxAudioHz = decode.FreqHz;
+        _weSent73 = false;
+        _theySent73 = false;
         TheirCall = Ft4MessageCodec.NormalizeCall(callDe);
         TheirGrid = Ft4MessageCodec.IsGrid(extra) ? extra : TheirGrid;
         Phase = Ft4QsoPhase.InQso;
@@ -159,6 +165,8 @@ public sealed class Ft4QsoSequencer
 
             if (Ft4MessageCodec.IsClosing(extra))
             {
+                if (Ft4MessageCodec.Is73(extra) || Ft4MessageCodec.IsRr73(extra))
+                    _theySent73 = true;
                 CurrentTxMessage = Ft4MessageCodec.Build73(TheirCall, my);
                 return;
             }
@@ -228,6 +236,8 @@ public sealed class Ft4QsoSequencer
         TheirGrid = null;
         ReportSent = null;
         ReportReceived = null;
+        _weSent73 = false;
+        _theySent73 = false;
         if (!keepMessage || string.IsNullOrWhiteSpace(CurrentTxMessage))
             CurrentTxMessage = Ft4MessageCodec.BuildCq(_myCall(), _myGrid());
         TransmitEnabled = true;
@@ -328,24 +338,20 @@ public sealed class Ft4QsoSequencer
             return false;
         }
 
-        if (_skipRrr() && Ft4MessageCodec.Is73(extra))
+        if (Ft4MessageCodec.Is73(extra) || Ft4MessageCodec.IsRr73(extra))
         {
-            // Their 73 after our RR73: contact done, no further TX.
-            FinishContact();
-            return CanLog();
+            // RR73 is that station's 73. The contact ends only after we have sent one too.
+            _theySent73 = true;
+            if (!IsOutgoingClosing(CurrentTxMessage))
+                CurrentTxMessage = Ft4MessageCodec.Build73(TheirCall, my);
+            return TryCompleteContact();
         }
 
-        if (Ft4MessageCodec.IsRrr(extra) || Ft4MessageCodec.IsRr73(extra) || Ft4MessageCodec.Is73(extra))
+        if (Ft4MessageCodec.IsRrr(extra))
         {
-            if (CurrentTxMessage.EndsWith(" RR73", StringComparison.Ordinal)
-                || CurrentTxMessage.EndsWith(" 73", StringComparison.Ordinal))
-            {
-                // We already sent closing; their ack finishes the QSO.
-                FinishContact();
-                return CanLog();
-            }
-
-            CurrentTxMessage = Ft4MessageCodec.Build73(TheirCall, my);
+            // RRR is not a sign-off. Send 73 unless one is already queued.
+            if (!IsOutgoingClosing(CurrentTxMessage))
+                CurrentTxMessage = Ft4MessageCodec.Build73(TheirCall, my);
             return false;
         }
 
@@ -403,8 +409,8 @@ public sealed class Ft4QsoSequencer
         && Ft4MessageCodec.IsRogerReport(extra);
 
     /// <summary>
-    /// After RR73, TX stops. A repeated report means they did not copy it, so send RR73
-    /// (or RRR) again. Their 73 leaves the contact finished.
+    /// The contact is already finished. A repeated report means they did not copy the
+    /// closing message, so send RR73 (or RRR) again. Their 73 leaves the contact finished.
     /// </summary>
     private void ResumeClosingIfTheyRepeatReport(string? callTo, string callDe, string? extra, string my)
     {
@@ -424,6 +430,8 @@ public sealed class Ft4QsoSequencer
         Phase = Ft4QsoPhase.InQso;
         TransmitEnabled = true;
         QsoCompletedUtc = null;
+        _weSent73 = false;
+        _theySent73 = false;
     }
 
     /// <summary>True while our next TX is still the first grid reply to their CQ.</summary>
@@ -486,7 +494,10 @@ public sealed class Ft4QsoSequencer
         return true;
     }
 
-    /// <summary>Called after a TX message was fully sent.</summary>
+    /// <summary>
+    /// Called after a TX message was fully sent. Our 73 or RR73 counts as sent.
+    /// The contact finishes only when the other station has sent 73 or RR73 as well.
+    /// </summary>
     public bool OnTxCompleted()
     {
         lock (_gate)
@@ -494,23 +505,29 @@ public sealed class Ft4QsoSequencer
             if (Phase != Ft4QsoPhase.InQso)
                 return false;
 
-            var msg = CurrentTxMessage;
-            if (_skipRrr() && msg.EndsWith(" RR73", StringComparison.Ordinal))
-            {
-                FinishContact();
-                return CanLog();
-            }
+            if (!IsOutgoingClosing(CurrentTxMessage))
+                return false;
 
-            if (msg.EndsWith(" 73", StringComparison.Ordinal)
-                && !msg.EndsWith(" RR73", StringComparison.Ordinal))
-            {
-                FinishContact();
-                return CanLog();
-            }
-
-            return false;
+            _weSent73 = true;
+            return TryCompleteContact();
         }
     }
+
+    /// <summary>Stop and log only after both stations have sent 73 (RR73 counts).</summary>
+    private bool TryCompleteContact()
+    {
+        if (!_weSent73 || !_theySent73)
+            return false;
+
+        FinishContact();
+        return CanLog();
+    }
+
+    /// <summary>True for our 73 and RR73. RRR is not a sign-off.</summary>
+    private static bool IsOutgoingClosing(string msg) =>
+        msg.EndsWith(" RR73", StringComparison.Ordinal)
+        || (msg.EndsWith(" 73", StringComparison.Ordinal)
+            && !msg.EndsWith(" RR73", StringComparison.Ordinal));
 
     private void FinishContact()
     {

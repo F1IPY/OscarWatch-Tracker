@@ -606,12 +606,21 @@ public sealed class Ft4ModemService : IDisposable
 
         if (_rig.TryGetUplinkRfPowerWatts(out var watts) && Ft4RfPowerLimit.ExceedsLimit(watts))
         {
-            if (_sequencer?.TransmitEnabled == true)
-                HaltTx();
+            var lowered = _settings.Current.Ft4.AutoLowerRfPower
+                && _rig.TrySetUplinkRfPowerWatts(Ft4RfPowerLimit.MaxWatts)
+                && _rig.TryGetUplinkRfPowerWatts(out watts)
+                && !Ft4RfPowerLimit.ExceedsLimit(watts);
+            if (!lowered)
+            {
+                if (_sequencer?.TransmitEnabled == true)
+                    HaltTx();
 
-            Status = _l.Get(Ft4RfPowerLimit.StatusKey, (int)Ft4RfPowerLimit.MaxWatts);
-            Changed?.Invoke();
-            return false;
+                Status = _l.Get(Ft4RfPowerLimit.StatusKey, (int)Ft4RfPowerLimit.MaxWatts);
+                Changed?.Invoke();
+                return false;
+            }
+
+            Log.Information("FT4 lowered uplink RF power to {Watts:0} W", watts);
         }
 
         return true;

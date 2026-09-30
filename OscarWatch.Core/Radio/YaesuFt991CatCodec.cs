@@ -105,6 +105,18 @@ public static class YaesuFt991CatCodec
     /// <summary>Read set RF power (watts). Answer is <c>PCxxx;</c> with xxx = 005–100.</summary>
     public static string BuildReadPowerCommand() => "PC;";
 
+    /// <summary>Set RF power. <c>PCxxx;</c> with xxx = 005–100.</summary>
+    public static bool TryBuildSetPowerCommand(double watts, out string command)
+    {
+        command = "";
+        var rounded = (int)Math.Round(watts);
+        if (rounded is < 5 or > 100)
+            return false;
+
+        command = $"PC{rounded:D3};";
+        return true;
+    }
+
     /// <summary>Parse <c>PCxxx;</c> (or bare digits) into watts.</summary>
     public static bool TryParsePowerWatts(ReadOnlySpan<char> response, out int watts)
     {

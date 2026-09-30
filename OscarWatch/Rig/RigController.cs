@@ -209,6 +209,25 @@ public sealed class RigController : IRigController, IDisposable
         return true;
     }
 
+    public bool TrySetUplinkRfPowerWatts(double watts)
+    {
+        var command = new RigCommand(RigCommandKind.SetUplinkRfPower)
+        {
+            RfPowerWatts = watts
+        };
+        try
+        {
+            EnqueueAndWait(command, TimeSpan.FromSeconds(2));
+        }
+        catch (TimeoutException ex)
+        {
+            Log.Debug(ex, "RF power set timed out");
+            return false;
+        }
+
+        return command.Succeeded;
+    }
+
     public void Disconnect()
     {
         _disconnectRequested = true;
@@ -389,6 +408,11 @@ public sealed class RigController : IRigController, IDisposable
 
                 case RigCommandKind.ReadUplinkRfPower:
                     command.RfPowerWatts = TryReadUplinkRfPowerWattsOnWorker();
+                    break;
+
+                case RigCommandKind.SetUplinkRfPower:
+                    command.Succeeded = command.RfPowerWatts is { } target
+                        && TrySetUplinkRfPowerWattsOnWorker(target);
                     break;
 
                 case RigCommandKind.Disconnect:
@@ -2748,6 +2772,44 @@ public sealed class RigController : IRigController, IDisposable
         }
     }
 
+    private bool TrySetUplinkRfPowerWattsOnWorker(double watts)
+    {
+        try
+        {
+            var driver = TxDriver();
+            if (driver is null || !driver.SupportsRfPowerWrite)
+                return false;
+
+            if (driver.TrySetRfPowerWatts(watts))
+            {
+                Log.Information("Set uplink RF power to {Watts:0} W on {Rig}", watts, driver.RigType);
+                return true;
+            }
+
+            var hz = _lastRigTxHz;
+            if (_cachedContext is { Corrected.RadioTransmitKHz: var txKHz } && txKHz > 0)
+                hz = (long)Math.Round(txKHz * 1000.0);
+
+            if (!IcomRfPowerEstimator.TryLevelForWatts(driver.RigType, hz, watts, out var level))
+                return false;
+
+            if (!driver.TrySetRfPowerLevel(level))
+                return false;
+
+            Log.Information(
+                "Set uplink RF power to {Watts:0} W (CI-V level {Level}) on {Rig}",
+                watts,
+                level,
+                driver.RigType);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Log.Debug(ex, "Uplink RF power set failed");
+            return false;
+        }
+    }
+
     private (RigStatusKind Kind, string? Port, string? Detail) DescribeConnectionFailure(RigSettings settings)
     {
         if (_lastConnectErrorKind == SerialPortConnectErrorKind.DualSamePort)
@@ -2789,6 +2851,7 @@ public sealed class RigController : IRigController, IDisposable
         SetFt4SlotGatedDoppler,
         ForceFt4DopplerStep,
         ReadUplinkRfPower,
+        SetUplinkRfPower,
         Disconnect,
         Drain,
         Shutdown
@@ -2828,6 +2891,7 @@ public sealed class RigController : IRigController, IDisposable
         public bool HandshakeAssert { get; }
         public bool Ft4HoldDoppler { get; }
         public double? RfPowerWatts { get; set; }
+        public bool Succeeded { get; set; }
         public ManualResetEventSlim? Completed { get; set; }
     }
 }

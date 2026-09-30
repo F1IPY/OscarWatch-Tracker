@@ -3988,6 +3988,12 @@ Aktuell: {1} ({2})</value>
   <data name="Ft4.AutoReply.Note">
     <value>Beim CQ-Rufen wird die erste Station beantwortet, die Sie ruft. Abwählen, um CQ weiterzurufen, bis Sie eine Station anklicken. Erneut auswählen, um den nächsten Anrufer zu beantworten, auch einen aus den letzten Sekunden.</value>
   </data>
+  <data name="Ft4.AutoLowerRfPower">
+    <value>HF-Leistung auf 30 W senken</value>
+  </data>
+  <data name="Ft4.AutoLowerRfPower.Note">
+    <value>Meldet das Gerät mehr als 30 W, setzt OscarWatch die Leistung vor dem Senden auf 30 W. Das gilt für ICOM, Yaesu FT-991 und FT-991A sowie Kenwood TS-2000. Das Gerät bleibt auf diesem Wert. Lässt sich die Leistung nicht ändern, bleibt das Senden gesperrt.</value>
+  </data>
   <data name="Ft4.CloseWhileTx.Title">
     <value>FT4 beim Senden schließen</value>
   </data>

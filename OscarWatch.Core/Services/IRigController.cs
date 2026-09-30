@@ -39,6 +39,13 @@ public interface IRigController
     /// </summary>
     bool TryGetUplinkRfPowerWatts(out double watts);
 
+    /// <summary>
+    /// Set the uplink radio's RF power in watts when the driver can write it
+    /// (ICOM CI-V, or Yaesu/Kenwood <c>PC</c>). Returns false when unsupported,
+    /// disconnected, or the radio did not accept the command.
+    /// </summary>
+    bool TrySetUplinkRfPowerWatts(double watts);
+
     void Disconnect();
 
     /// <summary>Disconnect and block until the rig worker has torn down drivers and cleared tracking state.</summary>

@@ -98,6 +98,18 @@ public sealed class KenwoodTs2000Driver : IRigDriver
         return true;
     }
 
+    public bool SupportsRfPowerWrite => true;
+
+    public bool TrySetRfPowerWatts(double watts)
+    {
+        if (!_transport.IsOpen || !KenwoodCatCodec.TryBuildSetPowerCommand(watts, out var command))
+            return false;
+
+        var reply = _transport.Transact(command, _catDelayMs);
+        return !string.IsNullOrEmpty(reply)
+            && !reply.Contains('?', StringComparison.Ordinal);
+    }
+
     public long? ReadFrequencyHz(RigVfo vfo)
     {
         var cached = CachedFrequencyHz(vfo);

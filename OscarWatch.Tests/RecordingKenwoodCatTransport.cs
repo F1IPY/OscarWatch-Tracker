@@ -80,11 +80,21 @@ internal sealed class RecordingKenwoodCatTransport : IKenwoodCatTransport
             "FA;" => KenwoodCatCodec.BuildSetFrequencyCommand('A', FaHz),
             "FB;" => KenwoodCatCodec.BuildSetFrequencyCommand('B', FbHz),
             "PC;" => $"PC{RfPowerWatts:D3};",
+            _ when TryRememberPowerSet(normalized) => normalized,
             _ => KenwoodCatCodec.IsReadCommand(normalized) ? null : normalized
         };
     }
 
     public void Dispose() => IsOpen = false;
+
+    private bool TryRememberPowerSet(string normalized)
+    {
+        if (!normalized.StartsWith("PC", StringComparison.OrdinalIgnoreCase) || normalized == "PC;")
+            return false;
+        if (KenwoodCatCodec.TryParsePowerWatts(normalized, out var watts))
+            RfPowerWatts = watts;
+        return true;
+    }
 
     private void ApplySatelliteModeCommand(string normalized)
     {

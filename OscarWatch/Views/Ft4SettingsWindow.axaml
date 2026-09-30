@@ -206,6 +206,11 @@
             </Grid>
             <TextBlock Classes="ft4-note"
                        Text="{loc:Localize Key=Ft4.TxWatchdogMinutes.Note}" />
+            <CheckBox Content="{loc:Localize Key=Ft4.AutoLowerRfPower}"
+                      IsChecked="{Binding AutoLowerRfPower}" />
+            <TextBlock Classes="ft4-note"
+                       Margin="24,0,0,0"
+                       Text="{loc:Localize Key=Ft4.AutoLowerRfPower.Note}" />
 
             <Separator Classes="ft4-rule" />
             <TextBlock Classes="ft4-section"

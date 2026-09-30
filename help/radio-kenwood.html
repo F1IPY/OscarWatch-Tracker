@@ -85,8 +85,9 @@
         <li>Satellite mode <strong>exit when you quit or disconnect</strong>, then COM port close with RTS/DTR dropped so USB serial adapters release cleanly.</li>
       </ul>
       <p>
-        OscarWatch does <strong>not</strong> change RF power. Set watts on the radio yourself.
-        FT4 reads that setting and will not transmit above 30 W.
+        FT4 reads the set power and will not transmit above 30 W. Tick
+        <strong>Lower RF power to 30 W</strong> in the FT4 modem settings and OscarWatch sends
+        <code>PC030;</code> before transmitting. The radio stays at that setting.
       </p>
       <p>
         If SATL cannot be confirmed via <code>SA;</code>, OscarWatch continues FA/FB tracking in a degraded state and

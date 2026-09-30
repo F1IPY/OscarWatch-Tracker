@@ -78,6 +78,13 @@ public sealed class Ft4Settings
     public bool AutoReply { get; set; } = true;
 
     /// <summary>
+    /// When true, FT4 sets the radio's RF power to <see cref="Ft4RfPowerLimit.MaxWatts"/>
+    /// before transmitting if the radio reports a higher setting. ICOM uses CI-V.
+    /// Yaesu FT-991/FT-991A and Kenwood TS-2000 use the <c>PC</c> command. The radio stays at that level.
+    /// </summary>
+    public bool AutoLowerRfPower { get; set; }
+
+    /// <summary>
     /// When true (default), hold CAT Doppler for each FT4 slot and cancel within-slot
     /// uplink drift in the TX audio (OrbitDeck audioDopplerTX).
     /// </summary>

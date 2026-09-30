@@ -172,9 +172,21 @@ public static class KenwoodCatCodec
 
     /// <summary>
     /// Read set RF power (watts) for the current transmit band.
-    /// Answer is <c>PCnnn;</c> with nnn = 005–100. OscarWatch never sends a <c>PC</c> set.
+    /// Answer is <c>PCnnn;</c> with nnn = 005–100.
     /// </summary>
     public static string BuildReadPowerCommand() => "PC;";
+
+    /// <summary>Set RF power. <c>PCnnn;</c> with nnn = 005–100.</summary>
+    public static bool TryBuildSetPowerCommand(double watts, out string command)
+    {
+        command = "";
+        var rounded = (int)Math.Round(watts);
+        if (rounded is < 5 or > 100)
+            return false;
+
+        command = $"PC{rounded:D3};";
+        return true;
+    }
 
     /// <summary>Parse <c>PCnnn;</c> (or bare digits) into watts. Manual range is 005–100.</summary>
     public static bool TryParsePowerWatts(ReadOnlySpan<char> response, out int watts)

@@ -315,6 +315,16 @@ public abstract class IcomCivDriverBase : IRigDriver
         return true;
     }
 
+    public bool SupportsRfPowerWrite => true;
+
+    public bool TrySetRfPowerLevel(int level0To255)
+    {
+        if (_transport is null || !IsConnected)
+            return false;
+
+        return SendWithAckRetry(IcomCivCodec.EncodeWriteRfPowerCommand(level0To255), "set RF power");
+    }
+
     public void SetPtt(bool transmit) =>
         SendWithAckRetry(
             transmit ? [0x1C, 0x00, 0x01] : [0x1C, 0x00, 0x00],

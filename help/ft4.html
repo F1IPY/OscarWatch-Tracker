@@ -97,7 +97,10 @@
         <li>AO-7 is focused (AMSAT has asked that FT4 is not used there);</li>
         <li>the radio reports more than 30 W. OscarWatch can read this on ICOM radios that report
           power over CI-V (for example the IC-9700), on the Yaesu FT-991 and FT-991A, and on the
-          Kenwood TS-2000. Turn the power down and try again. Radios that cannot report power are not checked.</li>
+          Kenwood TS-2000. Turn the power down and try again, or tick
+          <strong>Lower RF power to 30 W</strong> under <strong>Settings → Modem</strong>.
+          That sets the power on an ICOM, a Yaesu FT-991 or FT-991A, or a Kenwood TS-2000, and leaves it there.
+          Radios that cannot report power are not checked.</li>
       </ul>
 
       <h2 id="first-contact">A contact</h2>
@@ -116,8 +119,8 @@
           in the TX message, chooses the right slot, and turns transmit on.</li>
         <li>Leave it to run. Your sends appear as <strong>TX</strong>. The copy from the satellite
           appears as <strong>Echo</strong>. The other station's lines appear with no label in the TX column.</li>
-        <li>When both signal reports have been exchanged and the contact ends with 73 or RR73, it is
-          saved to the <a href="qso-logbook.html">logbook</a>.</li>
+        <li>When both signal reports have been exchanged and both stations have sent 73, it is
+          saved to the <a href="qso-logbook.html">logbook</a>. RR73 counts as that station's 73.</li>
       </ol>
       <p>
         Press <strong>Halt Tx</strong> at any time to stop at once. Closing the window while it is
@@ -142,15 +145,17 @@
         <tr><td><code>G4ABC MM9SQL +05</code></td><td>Your signal report to them. Higher is stronger. Below zero is still fine.</td></tr>
         <tr><td><code>MM9SQL G4ABC R+02</code></td><td>They copied your report, and this is their report to you.</td></tr>
         <tr><td><code>G4ABC MM9SQL RR73</code></td><td>You copied them, and you are saying goodbye in the same message.</td></tr>
-        <tr><td><code>MM9SQL G4ABC 73</code></td><td>They signed off. The contact is finished and can be logged.</td></tr>
+        <tr><td><code>MM9SQL G4ABC 73</code></td><td>They signed off. The contact is finished once you have sent 73 as well, and it can be logged.</td></tr>
       </table>
       <p>
         If you answer someone else's CQ, the first message OscarWatch sends is your grid, not a report.
         The reports come after they reply.
       </p>
       <p>
-        If they do not copy your RR73 and keep sending a report, OscarWatch sends RR73 again.
-        It does not keep transmitting if the band goes quiet. After the contact has finished, press
+        A contact is complete when both stations have sent 73. RR73 counts as that station's 73.
+        OscarWatch keeps transmitting 73 or RR73 until the other station has sent theirs.
+        If they do not copy your RR73 and keep sending a report, RR73 is sent again. If nobody replies,
+        transmit stops after the watchdog time. After the contact has finished, press
         <strong>CQ</strong> for a new call. OscarWatch will not answer the station you have just worked.
       </p>
       <p>
@@ -355,7 +360,8 @@
 
       <h2 id="logging">Logging</h2>
       <p>
-        A contact that ends with 73 or RR73, and has both signal reports, is saved to the
+        A contact is saved when both stations have sent 73 (RR73 counts as 73) and both signal reports
+        have been exchanged. It is written to the
         <a href="qso-logbook.html">OscarWatch Logbook</a> on its own. If you have no logbook yet,
         OscarWatch creates <strong>Main logbook</strong> and uses the grid from
         <strong>Settings → Station</strong>. Set your callsign afterwards with
@@ -371,7 +377,7 @@
       <ul>
         <li><strong>Nothing decodes</strong>: check the input soundcard, and that traces are on the waterfall. If DT for most stations is a long way from +0.5, set the PC clock, or connect a GPS so FT4 can correct it.</li>
         <li><strong>The radio does not transmit</strong>: check the PTT method and the output soundcard. For VOX, the radio's VOX or data VOX has to be on.</li>
-        <li><strong>Transmit is blocked</strong>: read the status line. It names the reason: the satellite, power above 30 W, or a missing callsign or grid.</li>
+        <li><strong>Transmit is blocked</strong>: read the status line. It names the reason: the satellite, power above 30 W, or a missing callsign or grid. <strong>Settings → Modem → Lower RF power to 30 W</strong> can set the power on an ICOM, a Yaesu FT-991 or FT-991A, or a Kenwood TS-2000.</li>
         <li><strong>No echo</strong>: you need to be inside the footprint, on a frequency the transponder will repeat, with enough power. Tune shows whether a tone comes back.</li>
         <li><strong>Echo sits away from the red bracket</strong>: wait a slot or two for echo calibration. If it keeps jumping, clear that satellite under <strong>Settings → Echo calibration</strong> and set the satellite panel TX offset to zero.</li>
         <li><strong>"Native FT4 library not found"</strong>: see <a href="#advanced">More detail</a>.</li>

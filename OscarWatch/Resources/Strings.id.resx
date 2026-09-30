@@ -3988,6 +3988,12 @@ Terbaru: {1} ({2})</value>
   <data name="Ft4.AutoReply.Note">
     <value>Saat memanggil CQ, jawab stasiun pertama yang memanggil Anda. Nonaktifkan untuk terus memanggil CQ sampai Anda mengklik stasiun. Aktifkan lagi untuk menjawab pemanggil berikutnya, termasuk yang memanggil beberapa detik lalu.</value>
   </data>
+  <data name="Ft4.AutoLowerRfPower">
+    <value>Turunkan daya RF ke 30 W</value>
+  </data>
+  <data name="Ft4.AutoLowerRfPower.Note">
+    <value>Jika radio melaporkan lebih dari 30 W, OscarWatch mengatur daya ke 30 W sebelum memancar. Ini berlaku untuk ICOM, Yaesu FT-991 dan FT-991A, serta Kenwood TS-2000. Radio tetap pada setelan itu. Jika daya tidak dapat diubah, pancaran tetap diblokir.</value>
+  </data>
   <data name="Ft4.CloseWhileTx.Title">
     <value>Tutup FT4 saat memancar</value>
   </data>

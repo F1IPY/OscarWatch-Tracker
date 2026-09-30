@@ -3984,6 +3984,12 @@
   <data name="Ft4.AutoReply.Note">
     <value>CQ中は、最初に呼んできた局に応答します。オフにすると、局をクリックするまでCQを続けます。再度オンにすると、直前数秒の呼び出しを含め、次の局に応答します。</value>
   </data>
+  <data name="Ft4.AutoLowerRfPower">
+    <value>RF出力を30 Wまで下げる</value>
+  </data>
+  <data name="Ft4.AutoLowerRfPower.Note">
+    <value>無線機が30 Wを超えると報告した場合、送信前に30 Wへ設定します。ICOM、Yaesu FT-991 / FT-991A、Kenwood TS-2000で動作します。無線機はその出力のままです。変更できない場合、送信はブロックされたままです。</value>
+  </data>
   <data name="Ft4.CloseWhileTx.Title">
     <value>送信中に FT4 を閉じる</value>
   </data>

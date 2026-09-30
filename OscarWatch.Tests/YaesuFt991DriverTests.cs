@@ -157,6 +157,34 @@ public sealed class YaesuFt991DriverTests
     }
 
     [Fact]
+    public void TrySetRfPowerWatts_sends_pc_command()
+    {
+        var transport = new RecordingYaesuNewCatTransport { RfPowerWatts = 50 };
+        var driver = new YaesuFt991Driver(RigType.YaesuFt991, transport);
+        driver.Open();
+        transport.SentCommands.Clear();
+
+        Assert.True(driver.SupportsRfPowerWrite);
+        Assert.True(driver.TrySetRfPowerWatts(30));
+        Assert.Contains("PC030;", transport.SentCommands);
+        Assert.True(driver.TryReadRfPowerWatts(out var watts));
+        Assert.Equal(30.0, watts);
+    }
+
+    [Fact]
+    public void TrySetRfPowerWatts_rejects_out_of_range()
+    {
+        var transport = new RecordingYaesuNewCatTransport();
+        var driver = new YaesuFt991aDriver(transport);
+        driver.Open();
+        transport.SentCommands.Clear();
+
+        Assert.False(driver.TrySetRfPowerWatts(4));
+        Assert.False(driver.TrySetRfPowerWatts(101));
+        Assert.Empty(transport.SentCommands);
+    }
+
+    [Fact]
     public void Ft991a_TryReadRfPowerWatts_reads_pc_command()
     {
         var transport = new RecordingYaesuNewCatTransport { RfPowerWatts = 20 };

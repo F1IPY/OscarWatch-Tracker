@@ -28,10 +28,16 @@ public sealed class Ft4QsoSequencerTests
         Assert.False(seq.OnDecoded(Msg("MM9SQL G4ABC -10", snr: -10f)));
         Assert.Equal("G4ABC MM9SQL RR73", seq.CurrentTxMessage);
 
-        Assert.True(seq.OnTxCompleted());
-        Assert.Equal(Ft4QsoPhase.Finished, seq.Phase);
-        Assert.True(seq.CanLog());
+        // Our RR73 is sent. Their 73 has not arrived, so TX stays on.
+        Assert.False(seq.OnTxCompleted());
+        Assert.Equal(Ft4QsoPhase.InQso, seq.Phase);
+        Assert.True(seq.TransmitEnabled);
         Assert.Equal("-10", seq.ReportReceived);
+
+        Assert.True(seq.OnDecoded(Msg("MM9SQL G4ABC 73")));
+        Assert.Equal(Ft4QsoPhase.Finished, seq.Phase);
+        Assert.False(seq.TransmitEnabled);
+        Assert.True(seq.CanLog());
     }
 
     [Fact]
@@ -42,9 +48,9 @@ public sealed class Ft4QsoSequencerTests
         seq.OnDecoded(Msg("MM9SQL G1YEF IO91"));
         seq.OnDecoded(Msg("MM9SQL G1YEF R-17"));
         Assert.Equal("G1YEF MM9SQL RR73", seq.CurrentTxMessage);
-        Assert.True(seq.OnTxCompleted());
-        Assert.Equal(Ft4QsoPhase.Finished, seq.Phase);
-        Assert.False(seq.TransmitEnabled);
+        Assert.False(seq.OnTxCompleted());
+        Assert.Equal(Ft4QsoPhase.InQso, seq.Phase);
+        Assert.True(seq.TransmitEnabled);
 
         Assert.False(seq.OnDecoded(Msg("MM9SQL G1YEF R-17")));
         Assert.Equal(Ft4QsoPhase.InQso, seq.Phase);
@@ -52,6 +58,16 @@ public sealed class Ft4QsoSequencerTests
         Assert.Equal("G1YEF MM9SQL RR73", seq.CurrentTxMessage);
         Assert.Null(seq.QsoCompletedUtc);
 
+        Assert.True(seq.OnDecoded(Msg("MM9SQL G1YEF 73")));
+        Assert.Equal(Ft4QsoPhase.Finished, seq.Phase);
+        Assert.False(seq.TransmitEnabled);
+
+        // They missed the sign-off and send the report again: RR73 goes out once more.
+        Assert.False(seq.OnDecoded(Msg("MM9SQL G1YEF R-17")));
+        Assert.Equal(Ft4QsoPhase.InQso, seq.Phase);
+        Assert.True(seq.TransmitEnabled);
+        Assert.Equal("G1YEF MM9SQL RR73", seq.CurrentTxMessage);
+        Assert.False(seq.OnTxCompleted());
         Assert.True(seq.OnDecoded(Msg("MM9SQL G1YEF 73")));
         Assert.Equal(Ft4QsoPhase.Finished, seq.Phase);
         Assert.False(seq.TransmitEnabled);
@@ -366,7 +382,12 @@ public sealed class Ft4QsoSequencerTests
         seq.OnDecoded(Msg("MM9SQL G4ABC IO91"));
         seq.OnDecoded(Msg("MM9SQL G4ABC -08"));
         Assert.Equal("G4ABC MM9SQL RR73", seq.CurrentTxMessage);
-        Assert.True(seq.OnDecoded(Msg("MM9SQL G4ABC 73")));
+        // Heard before we have transmitted RR73: keep TX until our 73 is sent.
+        Assert.False(seq.OnDecoded(Msg("MM9SQL G4ABC 73")));
+        Assert.Equal(Ft4QsoPhase.InQso, seq.Phase);
+        Assert.True(seq.TransmitEnabled);
+
+        Assert.True(seq.OnTxCompleted());
         Assert.Equal(Ft4QsoPhase.Finished, seq.Phase);
         Assert.False(seq.TransmitEnabled);
     }
@@ -379,7 +400,9 @@ public sealed class Ft4QsoSequencerTests
         seq.OnDecoded(Msg("MM9SQL G1YEF IO91", snr: 15f));
         Assert.Equal("G1YEF MM9SQL +15", seq.CurrentTxMessage);
         seq.OnDecoded(Msg("MM9SQL G1YEF +05"));
-        Assert.True(seq.OnTxCompleted());
+        Assert.False(seq.OnTxCompleted());
+        Assert.Null(seq.QsoCompletedUtc);
+        Assert.True(seq.OnDecoded(Msg("MM9SQL G1YEF 73")));
         Assert.NotNull(seq.QsoCompletedUtc);
 
         var completed = seq.QsoCompletedUtc!.Value;
@@ -424,6 +447,10 @@ public sealed class Ft4QsoSequencerTests
         Assert.Equal("G4ABC MM9SQL 73", seq.CurrentTxMessage);
         Assert.True(seq.TransmitEnabled);
         Assert.False(seq.OnTxCompleted());
+        Assert.Equal(Ft4QsoPhase.InQso, seq.Phase);
+        Assert.True(seq.TransmitEnabled);
+
+        Assert.False(seq.OnDecoded(Msg("MM9SQL G4ABC 73")));
         Assert.Equal(Ft4QsoPhase.Finished, seq.Phase);
         Assert.False(seq.TransmitEnabled);
 

@@ -34,6 +34,7 @@ internal sealed class RecordingIcomCivTransport : IIcomCivTransport
             0x05 => HandleSetFrequency(body),
             0x03 => NextReadResponse ?? BuildReadResponse(MainHz),
             0x07 => [0xFE, 0xFE, 0x60, 0x00, 0xFB, 0xFD],
+            0x14 when body.Length >= 4 && body[1] == 0x0A => HandleWriteRfPower(body),
             0x14 when body.Length >= 2 && body[1] == 0x0A => BuildRfPowerResponse(RfPowerLevel),
             _ => [0xFE, 0xFE, 0x60, 0x00, 0xFB, 0xFD]
         };
@@ -85,6 +86,15 @@ internal sealed class RecordingIcomCivTransport : IIcomCivTransport
     {
         var body = IcomCivCodec.EncodeSetFrequencyHz(hz);
         return [0xFE, 0xFE, 0x60, 0x00, 0x00, body[1], body[2], body[3], body[4], body[5], 0xFB, 0xFD];
+    }
+
+    private byte[] HandleWriteRfPower(ReadOnlySpan<byte> body)
+    {
+        var level = IcomCivCodec.DecodeLevel255FromResponse(
+            [0xFE, 0xFE, 0xE0, 0xA2, body[0], body[1], body[2], body[3], 0xFD]);
+        if (level is not null)
+            RfPowerLevel = level.Value;
+        return [0xFE, 0xFE, 0x60, 0x00, 0xFB, 0xFD];
     }
 
     private static byte[] BuildRfPowerResponse(int level)

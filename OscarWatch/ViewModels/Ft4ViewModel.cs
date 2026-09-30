@@ -69,6 +69,7 @@ public partial class Ft4ViewModel : ViewModelBase, IDisposable
         _txLevel = Math.Clamp(ft4.TxLevel, 0.05, 1.0);
         _holdTxFrequency = ft4.HoldTxFrequency;
         _autoReply = ft4.AutoReply;
+        _autoLowerRfPower = ft4.AutoLowerRfPower;
         _audioDopplerTx = ft4.AudioDopplerTx;
         _audioDopplerRx = ft4.AudioDopplerRx;
         _parallelTxEchoDecode = ft4.ParallelTxEchoDecode;
@@ -192,6 +193,7 @@ public partial class Ft4ViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private bool _preferEvenSlot;
     [ObservableProperty] private bool _holdTxFrequency = true;
     [ObservableProperty] private bool _autoReply = true;
+    [ObservableProperty] private bool _autoLowerRfPower;
     [ObservableProperty] private bool _audioDopplerTx = true;
     [ObservableProperty] private bool _audioDopplerRx = true;
     [ObservableProperty] private bool _parallelTxEchoDecode = true;
@@ -244,6 +246,12 @@ public partial class Ft4ViewModel : ViewModelBase, IDisposable
         // The sequencer must see this tick immediately. A settings read alone
         // left CQ running after the box was cleared and ticked again.
         _modem.SetAutoReply(value);
+    }
+
+    partial void OnAutoLowerRfPowerChanged(bool value)
+    {
+        _settings.Current.Ft4.AutoLowerRfPower = value;
+        _settings.RequestSave();
     }
 
     partial void OnHoldTxFrequencyChanged(bool value)

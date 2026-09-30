@@ -26,6 +26,30 @@ public static class IcomRfPowerEstimator
         return true;
     }
 
+    /// <summary>
+    /// CI-V level (0–255) for a target wattage on this radio and frequency.
+    /// Uses the floor so the set point does not land above the requested watts.
+    /// </summary>
+    public static bool TryLevelForWatts(RigType rigType, long frequencyHz, double watts, out int level0To255)
+    {
+        level0To255 = 0;
+        if (watts < 0 || double.IsNaN(watts))
+            return false;
+
+        var max = MaxPowerWatts(rigType, frequencyHz);
+        if (max is null or <= 0)
+            return false;
+
+        if (watts >= max.Value)
+        {
+            level0To255 = 255;
+            return true;
+        }
+
+        level0To255 = (int)Math.Floor(watts / max.Value * 255.0);
+        return true;
+    }
+
     /// <summary>Catalogue maximum RF power (W) for the given radio and frequency band.</summary>
     public static int? MaxPowerWatts(RigType rigType, long frequencyHz)
     {

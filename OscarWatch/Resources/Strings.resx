@@ -3984,6 +3984,12 @@ Latest: {1} ({2})</value>
   <data name="Ft4.AutoReply.Note">
     <value>While calling CQ, answer the first station that calls you. Clear this to keep calling CQ until you click a station. Tick it again to answer the next caller, including one from the last few seconds.</value>
   </data>
+  <data name="Ft4.AutoLowerRfPower">
+    <value>Lower RF power to 30 W</value>
+  </data>
+  <data name="Ft4.AutoLowerRfPower.Note">
+    <value>When the radio reports more than 30 W, OscarWatch sets it to 30 W before transmitting. This works on ICOM radios, the Yaesu FT-991 and FT-991A, and the Kenwood TS-2000. The radio stays at that setting. If the radio cannot be changed, transmit stays blocked.</value>
+  </data>
   <data name="Ft4.CloseWhileTx.Title">
     <value>Close FT4 while transmitting</value>
   </data>

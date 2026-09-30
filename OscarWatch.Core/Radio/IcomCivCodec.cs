@@ -85,6 +85,13 @@ public static class IcomCivCodec
     /// <summary>CI-V body to read RF power (command 0x14 sub 0x0A).</summary>
     public static byte[] EncodeReadRfPowerCommand() => [0x14, 0x0A];
 
+    /// <summary>CI-V body to set RF power (command 0x14 sub 0x0A, level 0–255).</summary>
+    public static byte[] EncodeWriteRfPowerCommand(int level0To255)
+    {
+        var (high, low) = EncodeLevel255(level0To255);
+        return [0x14, 0x0A, high, low];
+    }
+
     /// <summary>
     /// Decodes a 0x14 0x0A RF-power response. Data is four BCD digits (0000–0255)
     /// packed into two bytes (minimum to maximum RF power setting).

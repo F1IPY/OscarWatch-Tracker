@@ -3984,6 +3984,12 @@ Mais recente: {1} ({2})</value>
   <data name="Ft4.AutoReply.Note">
     <value>Ao chamar CQ, responde à primeira estação que o chamar. Desmarque para continuar chamando CQ até clicar numa estação. Marque de novo para responder à próxima, inclusive uma dos últimos segundos.</value>
   </data>
+  <data name="Ft4.AutoLowerRfPower">
+    <value>Reduzir a potência de RF para 30 W</value>
+  </data>
+  <data name="Ft4.AutoLowerRfPower.Note">
+    <value>Quando o rádio indica mais de 30 W, o OscarWatch define 30 W antes de transmitir. Funciona em rádios ICOM, Yaesu FT-991 e FT-991A, e Kenwood TS-2000. O rádio permanece nesse ajuste. Se não for possível alterar, a transmissão continua bloqueada.</value>
+  </data>
   <data name="Ft4.CloseWhileTx.Title">
     <value>Fechar o FT4 durante a transmissão</value>
   </data>

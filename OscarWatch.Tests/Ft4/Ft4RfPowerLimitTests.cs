@@ -57,4 +57,30 @@ public sealed class IcomRfPowerEstimatorTests
         Assert.False(IcomRfPowerEstimator.TryEstimateWatts(
             RigType.YaesuFt991a, 145_900_000, 200, out _));
     }
+
+    [Fact]
+    public void Ic9700_70cm_level_for_30w_is_102()
+    {
+        Assert.True(IcomRfPowerEstimator.TryLevelForWatts(
+            RigType.IcomIc9700, 435_000_000, Ft4RfPowerLimit.MaxWatts, out var level));
+        Assert.Equal(102, level);
+        Assert.True(IcomRfPowerEstimator.TryEstimateWatts(
+            RigType.IcomIc9700, 435_000_000, level, out var setWatts));
+        Assert.False(Ft4RfPowerLimit.ExceedsLimit(setWatts));
+    }
+
+    [Fact]
+    public void Level_for_30w_on_100w_band_stays_at_or_under_the_limit()
+    {
+        Assert.True(IcomRfPowerEstimator.TryLevelForWatts(
+            RigType.IcomIc9700, 145_900_000, Ft4RfPowerLimit.MaxWatts, out var level));
+        Assert.True(IcomRfPowerEstimator.TryEstimateWatts(
+            RigType.IcomIc9700, 145_900_000, level, out var watts));
+        Assert.False(Ft4RfPowerLimit.ExceedsLimit(watts));
+    }
+
+    [Fact]
+    public void Unknown_band_cannot_map_a_wattage_to_a_level() =>
+        Assert.False(IcomRfPowerEstimator.TryLevelForWatts(
+            RigType.YaesuFt991a, 145_900_000, 200, out _));
 }
