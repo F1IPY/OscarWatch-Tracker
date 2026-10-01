@@ -88,30 +88,6 @@ public static class Ft4EchoAligner
         return TryScanPeakHz(samples.Slice(start, end - start), sampleRate, centreHz, halfWidthHz, out peakHz);
     }
 
-    /// <summary>
-    /// Peak of a continuous tone (Tune) in a short capture window. Unlike
-    /// <see cref="TryMeasurePeakHz"/> this does not assume an FT4 burst layout.
-    /// </summary>
-    public static bool TryMeasureTonePeakHz(
-        ReadOnlySpan<float> samples,
-        int sampleRate,
-        double centreHz,
-        out double peakHz,
-        double halfWidthHz = 700)
-    {
-        peakHz = 0;
-        if (sampleRate < 8000
-            || samples.Length < sampleRate / 20
-            || !double.IsFinite(centreHz)
-            || !double.IsFinite(halfWidthHz)
-            || halfWidthHz < 20)
-        {
-            return false;
-        }
-
-        return TryScanPeakHz(samples, sampleRate, centreHz, halfWidthHz, out peakHz);
-    }
-
     private static bool TryScanPeakHz(
         ReadOnlySpan<float> burst,
         int sampleRate,

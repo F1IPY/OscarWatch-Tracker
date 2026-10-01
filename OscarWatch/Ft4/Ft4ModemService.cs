@@ -49,7 +49,6 @@ public sealed class Ft4ModemService : IDisposable
     private int _deviceSampleRate = 48000;
     private DateTime _currentSlotStart = DateTime.MinValue;
     private bool _txThisSlot;
-    private const double MaxWaterfallEchoCorrectionHz = 50;
     private long _txKickedSlotTicks; // slot start of the last KickTransmit, set from the TX timer thread
     private DateTime _lastEchoCalibrationSlot = DateTime.MinValue;
     private bool _decodeQueuedThisSlot;
@@ -1391,10 +1390,6 @@ public sealed class Ft4ModemService : IDisposable
             TaskScheduler.Default);
 
         Task.WaitAll(primary, late);
-        if (primary.Result || late.Result)
-            return;
-
-        TryCalibrateEchoFromSpectrum(slotStart, raw, txHz);
     }
 
     private void RecoverOwnEchoSequential(
@@ -1423,8 +1418,6 @@ public sealed class Ft4ModemService : IDisposable
                 return;
             }
         }
-
-        TryCalibrateEchoFromSpectrum(slotStart, raw, txHz);
     }
 
     /// <summary>Post decoder output. Returns true when our own callsign was published.</summary>
@@ -1629,44 +1622,6 @@ public sealed class Ft4ModemService : IDisposable
 
         if (TryClaimEchoCalibration(slotStart))
             ApplyEchoCalibrationHz(own.FreqHz - seq.TxAudioHz);
-    }
-
-    /// <summary>
-    /// The trace is on the waterfall but the decoder missed the message.
-    /// Measure that tone and nudge the uplink so the next slot sits on the red bracket.
-    /// </summary>
-    private void TryCalibrateEchoFromSpectrum(DateTime slotStart, float[] raw, double txHz)
-    {
-        if (_sequencer is not { IsCqMessage: true })
-            return;
-
-        if (!Ft4EchoAligner.TryMeasurePeakHz(raw, 12000, txHz, out var peakHz))
-            return;
-
-        var errorHz = peakHz - txHz;
-        if (Math.Abs(errorHz) < 15)
-            return;
-
-        // Undecoded peaks can be another station near the bracket. Only trim small drift here;
-        // large corrections come from a decoded echo (or Tune).
-        if (Math.Abs(errorHz) > MaxWaterfallEchoCorrectionHz)
-        {
-            Log.Debug(
-                "FT4 waterfall peak {Peak:0} Hz is {Error:0} Hz from the TX marker; left for a decoded echo",
-                peakHz,
-                errorHz);
-            return;
-        }
-
-        if (!TryClaimEchoCalibration(slotStart))
-            return;
-
-        Log.Information(
-            "FT4 echo on the waterfall is {Peak:0} Hz, TX marker {Tx:0} Hz, error {Error:0} Hz",
-            peakHz,
-            txHz,
-            errorHz);
-        ApplyEchoCalibrationHz(errorHz);
     }
 
     /// <summary>
