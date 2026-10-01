@@ -50,6 +50,7 @@ public sealed class Ft4ModemService : IDisposable
     private DateTime _currentSlotStart = DateTime.MinValue;
     private bool _txThisSlot;
     private long _txKickedSlotTicks; // slot start of the last KickTransmit, set from the TX timer thread
+    private double _txKickedAudioHz; // TX audio Hz sent in that slot; set before _txKickedSlotTicks
     private DateTime _lastEchoCalibrationSlot = DateTime.MinValue;
     private bool _decodeQueuedThisSlot;
     private bool? _deepDecodeActive;
@@ -855,6 +856,7 @@ public sealed class Ft4ModemService : IDisposable
         if (Interlocked.CompareExchange(ref _txRunning, 1, 0) != 0)
             return;
 
+        Interlocked.Exchange(ref _txKickedAudioHz, Math.Clamp(seq.TxAudioHz, 200, 3000));
         Interlocked.Exchange(ref _txKickedSlotTicks, slotStart.Ticks);
         _txThisSlot = true;
         _txCts?.Cancel();
@@ -1504,8 +1506,7 @@ public sealed class Ft4ModemService : IDisposable
                 if (!publishEcho)
                     continue;
 
-                if (Ft4MessageCodec.IsCq(echo.CallTo))
-                    ApplyEchoCalibration(slotStart, echo);
+                ApplyEchoCalibration(slotStart, echo);
 
                 foundOwn = true;
                 any = true;
@@ -1614,14 +1615,19 @@ public sealed class Ft4ModemService : IDisposable
             Decodes.RemoveAt(Decodes.Count - 1);
     }
 
+    /// <summary>
+    /// Any decoded own echo is our signal, so it can set the uplink trim. Measure against the
+    /// TX audio actually sent in that slot: answering a station can move TX audio before the
+    /// decode finishes.
+    /// </summary>
     private void ApplyEchoCalibration(DateTime slotStart, Ft4DecodedMessage own)
     {
-        var seq = _sequencer;
-        if (seq is null)
+        if (Interlocked.Read(ref _txKickedSlotTicks) != slotStart.Ticks)
             return;
 
+        var sentHz = Interlocked.CompareExchange(ref _txKickedAudioHz, 0, 0);
         if (TryClaimEchoCalibration(slotStart))
-            ApplyEchoCalibrationHz(own.FreqHz - seq.TxAudioHz);
+            ApplyEchoCalibrationHz(own.FreqHz - sentHz);
     }
 
     /// <summary>

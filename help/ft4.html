@@ -275,9 +275,10 @@
       <h3>Your echo</h3>
       <p>
         Doppler correction is not always exact. The satellite's own frequency can be a little off, so your echo
-        may not land in the red bracket. When OscarWatch decodes your own CQ echo, it measures the difference
-        and shifts the uplink so the next transmission comes back on the bracket. It does not use reports or 73
-        for this. The shift is remembered for that satellite and used again next time.
+        may not land in the red bracket. When OscarWatch decodes your own echo (CQ, reply, report or 73), it
+        measures the difference and shifts the uplink so the next transmission comes back on the bracket. This
+        keeps tracking drift during a contact, not only when you call CQ. The shift is remembered for that
+        satellite and used again next time.
       </p>
       <ul>
         <li>It corrects at most once per slot, so it does not chase itself.</li>
