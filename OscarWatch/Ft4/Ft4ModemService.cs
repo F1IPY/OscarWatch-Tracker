@@ -145,6 +145,7 @@ public sealed class Ft4ModemService : IDisposable
     public event Action? Changed;
 
     private string? _lastLoggedKey;
+    private string? _eligibilityBlockStatus;
 
     public IReadOnlyList<AudioInputDevice> GetInputDevices() => _audio.GetInputDevices();
 
@@ -572,18 +573,32 @@ public sealed class Ft4ModemService : IDisposable
 
     /// <summary>
     /// Re-check satellite eligibility while listening (e.g. operator switched to FM, FO-29, or AO-7).
-    /// Halts TX when the focused satellite is not allowed for FT4.
+    /// Halts TX when the focused satellite is not allowed for FT4, and clears the block
+    /// message once the operator moves to an allowed satellite.
     /// </summary>
     public void RefreshSatelliteEligibility()
     {
         var reason = EvaluateTransmitBlock();
         if (reason == Ft4SatelliteEligibility.BlockReason.None)
+        {
+            if (_eligibilityBlockStatus is null)
+                return;
+
+            var showingBlock = string.Equals(Status, _eligibilityBlockStatus, StringComparison.Ordinal);
+            _eligibilityBlockStatus = null;
+            if (!showingBlock)
+                return;
+
+            Status = _l.Get("Ft4.Status.Listening");
+            Changed?.Invoke();
             return;
+        }
 
         if (_sequencer?.TransmitEnabled == true)
             HaltTx();
 
         var msg = _l.Get(Ft4SatelliteEligibility.StatusKey(reason));
+        _eligibilityBlockStatus = msg;
         if (string.Equals(Status, msg, StringComparison.Ordinal))
             return;
 
@@ -600,6 +615,7 @@ public sealed class Ft4ModemService : IDisposable
                 HaltTx();
 
             Status = _l.Get(Ft4SatelliteEligibility.StatusKey(reason));
+            _eligibilityBlockStatus = Status;
             Changed?.Invoke();
             return false;
         }
