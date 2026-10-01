@@ -534,6 +534,8 @@ public sealed class Ft4QsoSequencer
         TransmitEnabled = false;
         Phase = Ft4QsoPhase.Finished;
         QsoCompletedUtc = DateTime.UtcNow;
+        // Leave the box on CQ so the next enable does not send the old 73.
+        CurrentTxMessage = Ft4MessageCodec.BuildCq(_myCall(), _myGrid());
     }
 
     public bool CanLog() =>

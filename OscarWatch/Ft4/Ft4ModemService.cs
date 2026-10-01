@@ -958,12 +958,13 @@ public sealed class Ft4ModemService : IDisposable
         if (ct.IsCancellationRequested)
             return;
 
-        AppendTransmittedMessage(slotStart, seq.CurrentTxMessage, audioHz);
+        var sent = seq.CurrentTxMessage;
+        AppendTransmittedMessage(slotStart, sent, audioHz);
 
         if (seq.OnTxCompleted())
             await TryLogAsync(manual: false).ConfigureAwait(false);
 
-        Status = _l.Get("Ft4.Status.TxDone", seq.CurrentTxMessage);
+        Status = _l.Get("Ft4.Status.TxDone", sent);
         Changed?.Invoke();
     }
 

@@ -37,6 +37,7 @@ public sealed class Ft4QsoSequencerTests
         Assert.True(seq.OnDecoded(Msg("MM9SQL G4ABC 73")));
         Assert.Equal(Ft4QsoPhase.Finished, seq.Phase);
         Assert.False(seq.TransmitEnabled);
+        Assert.Equal("CQ MM9SQL IO85", seq.CurrentTxMessage);
         Assert.True(seq.CanLog());
     }
 
@@ -71,6 +72,7 @@ public sealed class Ft4QsoSequencerTests
         Assert.True(seq.OnDecoded(Msg("MM9SQL G1YEF 73")));
         Assert.Equal(Ft4QsoPhase.Finished, seq.Phase);
         Assert.False(seq.TransmitEnabled);
+        Assert.Equal("CQ MM9SQL IO85", seq.CurrentTxMessage);
     }
 
     [Fact]
@@ -97,6 +99,7 @@ public sealed class Ft4QsoSequencerTests
         Assert.Equal("G4ABC MM9SQL 73", seq.CurrentTxMessage);
         Assert.True(seq.OnTxCompleted());
         Assert.Equal(Ft4QsoPhase.Finished, seq.Phase);
+        Assert.Equal("CQ MM9SQL IO85", seq.CurrentTxMessage);
     }
 
     [Fact]
@@ -184,6 +187,7 @@ public sealed class Ft4QsoSequencerTests
         Assert.Equal("2M0SQL MM9SQL 73", seq.CurrentTxMessage);
         Assert.True(seq.OnTxCompleted());
         Assert.Equal(Ft4QsoPhase.Finished, seq.Phase);
+        Assert.Equal("CQ MM9SQL IO85", seq.CurrentTxMessage);
     }
 
     [Fact]
@@ -390,6 +394,7 @@ public sealed class Ft4QsoSequencerTests
         Assert.True(seq.OnTxCompleted());
         Assert.Equal(Ft4QsoPhase.Finished, seq.Phase);
         Assert.False(seq.TransmitEnabled);
+        Assert.Equal("CQ MM9SQL IO85", seq.CurrentTxMessage);
     }
 
     [Fact]
@@ -453,6 +458,7 @@ public sealed class Ft4QsoSequencerTests
         Assert.False(seq.OnDecoded(Msg("MM9SQL G4ABC 73")));
         Assert.Equal(Ft4QsoPhase.Finished, seq.Phase);
         Assert.False(seq.TransmitEnabled);
+        Assert.Equal("CQ MM9SQL IO85", seq.CurrentTxMessage);
 
         var fresh = new Ft4QsoSequencer(() => "MM9SQL", () => "IO85", () => true);
         fresh.StartAnswer(Msg("CQ G4ABC JO01"), oppositeEvenSlot: false);
