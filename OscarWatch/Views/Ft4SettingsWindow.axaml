@@ -226,10 +226,13 @@
             <TextBlock Classes="ft4-note"
                        Margin="24,0,0,0"
                        Text="{loc:Localize Key=Ft4.ParallelTxEchoDecode.Note}" />
+          </StackPanel>
+        </ScrollViewer>
+      </TabItem>
 
-            <Separator Classes="ft4-rule" />
-            <TextBlock Classes="ft4-section"
-                       Text="{loc:Localize Key=Ft4.Settings.Group.Reporting}" />
+      <TabItem Header="{loc:Localize Key=Ft4.Settings.Group.Reporting}">
+        <ScrollViewer Margin="8,10,4,4" VerticalScrollBarVisibility="Auto">
+          <StackPanel Spacing="8">
             <CheckBox Content="{loc:Localize Key=Ft4.PskReporter}"
                       IsChecked="{Binding PskReporterEnabled}" />
             <TextBlock Classes="ft4-note"
