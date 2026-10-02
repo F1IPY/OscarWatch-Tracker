@@ -4026,6 +4026,12 @@
   <data name="Ft4.PskReporter.Note">
     <value>大约每五分钟使用本台呼号和网格，将解码到的电台发送到 pskreporter.info。报告使用上行频率，卫星名称作为天线信息发送。</value>
   </data>
+  <data name="Ft4.OscarWatchSpots">
+    <value>向 OscarWatch.org 发送 FT4 通联报告</value>
+  </data>
+  <data name="Ft4.OscarWatchSpots.Note">
+    <value>将解码到的电台发送到 oscarwatch.org，使用“设置 → OscarWatch”中的 API 令牌。保存该令牌之前无法使用。网站个人资料需要呼号和网格。</value>
+  </data>
   <data name="Ft4.DecodeFontSize">
     <value>解码文字大小</value>
   </data>

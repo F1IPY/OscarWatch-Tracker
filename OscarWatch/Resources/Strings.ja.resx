@@ -4026,6 +4026,12 @@
   <data name="Ft4.PskReporter.Note">
     <value>デコードした局を、局のコールサインとグリッドを使って約5分ごとにpskreporter.infoへ送信します。スポットにはアップリンク周波数を使い、衛星名はアンテナとして送信されます。</value>
   </data>
+  <data name="Ft4.OscarWatchSpots">
+    <value>FT4スポットをOscarWatch.orgへ送信</value>
+  </data>
+  <data name="Ft4.OscarWatchSpots.Note">
+    <value>デコードした局を oscarwatch.org に送ります。設定 → OscarWatch の API トークンを使います。トークンを保存するまで使えません。ウェブサイトのプロフィールにコールサインとグリッドスクエアが必要です。</value>
+  </data>
   <data name="Ft4.DecodeFontSize">
     <value>デコード文字サイズ</value>
   </data>

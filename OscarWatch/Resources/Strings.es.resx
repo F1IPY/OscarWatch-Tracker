@@ -4026,6 +4026,12 @@ Está utilizando la versión {0}.
   <data name="Ft4.PskReporter.Note">
     <value>Envía las estaciones que decodificas a pskreporter.info cada cinco minutos aproximadamente, con tu indicativo y locator de estación. Los spots usan la frecuencia de subida y el nombre del satélite se envía como tu antena.</value>
   </data>
+  <data name="Ft4.OscarWatchSpots">
+    <value>Enviar spots FT4 a OscarWatch.org</value>
+  </data>
+  <data name="Ft4.OscarWatchSpots.Note">
+    <value>Envía las estaciones que decodificas a oscarwatch.org, con el token de API de Ajustes → OscarWatch. No está disponible hasta que se guarde ese token. Tu perfil en la web necesita un indicativo y un locator.</value>
+  </data>
   <data name="Ft4.DecodeFontSize">
     <value>Tamaño del texto de decode</value>
   </data>

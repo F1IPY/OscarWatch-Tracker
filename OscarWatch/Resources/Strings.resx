@@ -4026,6 +4026,12 @@ Latest: {1} ({2})</value>
   <data name="Ft4.PskReporter.Note">
     <value>Sends stations you decode to pskreporter.info about every five minutes, using your station callsign and grid. Spots use the uplink frequency, and the satellite name is sent as your antenna.</value>
   </data>
+  <data name="Ft4.OscarWatchSpots">
+    <value>Send FT4 spots to OscarWatch.org</value>
+  </data>
+  <data name="Ft4.OscarWatchSpots.Note">
+    <value>Sends stations you decode to oscarwatch.org, using the API token from Settings → OscarWatch. Unavailable until that token is saved. Your website profile needs a callsign and gridsquare.</value>
+  </data>
   <data name="Ft4.DecodeFontSize">
     <value>Decode text size</value>
   </data>

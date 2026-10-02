@@ -75,6 +75,13 @@ public partial class Ft4ViewModel : ViewModelBase, IDisposable
         _parallelTxEchoDecode = ft4.ParallelTxEchoDecode;
         _txWatchdogMinutes = Ft4TxWatchdog.ClampMinutes(ft4.TxWatchdogMinutes);
         _pskReporterEnabled = ft4.PskReporterEnabled;
+        _oscarWatchSpotsTokenAvailable = Ft4OscarWatchSpots.HasApiToken(_settings.Current.SatelliteStatus.ApiToken);
+        _oscarWatchSpotsEnabled = ft4.OscarWatchSpotsEnabled && _oscarWatchSpotsTokenAvailable;
+        if (ft4.OscarWatchSpotsEnabled && !_oscarWatchSpotsTokenAvailable)
+        {
+            ft4.OscarWatchSpotsEnabled = false;
+            _settings.RequestSave();
+        }
         _modem.RxAudioHz = _rxAudioHz;
         _pttLeadMs = Math.Clamp(ft4.PttLeadMs, 0, 2000);
         _pttTailMs = Math.Clamp(ft4.PttTailMs, 0, 2000);
@@ -200,6 +207,11 @@ public partial class Ft4ViewModel : ViewModelBase, IDisposable
 
     [ObservableProperty] private int _txWatchdogMinutes = Ft4TxWatchdog.DefaultMinutes;
     [ObservableProperty] private bool _pskReporterEnabled;
+
+    /// <summary>True when Settings, OscarWatch has an API token, so spot reporting can be turned on.</summary>
+    [ObservableProperty] private bool _oscarWatchSpotsTokenAvailable;
+
+    [ObservableProperty] private bool _oscarWatchSpotsEnabled;
     [ObservableProperty] private int _pttLeadMs = 200;
     [ObservableProperty] private int _pttTailMs = 100;
     [ObservableProperty] private double _decodeFontSize = 12;
@@ -300,6 +312,18 @@ public partial class Ft4ViewModel : ViewModelBase, IDisposable
         _settings.Current.Ft4.PskReporterEnabled = value;
         _settings.RequestSave();
         _modem.ApplyPskReporterSettings();
+    }
+
+    partial void OnOscarWatchSpotsEnabledChanged(bool value)
+    {
+        if (value && !Ft4OscarWatchSpots.HasApiToken(_settings.Current.SatelliteStatus.ApiToken))
+        {
+            OscarWatchSpotsEnabled = false;
+            return;
+        }
+
+        _settings.Current.Ft4.OscarWatchSpotsEnabled = value;
+        _settings.RequestSave();
     }
 
     partial void OnPttLeadMsChanged(int value)
@@ -1351,8 +1375,18 @@ public partial class Ft4ViewModel : ViewModelBase, IDisposable
         }
     }
 
+    private void SyncOscarWatchSpotAvailability()
+    {
+        var available = Ft4OscarWatchSpots.HasApiToken(_settings.Current.SatelliteStatus.ApiToken);
+        if (available != OscarWatchSpotsTokenAvailable)
+            OscarWatchSpotsTokenAvailable = available;
+        if (!available && OscarWatchSpotsEnabled)
+            OscarWatchSpotsEnabled = false;
+    }
+
     private void RefreshUiTick()
     {
+        SyncOscarWatchSpotAvailability();
         var utc = Ft4Clock.UtcNow;
         var slotStart = Ft4SlotClock.SlotStartUtc(utc, Ft4SlotClock.Ft4SlotSeconds);
         var into = Ft4SlotClock.SecondsIntoSlot(utc, Ft4SlotClock.Ft4SlotSeconds);

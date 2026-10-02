@@ -4030,6 +4030,12 @@ Aktuell: {1} ({2})</value>
   <data name="Ft4.PskReporter.Note">
     <value>Sendet dekodierte Stationen etwa alle fünf Minuten mit Rufzeichen und Locator Ihrer Station an pskreporter.info. Spots verwenden die Uplink-Frequenz, und der Satellitenname wird als Antenne übermittelt.</value>
   </data>
+  <data name="Ft4.OscarWatchSpots">
+    <value>FT4-Spots an OscarWatch.org senden</value>
+  </data>
+  <data name="Ft4.OscarWatchSpots.Note">
+    <value>Sendet dekodierte Stationen an oscarwatch.org und verwendet das API-Token unter Einstellungen → OscarWatch. Nicht verfügbar, bis dieses Token gespeichert ist. Ihr Website-Profil braucht ein Rufzeichen und ein Locator-Feld.</value>
+  </data>
   <data name="Ft4.DecodeFontSize">
     <value>Decode-Schriftgröße</value>
   </data>

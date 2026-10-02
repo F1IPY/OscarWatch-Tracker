@@ -30,6 +30,8 @@ public sealed class Ft4ModemService : IDisposable
     private readonly Ft4AudioService _audio = new();
     private readonly Ft4PttKeyer _ptt;
     private readonly PskReporterClient _pskReporter = new();
+    private readonly OscarWatchSpotReporter _spotReporter;
+    private readonly string _spotClientId;
     private readonly object _gate = new();
 
     private CancellationTokenSource? _loopCts;
@@ -72,7 +74,8 @@ public sealed class Ft4ModemService : IDisposable
         IOrbitPropagator propagator,
         ILocalizationService localization,
         IAudioRecordingService recording,
-        IGpsService gps)
+        IGpsService gps,
+        ISatelliteSpotService spots)
     {
         _settings = settings;
         _tracking = tracking;
@@ -94,7 +97,20 @@ public sealed class Ft4ModemService : IDisposable
                 Log.Warning(ex, "{Message}", message);
         };
         ApplyPskReporterSettings();
+        _spotClientId = $"OscarWatch-Tracker/{OscarWatchHttpClients.GetProductVersion()}";
+        _spotReporter = new OscarWatchSpotReporter(spots, OscarWatchSpotsActive, () => _settings.Current.SatelliteStatus);
+        _spotReporter.Diagnostic += (message, ex) =>
+        {
+            if (ex is null)
+                Log.Information("{Message}", message);
+            else
+                Log.Warning(ex, "{Message}", message);
+        };
     }
+
+    private bool OscarWatchSpotsActive() =>
+        _settings.Current.Ft4.OscarWatchSpotsEnabled
+        && Ft4OscarWatchSpots.HasApiToken(_settings.Current.SatelliteStatus.ApiToken);
 
     /// <summary>Open or close the PSK Reporter socket to match FT4 settings.</summary>
     public void ApplyPskReporterSettings()
@@ -128,6 +144,26 @@ public sealed class Ft4ModemService : IDisposable
         catch (Exception ex)
         {
             Log.Debug(ex, "PSK Reporter spot skipped");
+        }
+    }
+
+    private void ReportToOscarWatch(Ft4DecodedMessage msg)
+    {
+        if (!OscarWatchSpotsActive())
+            return;
+
+        try
+        {
+            var snap = _snapshot.GetCurrent();
+            var station = _settings.Current.GroundStation;
+            if (!Ft4OscarWatchSpots.TryCreate(msg, snap, station.Callsign, _spotClientId, out var spot))
+                return;
+
+            _spotReporter.TryEnqueue(spot);
+        }
+        catch (Exception ex)
+        {
+            Log.Debug(ex, "OscarWatch spot skipped");
         }
     }
 
@@ -1554,6 +1590,7 @@ public sealed class Ft4ModemService : IDisposable
             if (isOwn)
                 foundOwn = true;
             ReportToPskReporter(msg);
+            ReportToOscarWatch(msg);
             Avalonia.Threading.Dispatcher.UIThread.Post(() =>
             {
                 Decodes.Insert(0, msg);
@@ -1821,6 +1858,7 @@ public sealed class Ft4ModemService : IDisposable
     {
         StopAsync().GetAwaiter().GetResult();
         _pskReporter.Dispose();
+        _spotReporter.Dispose();
         _ptt.Dispose();
         _audio.Dispose();
     }

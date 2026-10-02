@@ -235,6 +235,12 @@
             <TextBlock Classes="ft4-note"
                        Margin="24,0,0,0"
                        Text="{loc:Localize Key=Ft4.PskReporter.Note}" />
+            <CheckBox Content="{loc:Localize Key=Ft4.OscarWatchSpots}"
+                      IsChecked="{Binding OscarWatchSpotsEnabled}"
+                      IsEnabled="{Binding OscarWatchSpotsTokenAvailable}" />
+            <TextBlock Classes="ft4-note"
+                       Margin="24,0,0,0"
+                       Text="{loc:Localize Key=Ft4.OscarWatchSpots.Note}" />
           </StackPanel>
         </ScrollViewer>
       </TabItem>

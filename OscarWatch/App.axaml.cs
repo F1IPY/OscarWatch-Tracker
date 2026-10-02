@@ -85,6 +85,7 @@ public partial class App : Application
         services.AddSingleton<IGitHubReleaseService, GitHubReleaseService>();
         services.AddSingleton<IHamsAtRovesService, HamsAtRovesService>();
         services.AddSingleton<ISatelliteStatusReportService, SatelliteStatusReportService>();
+        services.AddSingleton<ISatelliteSpotService, SatelliteSpotService>();
         services.AddSingleton<ILocalizationService>(LocalizationService.Instance);
         services.AddSingleton<LiveTrackerSnapshotProvider>();
         services.AddSingleton<ILiveTrackerSnapshotProvider>(sp => sp.GetRequiredService<LiveTrackerSnapshotProvider>());

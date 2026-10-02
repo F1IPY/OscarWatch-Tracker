@@ -110,6 +110,12 @@ public sealed class Ft4Settings
     /// <summary>When true, receive decodes are reported to PSK Reporter. Off by default.</summary>
     public bool PskReporterEnabled { get; set; }
 
+    /// <summary>
+    /// When true, receive decodes are posted to OscarWatch.org satellite spots.
+    /// Off by default. Unused unless Settings, OscarWatch has an API token.
+    /// </summary>
+    public bool OscarWatchSpotsEnabled { get; set; }
+
     /// <summary>PSK Reporter UDP host. Not shown in the UI.</summary>
     public string PskReporterHost { get; set; } = PskReporterClient.DefaultHost;
 

@@ -4030,6 +4030,12 @@ LOS: {2}
   <data name="Ft4.PskReporter.Note">
     <value>ส่งสถานีที่ถอดรหัสได้ไปยัง pskreporter.info ประมาณทุกห้านาที โดยใช้คอลซายน์และกริดของสถานีคุณ สปอตใช้ความถี่อัปลิงก์ และส่งชื่อดาวเทียมเป็นข้อมูลสายอากาศ</value>
   </data>
+  <data name="Ft4.OscarWatchSpots">
+    <value>ส่งสปอต FT4 ไปยัง OscarWatch.org</value>
+  </data>
+  <data name="Ft4.OscarWatchSpots.Note">
+    <value>ส่งสถานีที่ถอดรหัสได้ไปยัง oscarwatch.org โดยใช้โทเค็น API จาก การตั้งค่า → OscarWatch ใช้ไม่ได้จนกว่าจะบันทึกโทเค็นนั้น โปรไฟล์บนเว็บไซต์ต้องมีคอลซายน์และกริดสแควร์</value>
+  </data>
   <data name="Ft4.DecodeFontSize">
     <value>ขนาดข้อความถอดรหัส</value>
   </data>

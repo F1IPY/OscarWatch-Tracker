@@ -35,6 +35,8 @@ public sealed class Ft4SettingsTests
         Assert.True(settings.AudioDopplerRx);
         Assert.True(settings.ParallelTxEchoDecode);
         Assert.Equal(Ft4TxWatchdog.DefaultMinutes, settings.TxWatchdogMinutes);
+        Assert.False(settings.PskReporterEnabled);
+        Assert.False(settings.OscarWatchSpotsEnabled);
         Assert.Equal(12, settings.DecodeFontSize);
         Assert.Equal(Ft4Settings.DefaultWaterfallRangeDb, settings.WaterfallRangeDb);
         Assert.Equal(Ft4DecodeHighlight.DefaultCallingMeColour, settings.CallingMeColour);

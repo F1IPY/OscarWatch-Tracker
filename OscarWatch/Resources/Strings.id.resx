@@ -4030,6 +4030,12 @@ Terbaru: {1} ({2})</value>
   <data name="Ft4.PskReporter.Note">
     <value>Mengirim stasiun yang Anda decode ke pskreporter.info kira-kira setiap lima menit, memakai callsign dan grid stasiun Anda. Spot memakai frekuensi uplink, dan nama satelit dikirim sebagai antena Anda.</value>
   </data>
+  <data name="Ft4.OscarWatchSpots">
+    <value>Kirim spot FT4 ke OscarWatch.org</value>
+  </data>
+  <data name="Ft4.OscarWatchSpots.Note">
+    <value>Mengirim stasiun yang Anda decode ke oscarwatch.org, memakai token API dari Pengaturan → OscarWatch. Tidak tersedia sampai token itu disimpan. Profil situs web Anda perlu callsign dan gridsquare.</value>
+  </data>
   <data name="Ft4.DecodeFontSize">
     <value>Ukuran teks decode</value>
   </data>
