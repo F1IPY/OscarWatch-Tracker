@@ -318,6 +318,49 @@ public sealed class Ft8NativeRoundTripTests
         Assert.Equal(plainRr73, hintedRr73);
     }
 
+    [Fact]
+    public void Strong_signal_is_removed_so_a_weaker_one_underneath_decodes()
+    {
+        if (!RequireNativeOrReturn())
+            return;
+
+        var strong = Ft8Native.EncodeFt4("CQ MM9SQL IO85", freqHz: 1500f);
+        var weak = Ft8Native.EncodeFt4("CQ G4ABC IO91", freqHz: 1500f);
+        Assert.NotNull(strong);
+        Assert.NotNull(weak);
+
+        var length = Math.Min(strong!.Length, weak!.Length);
+        var mixed = new float[length];
+        for (var i = 0; i < length; i++)
+            mixed[i] = strong[i] + 0.12f * weak[i];
+
+        var decoded = Ft8Native.DecodeFt4(mixed, 12000, 200f, 2800f);
+        Assert.Contains(decoded, d => d.text.Contains("MM9SQL", StringComparison.Ordinal));
+        Assert.Contains(decoded, d => d.text.Contains("G4ABC", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Noisy_strong_signal_is_removed_so_a_weaker_one_underneath_decodes()
+    {
+        if (!RequireNativeOrReturn())
+            return;
+
+        var strong = Ft8Native.EncodeFt4("CQ MM9SQL IO85", freqHz: 1500f);
+        var weak = Ft8Native.EncodeFt4("CQ G4ABC IO91", freqHz: 1500f);
+        Assert.NotNull(strong);
+        Assert.NotNull(weak);
+
+        var length = Math.Min(strong!.Length, weak!.Length);
+        var mixed = new float[length];
+        for (var i = 0; i < length; i++)
+            mixed[i] = strong[i] + 0.5f * weak[i];
+
+        var noisy = AddWhiteNoise(mixed, 12000, snrDb: 0, seed: 11);
+        var decoded = Ft8Native.DecodeFt4(noisy, 12000, 200f, 2800f);
+        Assert.Contains(decoded, d => d.text.Contains("MM9SQL", StringComparison.Ordinal));
+        Assert.Contains(decoded, d => d.text.Contains("G4ABC", StringComparison.Ordinal));
+    }
+
     private static string ApHintsFor(string myCall, string theirCall)
     {
         var lines = new List<string>();
