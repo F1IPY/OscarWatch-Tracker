@@ -25,6 +25,7 @@ public sealed class Ft4QsoSequencerTests
         Assert.Equal(1200, hz);
         Assert.Contains("MM9SQL G4ABC 73", hints, StringComparison.Ordinal);
         Assert.Contains("MM9SQL G4ABC RR73", hints, StringComparison.Ordinal);
+        Assert.DoesNotContain("MM9SQL G4ABC RRR", hints, StringComparison.Ordinal);
         Assert.Contains("MM9SQL G4ABC -12", hints, StringComparison.Ordinal);
         Assert.DoesNotContain("G4ABC MM9SQL 73", hints, StringComparison.Ordinal);
 

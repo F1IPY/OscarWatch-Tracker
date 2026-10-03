@@ -21,4 +21,11 @@ public static class Ft4DecodeDepth
     /// </summary>
     public static bool UseFullSlotDecode(double? elevationDeg) =>
         elevationDeg is >= 0 and < FullSlotElevationDeg;
+
+    /// <summary>
+    /// Hinted replies are only tried while the satellite is still up.
+    /// Below the horizon those same hints turn noise into a plausible report.
+    /// </summary>
+    public static bool UseApriori(double? elevationDeg) =>
+        elevationDeg is >= 0;
 }

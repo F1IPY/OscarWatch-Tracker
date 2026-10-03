@@ -1486,7 +1486,10 @@ public sealed class Ft4ModemService : IDisposable
             Ft8Native.ResolveWaterfallSearchBand(out fMin, out fMax);
         string? apHints = null;
         var apHz = 0f;
-        if (!ownOnly && _sequencer is not null && _sequencer.TryGetApHints(out var hintText, out var hintHz))
+        if (!ownOnly
+            && Ft4DecodeDepth.UseApriori(_snapshot.GetCurrent().ElevationDeg)
+            && _sequencer is not null
+            && _sequencer.TryGetApHints(out var hintText, out var hintHz))
         {
             apHints = hintText;
             apHz = (float)hintHz;

@@ -285,6 +285,50 @@ public sealed class Ft8NativeRoundTripTests
     }
 
     [Fact]
+    public void Ap_hints_do_not_invent_a_second_message_on_a_decoded_burst()
+    {
+        if (!RequireNativeOrReturn())
+            return;
+
+        const int rate = 12000;
+        var pcm = Ft8Native.EncodeFt4("R5AO R8CEL -11", freqHz: 1500f);
+        Assert.NotNull(pcm);
+        var hints = ApHintsFor("GW4VXE", "R8CEL");
+
+        for (var seed = 1; seed <= 4; seed++)
+        {
+            var noisy = AddWhiteNoise(pcm!, rate, snrDb: -8, seed);
+            var decoded = Ft8Native.DecodeFt4(noisy, rate, 200f, 2800f, deep: false, hints, apCentreHz: 1500f);
+            Assert.Contains(decoded, d => d.text.Contains("R5AO", StringComparison.Ordinal));
+            Assert.DoesNotContain(decoded, d => d.text.Contains("GW4VXE", StringComparison.Ordinal));
+        }
+    }
+
+    [Fact]
+    public void Weak_station_under_a_decoded_burst_still_appears_when_hints_are_on()
+    {
+        if (!RequireNativeOrReturn())
+            return;
+
+        var strong = Ft8Native.EncodeFt4("R5AO R8CEL -11", freqHz: 1500f);
+        var weak = Ft8Native.EncodeFt4("CQ G4ABC IO91", freqHz: 1500f);
+        Assert.NotNull(strong);
+        Assert.NotNull(weak);
+
+        var length = Math.Min(strong!.Length, weak!.Length);
+        var mixed = new float[length];
+        for (var i = 0; i < length; i++)
+            mixed[i] = strong[i] + 0.5f * weak[i];
+
+        var noisy = AddWhiteNoise(mixed, 12000, snrDb: 0, seed: 11);
+        var hints = ApHintsFor("GW4VXE", "R8CEL");
+        var decoded = Ft8Native.DecodeFt4(noisy, 12000, 200f, 2800f, deep: false, hints, apCentreHz: 1500f);
+        Assert.Contains(decoded, d => d.text.Contains("R5AO", StringComparison.Ordinal));
+        Assert.Contains(decoded, d => d.text.Contains("G4ABC", StringComparison.Ordinal));
+        Assert.DoesNotContain(decoded, d => d.text.Contains("GW4VXE", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void Ap_hints_do_not_replace_a_different_station()
     {
         if (!RequireNativeOrReturn())
@@ -371,7 +415,6 @@ public sealed class Ft8NativeRoundTripTests
             lines.Add(Ft4MessageCodec.BuildReport(myCall, theirCall, Ft4MessageCodec.FormatRogerReport(snr)));
         }
 
-        lines.Add(Ft4MessageCodec.BuildRrr(myCall, theirCall));
         lines.Add(Ft4MessageCodec.BuildRr73(myCall, theirCall));
         lines.Add(Ft4MessageCodec.Build73(myCall, theirCall));
         return string.Join('\n', lines);

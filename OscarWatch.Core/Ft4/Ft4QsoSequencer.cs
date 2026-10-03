@@ -254,7 +254,8 @@ public sealed class Ft4QsoSequencer
 
     /// <summary>
     /// Newline-separated messages to try when the first decode misses a weak copy.
-    /// Only while a contact is open and both calls are known: their report, RRR, RR73, or 73.
+    /// Only while a contact is open and both calls are known: their report, RR73, or 73.
+    /// RRR is not guessed. A decoded RRR queues our 73, and satellite contacts usually skip that step.
     /// </summary>
     public bool TryGetApHints(out string hints, out double audioHz)
     {
@@ -289,7 +290,6 @@ public sealed class Ft4QsoSequencer
             lines.Add(Ft4MessageCodec.BuildReport(my, them, Ft4MessageCodec.FormatRogerReport(snr)));
         }
 
-        lines.Add(Ft4MessageCodec.BuildRrr(my, them));
         lines.Add(Ft4MessageCodec.BuildRr73(my, them));
         lines.Add(Ft4MessageCodec.Build73(my, them));
         hints = string.Join('\n', lines);

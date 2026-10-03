@@ -57,4 +57,27 @@ public sealed class Ft4DecodeDepthTests
     {
         Assert.False(Ft4DecodeDepth.UseFullSlotDecode(null));
     }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(3)]
+    [InlineData(40)]
+    public void Hinted_replies_are_tried_while_the_satellite_is_up(double elevationDeg)
+    {
+        Assert.True(Ft4DecodeDepth.UseApriori(elevationDeg));
+    }
+
+    [Theory]
+    [InlineData(-0.1)]
+    [InlineData(-3)]
+    public void Hinted_replies_stop_once_the_satellite_has_set(double elevationDeg)
+    {
+        Assert.False(Ft4DecodeDepth.UseApriori(elevationDeg));
+    }
+
+    [Fact]
+    public void Hinted_replies_stop_when_elevation_is_unknown()
+    {
+        Assert.False(Ft4DecodeDepth.UseApriori(null));
+    }
 }

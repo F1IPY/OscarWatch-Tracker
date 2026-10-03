@@ -578,6 +578,25 @@ static int text_already_decoded(const ow_ft8_decode_t* decoded, int count, const
     return 0;
 }
 
+/* One FT4 transmission is about 80 Hz wide. A hinted message inside that
+   patch, at the same moment, is the same energy read a second way. */
+#define kApBurstHz 100.0f
+#define kApBurstSec 0.30f
+
+static int burst_already_decoded(
+    const ow_ft8_decode_t* decoded, int count, float freq_hz, float time_sec)
+{
+    if (!decoded || count <= 0)
+        return 0;
+    for (int i = 0; i < count; ++i)
+    {
+        if (fabsf(decoded[i].freq_hz - freq_hz) <= kApBurstHz
+            && fabsf(decoded[i].time_sec - time_sec) <= kApBurstSec)
+            return 1;
+    }
+    return 0;
+}
+
 /* A strong trace is rebuilt and taken out of the audio so a weaker one on the
    same frequency can be decoded. The carrier phase is fitted; a poor fit is
    left alone so a bad alignment cannot dig a hole in the neighbour. */
@@ -853,7 +872,9 @@ static int decode_slot(
     const char* hints_nl,
     float hint_hz,
     float hint_half_hz,
-    int do_subtract)
+    int do_subtract,
+    const ow_ft8_decode_t* occupied,
+    int occupied_count)
 {
     ensure_hashtable();
     if (!samples || num_samples <= 0 || sample_rate <= 0 || !out_decodes || out_capacity <= 0)
@@ -980,7 +1001,7 @@ static int decode_slot(
         }
     }
 
-    /* A priori: both calls are known, so try the report / RRR / RR73 / 73 list
+    /* A priori: both calls are known, so try the report / RR73 / 73 list
        against candidates the CRC decode missed. One winner per slot. */
     if (is_ft4 && hints_nl && hints_nl[0] != '\0' && num_decoded < out_capacity)
     {
@@ -999,7 +1020,13 @@ static int decode_slot(
 
                 const ftx_candidate_t* cand = &candidate_list[idx];
                 float freq_hz = (mon->min_bin + cand->freq_offset + (float)cand->freq_sub / mon->wf.freq_osr) / mon->symbol_period;
+                float cand_time = (cand->time_offset + (float)cand->time_sub / mon->wf.time_osr) * mon->symbol_period;
                 if (hint_half_hz > 0.0f && fabsf(freq_hz - hint_hz) > hint_half_hz)
+                    continue;
+                /* The CRC pass already explained this burst. Do not also
+                   accept a hinted message to a different station. */
+                if (burst_already_decoded(out_decodes, num_decoded, freq_hz, cand_time)
+                    || burst_already_decoded(occupied, occupied_count, freq_hz, cand_time))
                     continue;
 
                 float llr[FTX_LDPC_N];
@@ -1080,7 +1107,8 @@ static int decode_slot(
                 ow_ft8_decode_t extra[OW_FT8_MAX_DECODES];
                 int n_extra = decode_slot(
                     residual, num_samples, sample_rate, is_ft4, f_min_hz, f_max_hz,
-                    extra, OW_FT8_MAX_DECODES, deep, hints_nl, hint_hz, hint_half_hz, 0);
+                    extra, OW_FT8_MAX_DECODES, deep, hints_nl, hint_hz, hint_half_hz, 0,
+                    out_decodes, num_decoded);
                 for (int i = 0; i < n_extra && num_decoded < out_capacity; ++i)
                 {
                     if (text_already_decoded(out_decodes, num_decoded, extra[i].text))
@@ -1107,7 +1135,7 @@ OW_FT8_API int ow_ft8_decode_pcm(
     int deep)
 {
     return decode_slot(samples, num_samples, sample_rate, is_ft4, f_min_hz, f_max_hz,
-        out_decodes, out_capacity, deep, NULL, 0.0f, 0.0f, 1);
+        out_decodes, out_capacity, deep, NULL, 0.0f, 0.0f, 1, NULL, 0);
 }
 
 OW_FT8_API int ow_ft8_decode_pcm_ap(
@@ -1125,5 +1153,5 @@ OW_FT8_API int ow_ft8_decode_pcm_ap(
     float hint_half_hz)
 {
     return decode_slot(samples, num_samples, sample_rate, is_ft4, f_min_hz, f_max_hz,
-        out_decodes, out_capacity, deep, hints_nl, hint_hz, hint_half_hz, 1);
+        out_decodes, out_capacity, deep, hints_nl, hint_hz, hint_half_hz, 1, NULL, 0);
 }
