@@ -12,7 +12,9 @@ public enum Ft4DecodeHighlightKind
 
 /// <summary>
 /// Which decode rows are painted. A station addressing us is "calling me".
-/// Once that station is the QSO partner, their lines are "replying" instead.
+/// Once that station is the QSO partner, their lines are "replying" instead,
+/// and they stay that way after the contact. They are not painted as "calling me"
+/// when the partner is cleared.
 /// A callsign not yet in the logbook is "new call", including when they are calling CQ,
 /// so a first CQ is not lost among the others. A CQ from a logged station uses the CQ shade.
 /// A grid not yet in the logbook is "new grid".
@@ -33,7 +35,8 @@ public static class Ft4DecodeHighlight
         string? myCall,
         string? partnerCall,
         IReadOnlySet<string>? workedCalls = null,
-        IReadOnlySet<string>? workedGridFields = null)
+        IReadOnlySet<string>? workedGridFields = null,
+        IReadOnlySet<string>? finishedPartners = null)
     {
         if (!message.IsReceiveActivity)
             return Ft4DecodeHighlightKind.None;
@@ -44,9 +47,17 @@ public static class Ft4DecodeHighlight
             && message.CallTo.Equals(mine, StringComparison.OrdinalIgnoreCase))
         {
             var partner = Ft4MessageCodec.NormalizeCall(partnerCall ?? "");
+            var from = Ft4MessageCodec.NormalizeCall(message.CallDe ?? "");
             if (partner.Length > 0
-                && !string.IsNullOrWhiteSpace(message.CallDe)
-                && message.CallDe.Equals(partner, StringComparison.OrdinalIgnoreCase))
+                && from.Length > 0
+                && from.Equals(partner, StringComparison.OrdinalIgnoreCase))
+            {
+                return Ft4DecodeHighlightKind.Replying;
+            }
+
+            if (from.Length > 0
+                && finishedPartners is not null
+                && finishedPartners.Contains(from))
             {
                 return Ft4DecodeHighlightKind.Replying;
             }

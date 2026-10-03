@@ -42,6 +42,7 @@ public sealed partial class Ft4DecodeRowViewModel : ObservableObject
         string cqColour,
         IReadOnlySet<string>? workedCalls,
         IReadOnlySet<string>? workedGridFields,
+        IReadOnlySet<string>? finishedPartners = null,
         string? callingMeText = null,
         string? replyingText = null,
         string? newCallText = null,
@@ -54,7 +55,8 @@ public sealed partial class Ft4DecodeRowViewModel : ObservableObject
             myCall,
             partnerCall,
             workedCalls,
-            workedGridFields);
+            workedGridFields,
+            finishedPartners);
         var hex = kind switch
         {
             Ft4DecodeHighlightKind.Replying => replyingColour,

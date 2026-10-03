@@ -36,6 +36,19 @@ public sealed class Ft4DecodeRowHighlightTests
     }
 
     [Fact]
+    public void Finished_partner_keeps_the_replying_brush()
+    {
+        var row = new Ft4DecodeRowViewModel(Line("MM9SQL G4ABC IO91", "MM9SQL", "G4ABC", "IO91"));
+        var finished = new HashSet<string>(StringComparer.Ordinal) { "G4ABC" };
+
+        row.RefreshHighlight("MM9SQL", "G4ABC", "#66E6B15A", "#665CB88A", "#664D9DE8", "#66C07AD0", "#6678C8E0", null, null);
+        var replying = row.RowBackground;
+        row.RefreshHighlight("MM9SQL", null, "#66E6B15A", "#665CB88A", "#664D9DE8", "#66C07AD0", "#6678C8E0", null, null, finished);
+
+        Assert.Same(replying, row.RowBackground);
+    }
+
+    [Fact]
     public void Chosen_text_colour_is_applied_and_kept()
     {
         var row = new Ft4DecodeRowViewModel(Line("CQ G4ABC IO91", "CQ", "G4ABC", "IO91"));

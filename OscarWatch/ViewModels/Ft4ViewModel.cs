@@ -31,6 +31,8 @@ public partial class Ft4ViewModel : ViewModelBase, IDisposable
     private bool _loadingEchoCalibration;
     private IReadOnlySet<string> _workedCalls = new HashSet<string>(StringComparer.Ordinal);
     private IReadOnlySet<string> _workedGridFields = new HashSet<string>(StringComparer.Ordinal);
+    private readonly HashSet<string> _finishedPartners = new(StringComparer.Ordinal);
+    private string? _highlightPartner;
 
     public Ft4ViewModel(
         ISettingsService settings,
@@ -479,7 +481,17 @@ public partial class Ft4ViewModel : ViewModelBase, IDisposable
             hex => TxTextColour = hex,
             hex => _settings.Current.Ft4.TxTextColour = hex);
 
-    partial void OnQsoPartnerCallChanged(string? value) => RefreshDecodeHighlights();
+    partial void OnQsoPartnerCallChanged(string? value)
+    {
+        // Their lines were "replying" during the contact. Clearing the partner must
+        // not repaint them as "calling me" after the QSO.
+        var previous = Ft4MessageCodec.NormalizeCall(_highlightPartner ?? "");
+        var next = Ft4MessageCodec.NormalizeCall(value ?? "");
+        if (previous.Length > 0 && !previous.Equals(next, StringComparison.Ordinal))
+            _finishedPartners.Add(previous);
+        _highlightPartner = value;
+        RefreshDecodeHighlights();
+    }
 
     private int _colourCommitDepth;
 
@@ -1356,6 +1368,7 @@ public partial class Ft4ViewModel : ViewModelBase, IDisposable
             CqColour,
             _workedCalls,
             _workedGridFields,
+            _finishedPartners,
             CallingMeTextColour,
             ReplyingTextColour,
             NewCallTextColour,

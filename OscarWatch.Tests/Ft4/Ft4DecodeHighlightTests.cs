@@ -85,6 +85,25 @@ public sealed class Ft4DecodeHighlightTests
     }
 
     [Fact]
+    public void Finished_partner_stays_replying_when_the_contact_ends()
+    {
+        var msg = Line("MM9SQL VE6HQ DO32", "MM9SQL", "VE6HQ", "DO32");
+        var finished = new HashSet<string>(StringComparer.Ordinal) { "VE6HQ" };
+        Assert.Equal(
+            Ft4DecodeHighlightKind.Replying,
+            Ft4DecodeHighlight.Classify(msg, "MM9SQL", null, Calls(), Grids(), finished));
+        Assert.Equal(
+            Ft4DecodeHighlightKind.CallingMe,
+            Ft4DecodeHighlight.Classify(
+                Line("MM9SQL KC1WAY FN42", "MM9SQL", "KC1WAY", "FN42"),
+                "MM9SQL",
+                null,
+                Calls(),
+                Grids(),
+                finished));
+    }
+
+    [Fact]
     public void Calling_me_outranks_new_call()
     {
         var msg = Line("MM9SQL G4ABC IO91", "MM9SQL", "G4ABC", "IO91");
