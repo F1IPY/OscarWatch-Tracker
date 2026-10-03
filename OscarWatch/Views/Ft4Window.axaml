@@ -206,6 +206,13 @@
                    FontFamily="Consolas,Courier New,monospace"
                    FontSize="{Binding DecodeFontSize}"
                    Padding="0">
+            <!-- A virtualizing panel painted the newest rows twice while the list
+                 was pulled back to the top. Scrolling rebuilt it and the copies vanished. -->
+            <ListBox.ItemsPanel>
+              <ItemsPanelTemplate>
+                <StackPanel />
+              </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
             <ListBox.Styles>
               <Style Selector="ListBoxItem">
                 <Setter Property="Padding" Value="0" />

@@ -1587,7 +1587,9 @@ public sealed class Ft4ModemService : IDisposable
                 continue;
             }
 
-            var dedupeKey = slotStart.Ticks + "|" + d.text + "|" + ((int)Math.Round(d.freq_hz / 5.0) * 5);
+            // Same text in one slot is the same transmission. A later pass often
+            // reports it a few hertz away, which a 5 Hz bucket let through as a second line.
+            var dedupeKey = slotStart.Ticks + "|" + d.text;
             lock (_decodePostGate)
             {
                 if (!_postedDecodeKeys.Add(dedupeKey))
