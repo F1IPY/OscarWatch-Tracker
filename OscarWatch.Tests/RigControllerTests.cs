@@ -2200,17 +2200,16 @@ public class RigControllerTests
         controller.Update(settings, ctx);
         Thread.Sleep(650);
 
-        // Slow CI runners can still be inside the post-write dial settle window, which would skip the sync.
-        var ignoreDialUntil = typeof(RigController).GetField("_ignoreDialUntilUtc", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
-        var settleDeadline = DateTime.UtcNow.AddSeconds(5);
-        while (DateTime.UtcNow < settleDeadline && (DateTime)ignoreDialUntil.GetValue(controller)! > DateTime.UtcNow)
-            Thread.Sleep(20);
-
-        // Simulate accumulated phantom manual (false knob detect) while rig stayed at doppler target.
-        typeof(RigController).GetField("_passbandDownlinkAdjustKHz", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
-            .SetValue(controller, -9.8);
-        typeof(RigController).GetField("_passbandUplinkAdjustKHz", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
-            .SetValue(controller, 9.8);
+        // The rig thread keeps tracking. Suspend it before planting the phantom trim so it cannot
+        // see one field before the other, or retune the dial, and then skip the clear while the
+        // post-write settle window is still open.
+        SetPrivate(controller, "_suspendDopplerUntilUtc", DateTime.UtcNow.AddMinutes(1));
+        Thread.Sleep(400);
+        SetPrivate(controller, "_passbandDownlinkAdjustKHz", -9.8);
+        SetPrivate(controller, "_passbandUplinkAdjustKHz", 9.8);
+        SetPrivate(controller, "_ignoreDialUntilUtc", DateTime.MinValue);
+        SetPrivate(controller, "_blockKnobCapture", false);
+        SetPrivate(controller, "_vfoNotMoving", true);
 
         for (var i = 0; i < 14; i++)
             controller.RunTrackingLoopOnce();
@@ -2218,6 +2217,10 @@ public class RigControllerTests
         var status = controller.GetStatus();
         Assert.InRange(status.ManualReceiveAdjustKHz, -0.001, 0.001);
         Assert.InRange(status.ManualTransmitAdjustKHz, -0.001, 0.001);
+
+        static void SetPrivate(RigController controller, string fieldName, object value) =>
+            typeof(RigController).GetField(fieldName, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+                .SetValue(controller, value);
     }
 
     [Fact]
