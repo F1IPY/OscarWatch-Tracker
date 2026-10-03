@@ -45,10 +45,11 @@
         <a href="#what-is-ft4">What FT4 is</a> ·
         <a href="#before-you-start">Before a pass</a> ·
         <a href="#first-contact">A contact</a> ·
+        <a href="#logging">Logging</a> ·
+        <a href="#power">Power and good practice</a> ·
         <a href="#window">The window</a> ·
         <a href="#on-frequency">Staying on frequency</a> ·
         <a href="#settings">Settings</a> ·
-        <a href="#logging">Logging</a> ·
         <a href="#problems">If something is wrong</a> ·
         <a href="#glossary">Words you will see</a> ·
         <a href="#advanced">More detail</a>
@@ -95,12 +96,7 @@
         <li>the focused mode is FM (FT4 needs a linear transponder);</li>
         <li>FO-29 is focused (its licence does not allow this mode);</li>
         <li>AO-7 is focused (AMSAT has asked that FT4 is not used there);</li>
-        <li>the radio reports more than 30 W. OscarWatch can read this on ICOM radios that report
-          power over CI-V (for example the IC-9700), on the Yaesu FT-991 and FT-991A, and on the
-          Kenwood TS-2000. Turn the power down and try again, or tick
-          <strong>Lower RF power to 30 W</strong> under <strong>Settings → Modem</strong>.
-          That sets the power on an ICOM, a Yaesu FT-991 or FT-991A, or a Kenwood TS-2000, and leaves it there.
-          Radios that cannot report power are not checked.</li>
+        <li>the radio reports more than 30 W. See <a href="#power">Power and good practice</a>.</li>
       </ul>
 
       <h2 id="first-contact">A contact</h2>
@@ -112,7 +108,8 @@
           the radio) and the output (audio to the radio). On <strong>PTT</strong>, pick how the radio
           is switched to transmit.</li>
         <li>Press <strong>Tune</strong>. A steady tone goes out. Set <strong>TX level</strong> so the
-          radio's ALC meter barely moves, and keep the power at 30 W or less. Press <strong>Tune</strong>
+          radio's ALC meter barely moves, and keep the power at 30 W or less
+          (see <a href="#power">Power and good practice</a>). Press <strong>Tune</strong>
           again to stop. Tune does not change the saved uplink trim.</li>
         <li>Watch the list. A station calling CQ looks like <code>CQ EA1ABC IN63</code>.</li>
         <li>Click their line to answer, or press <strong>CQ</strong> to call yourself. OscarWatch fills
@@ -163,6 +160,55 @@
         Untick <strong>Skip RRR</strong> if you prefer a separate "all received" (RRR) before the 73.
         Contacts are shorter with it ticked, which matters on a satellite pass.
       </p>
+
+      <h2 id="logging">Logging</h2>
+      <p>
+        A contact is saved when both stations have sent 73 (RR73 counts as 73) and both signal reports
+        have been exchanged. It is written to the
+        <a href="qso-logbook.html">OscarWatch Logbook</a> on its own. If you have no logbook yet,
+        OscarWatch creates <strong>Main logbook</strong> and uses the grid from
+        <strong>Settings → Station</strong>. Set your callsign afterwards with
+        <strong>Logbook → Edit logbook</strong>.
+      </p>
+      <p>
+        The logged grid is the one that station sent. If you start calling one station and then work
+        another, the first station's grid is not carried over. When a contact finishes without a grid,
+        for example because they answered with a report straight away, OscarWatch uses the most recent
+        grid already in that logbook for the same callsign. If there is none, the grid is left blank and
+        you can add it later.
+      </p>
+      <p>
+        <strong>Log QSO</strong> saves a contact that did not finish. If the Logbook window is open, the
+        new line shows at once. If that logbook uploads to Cloudlog, the contact is queued as well.
+        You can also add or edit contacts from <strong>Tools → OscarWatch Logbook</strong>.
+      </p>
+
+      <h2 id="power">Power and good practice</h2>
+      <p>
+        FT4 transmit is limited to 30 W set power on radios OscarWatch can read. Linear satellites share
+        one passband, and a single strong uplink lowers the transponder's gain for everyone. FT4 decodes
+        well below 0 dB, so more power rarely helps you and usually hurts others.
+      </p>
+      <p>
+        OscarWatch reads the power setting on ICOM radios that report it over CI-V (for example the
+        IC-9700), on the Yaesu FT-991 and FT-991A, and on the Kenwood TS-2000. It checks before every
+        transmission, so turning the power up during a contact stops transmit at the next slot.
+        Radios that cannot report their power are not checked, and OscarWatch cannot see an amplifier
+        after the radio. Please keep to the limit anyway.
+      </p>
+      <p>
+        If the power is too high, the status line says so and transmit stops. Turn the power down and
+        press <strong>CQ</strong> or click a station again. Or tick <strong>Lower RF power to 30 W</strong>
+        under <strong>Settings → Modem</strong>: OscarWatch then sets the radio to 30 W for you before it
+        transmits, and leaves it at that setting. If the radio will not change, transmit stays blocked.
+      </p>
+      <p>A few habits make a pass better for everyone:</p>
+      <ul>
+        <li><strong>Watch your echo.</strong> If it comes back strong, you are already loud enough. Turn the power down until the echo is still decoded but not one of the strongest signals on the waterfall.</li>
+        <li><strong>Listen first.</strong> Answering a CQ you can see is quicker than calling CQ over the top of others.</li>
+        <li><strong>Keep contacts short.</strong> Leave <strong>Skip RRR</strong> ticked, and stop once you have both sent 73.</li>
+        <li><strong>Do not leave CQ running unattended.</strong> The watchdog stops transmit when nobody answers, but you should be at the radio while you transmit.</li>
+      </ul>
 
       <h2 id="window">The window</h2>
       <p>From top to bottom: the waterfall, the list of messages, the box you send from, and the status line.</p>
@@ -341,16 +387,25 @@
       <h3>Modem</h3>
       <p>Two groups.</p>
       <ul>
-        <li><strong>Contacts</strong>: <strong>Auto reply</strong>, <strong>Hold Tx Freq</strong>, and the <strong>TX watchdog</strong> in minutes. 0 turns the watchdog off. The same ticks are on the main FT4 window.</li>
+        <li><strong>Contacts</strong>: <strong>Auto reply</strong>, <strong>Hold Tx Freq</strong>, and the <strong>TX watchdog</strong> in minutes. 0 turns the watchdog off. The same ticks are on the main FT4 window.
+          <strong>Lower RF power to 30 W</strong> sets the radio to 30 W before transmitting when it reports more. See <a href="#power">Power and good practice</a>.</li>
         <li><strong>Doppler</strong>: audio correction on transmit, audio correction on receive, and looking for your echo in two ways at once during a transmit slot. Leave them on. Turn the last one off only if the PC struggles for a moment at each slot.</li>
       </ul>
 
       <h3>Reporting</h3>
       <p>
-        Send spots to PSK Reporter if you want other people to see that you decoded them.
-        Send FT4 spots to OscarWatch.org to show them on the OscarWatch map.
-        That tick stays unavailable until an API token is saved under <strong>Settings → OscarWatch</strong>.
+        Both are off until you tick them. They share the stations you decode, so other operators can see
+        who is active on the satellite.
       </p>
+      <ul>
+        <li><strong>Report decodes to PSK Reporter</strong>: sends the stations you hear to
+          <a href="https://pskreporter.info" target="_blank" rel="noopener">pskreporter.info</a> about every
+          five minutes, with your callsign and grid. The satellite name is sent as your antenna.</li>
+        <li><strong>Send FT4 spots to OscarWatch.org</strong>: sends each station you hear, with their grid and
+          signal report, to the OscarWatch.org map. This tick stays unavailable until an API token is saved
+          under <strong>Settings → OscarWatch</strong>, and your website profile needs a callsign and grid.</li>
+      </ul>
+      <p>Your own transmissions and echoes are never sent as spots.</p>
 
       <h3>Appearance</h3>
       <p>
@@ -366,26 +421,12 @@
         or clear every satellite. There is nothing here until a satellite has been corrected at least once.
       </p>
 
-      <h2 id="logging">Logging</h2>
-      <p>
-        A contact is saved when both stations have sent 73 (RR73 counts as 73) and both signal reports
-        have been exchanged. It is written to the
-        <a href="qso-logbook.html">OscarWatch Logbook</a> on its own. If you have no logbook yet,
-        OscarWatch creates <strong>Main logbook</strong> and uses the grid from
-        <strong>Settings → Station</strong>. Set your callsign afterwards with
-        <strong>Logbook → Edit logbook</strong>.
-      </p>
-      <p>
-        <strong>Log QSO</strong> saves a contact that did not finish. If the Logbook window is open, the
-        new line shows at once. If that logbook uploads to Cloudlog, the contact is queued as well.
-        You can also add or edit contacts from <strong>Tools → OscarWatch Logbook</strong>.
-      </p>
-
       <h2 id="problems">If something is wrong</h2>
       <ul>
         <li><strong>Nothing decodes</strong>: check the input soundcard, and that traces are on the waterfall. If DT for most stations is a long way from +0.5, set the PC clock, or connect a GPS so FT4 can correct it.</li>
         <li><strong>The radio does not transmit</strong>: check the PTT method and the output soundcard. For VOX, the radio's VOX or data VOX has to be on.</li>
-        <li><strong>Transmit is blocked</strong>: read the status line. It names the reason: the satellite, power above 30 W, or a missing callsign or grid. <strong>Settings → Modem → Lower RF power to 30 W</strong> can set the power on an ICOM, a Yaesu FT-991 or FT-991A, or a Kenwood TS-2000.</li>
+        <li><strong>Transmit is blocked</strong>: read the status line. It names the reason: the satellite, power above 30 W, or a missing callsign or grid. For power, see <a href="#power">Power and good practice</a>.</li>
+        <li><strong>Few decodes low on the horizon</strong>: this is normal for the first few degrees. Signals are weak and the frequency changes quickly. OscarWatch already works harder on decoding there (see <a href="#decoding">Decoding</a>). A clear view of the horizon helps more than extra power.</li>
         <li><strong>No echo</strong>: you need to be inside the footprint, on a frequency the transponder will repeat, with enough power. Tune shows whether a tone comes back.</li>
         <li><strong>Echo sits away from the red bracket</strong>: wait a slot or two for echo calibration. If it keeps jumping, clear that satellite under <strong>Settings → Echo calibration</strong> and set the satellite panel TX offset to zero.</li>
         <li><strong>"Native FT4 library not found"</strong>: see <a href="#advanced">More detail</a>.</li>
@@ -424,13 +465,26 @@
         shifted back before it is decoded.
       </p>
 
-      <h3>Decoding</h3>
+      <h3 id="decoding">Decoding</h3>
       <p>
         The decoder accepts an FT4 signal that starts up to about 2.5 seconds into the slot, which covers
         most satellite echoes. With <strong>Parallel TX echo decode</strong> on, a second look for late
         echoes runs at the same time during your transmit slots. If both find the same echo, one line is
         kept: the copy nearest your transmit frequency. Transmit audio is prepared before the slot and
         starts on the slot boundary. The tone itself follows a half-second lead-in, which is part of FT4 timing.
+      </p>
+      <p>
+        Receive slots are decoded about 6 seconds in, so replies show quickly. Low in the sky, OscarWatch
+        works harder:
+      </p>
+      <ul>
+        <li><strong>Below 20°</strong>: a deeper decode that tries more weak signals before giving up.</li>
+        <li><strong>Below 5°</strong>: each receive slot is decoded a second time at the end of the slot, so a
+          weak or slightly late signal is not cut off. That pass also tries the audio before Doppler correction,
+          in case the correction is a little out.</li>
+      </ul>
+      <p>
+        Higher up, signals are stronger and the quick decode keeps your replies in time for the next slot.
       </p>
 
       <h3>The decoder file</h3>
