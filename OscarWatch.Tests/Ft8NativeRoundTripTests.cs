@@ -191,4 +191,51 @@ public sealed class Ft8NativeRoundTripTests
         Assert.Contains(textA, d => d.text.Contains("MM9SQL", StringComparison.OrdinalIgnoreCase));
         Assert.Contains(textB, d => d.text.Contains("G4ABC", StringComparison.OrdinalIgnoreCase));
     }
+
+    [Theory]
+    [InlineData(-12)]
+    [InlineData(0)]
+    [InlineData(10)]
+    public void Decoded_snr_follows_2500_hz_reference(int snrDb)
+    {
+        if (!RequireNativeOrReturn())
+            return;
+
+        const int rate = 12000;
+        var pcm = Ft8Native.EncodeFt4("CQ MM9SQL IO85", freqHz: 1500f);
+        Assert.NotNull(pcm);
+
+        var noisy = AddWhiteNoise(pcm!, rate, snrDb, seed: 7);
+        var decoded = Ft8Native.DecodeFt4(noisy, rate, 200f, 2800f);
+        var hit = Assert.Single(decoded, d => d.text.Contains("MM9SQL", StringComparison.OrdinalIgnoreCase));
+        Assert.InRange(hit.snr, snrDb - 3f, snrDb + 3f);
+    }
+
+    private static float[] AddWhiteNoise(float[] pcm, int rate, int snrDb, int seed)
+    {
+        double power = 0;
+        var active = 0;
+        foreach (var sample in pcm)
+        {
+            if (Math.Abs(sample) <= 1e-4f)
+                continue;
+            power += sample * (double)sample;
+            active++;
+        }
+
+        power /= active;
+        var snrLin = Math.Pow(10.0, snrDb / 10.0);
+        var sigma = Math.Sqrt(power * rate / (snrLin * 5000.0));
+        var rng = new Random(seed);
+        var mixed = new float[pcm.Length];
+        for (var i = 0; i < pcm.Length; i++)
+        {
+            var u1 = 1.0 - rng.NextDouble();
+            var u2 = 1.0 - rng.NextDouble();
+            var gauss = Math.Sqrt(-2.0 * Math.Log(u1)) * Math.Cos(2.0 * Math.PI * u2);
+            mixed[i] = pcm[i] + (float)(sigma * gauss);
+        }
+
+        return mixed;
+    }
 }

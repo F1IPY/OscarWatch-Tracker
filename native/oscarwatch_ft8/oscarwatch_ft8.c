@@ -394,6 +394,109 @@ OW_FT8_API int ow_ft8_encode_pcm(
     return 0;
 }
 
+/* WSJT-X SNR is the signal power against the noise in 2500 Hz.
+   The bandwidth term uses the Hann window's noise bandwidth. kSnrFitDb
+   recentres that model: on white noise it read about half a decibel high
+   from -15 dB to +10 dB. */
+#define kSnrFitDb (-0.6f)
+#define kSnrFloorDb (-21.0f)
+#define kSnrCeilDb 49.0f
+
+static int cmp_float_asc(const void* a, const void* b)
+{
+    float fa = *(const float*)a;
+    float fb = *(const float*)b;
+    if (fa < fb)
+        return -1;
+    if (fa > fb)
+        return 1;
+    return 0;
+}
+
+/* Linear power of one waterfall bin, or -1 if the symbol or bin is outside the capture. */
+static float waterfall_bin_power(const ftx_waterfall_t* wf, const ftx_candidate_t* cand, int block_abs, int bin)
+{
+    if (block_abs < 0 || block_abs >= wf->num_blocks || bin < 0 || bin >= wf->num_bins)
+        return -1.0f;
+
+    int offset = block_abs;
+    offset = offset * wf->time_osr + cand->time_sub;
+    offset = offset * wf->freq_osr + cand->freq_sub;
+    offset = offset * wf->num_bins + bin;
+    return powf(10.0f, 0.1f * WF_ELEM_MAG(wf->mag[offset]));
+}
+
+static float estimate_snr_db(
+    const monitor_t* mon,
+    const ftx_candidate_t* cand,
+    const uint8_t* tones,
+    int num_symbols,
+    int num_fsk,
+    int skip_ends)
+{
+    const ftx_waterfall_t* wf = &mon->wf;
+    enum { kNoiseCap = 2048 };
+    float* noise = (float*)malloc((size_t)kNoiseCap * sizeof(float));
+    if (!noise)
+        return kSnrFloorDb;
+
+    double sig_sum = 0.0;
+    int sig_n = 0;
+    int noise_n = 0;
+    int first = skip_ends ? 1 : 0;
+    int last = num_symbols - (skip_ends ? 1 : 0);
+
+    for (int sym = first; sym < last; ++sym)
+    {
+        int tone = tones[sym];
+        if (tone < 0 || tone >= num_fsk)
+            continue;
+
+        int block_abs = cand->time_offset + sym;
+        float sig = waterfall_bin_power(wf, cand, block_abs, cand->freq_offset + tone);
+        if (sig < 0.0f)
+            continue;
+        sig_sum += sig;
+        ++sig_n;
+
+        /* Bins just outside the tone group, same symbol, so a sloping passband
+           does not set the noise from the far end of the waterfall. */
+        for (int rel = -12; rel <= num_fsk + 11 && noise_n < kNoiseCap; ++rel)
+        {
+            if (rel >= -1 && rel <= num_fsk)
+                continue;
+            float np = waterfall_bin_power(wf, cand, block_abs, cand->freq_offset + rel);
+            if (np < 0.0f)
+                continue;
+            noise[noise_n++] = np;
+        }
+    }
+
+    float snr = kSnrFloorDb;
+    if (sig_n > 0 && noise_n >= 8)
+    {
+        qsort(noise, (size_t)noise_n, sizeof(float), cmp_float_asc);
+        float noi = noise[noise_n / 2];
+        float sig = (float)(sig_sum / (double)sig_n);
+        if (noi > 0.0f && sig > noi)
+        {
+            int freq_osr = wf->freq_osr > 0 ? wf->freq_osr : 1;
+            float tone_hz = 1.0f / mon->symbol_period;
+            /* Hann equivalent noise bandwidth is 1.5 FFT bins. */
+            float noise_bw = 1.5f * tone_hz / (float)freq_osr;
+            float excess = (sig / noi) - 1.0f;
+            snr = 10.0f * log10f(excess) + 10.0f * log10f(noise_bw / 2500.0f) + kSnrFitDb;
+        }
+    }
+
+    free(noise);
+    if (snr < kSnrFloorDb)
+        snr = kSnrFloorDb;
+    if (snr > kSnrCeilDb)
+        snr = kSnrCeilDb;
+    return snr;
+}
+
 OW_FT8_API int ow_ft8_decode_pcm(
     const float* samples,
     int num_samples,
@@ -486,10 +589,29 @@ OW_FT8_API int ow_ft8_decode_pcm(
         if (unpack_status != FTX_MESSAGE_RC_OK)
             snprintf(text, sizeof(text), "ERR%d", (int)unpack_status);
 
+        uint8_t tones[FT4_NN];
+        int nsym;
+        int nfsk;
+        int skip_ends;
+        if (is_ft4)
+        {
+            ft4_encode(message.payload, tones);
+            nsym = FT4_NN;
+            nfsk = 4;
+            skip_ends = 1; /* first and last symbols are ramps, not full power */
+        }
+        else
+        {
+            ft8_encode(message.payload, tones);
+            nsym = FT8_NN;
+            nfsk = 8;
+            skip_ends = 0;
+        }
+
         ow_ft8_decode_t* out = &out_decodes[num_decoded++];
         out->freq_hz = freq_hz;
         out->time_sec = time_sec;
-        out->snr = cand->score * 0.5f;
+        out->snr = estimate_snr_db(mon, cand, tones, nsym, nfsk, skip_ends);
         strncpy(out->text, text, OW_FT8_MAX_MESSAGE_LEN - 1);
         out->text[OW_FT8_MAX_MESSAGE_LEN - 1] = '\0';
     }

@@ -243,7 +243,7 @@
         <tr><td>UTC</td><td>When that slot started, in UTC.</td></tr>
         <tr><td>TX</td><td>Blank for someone you heard. <strong>TX</strong> for a message you sent. <strong>Echo</strong> for your own message back from the satellite.</td></tr>
         <tr><td>DT</td><td>How late the signal was, in seconds from the start of the slot. About +0.5 is on time. Your echo is usually a little later. One station a long way off has a clock problem. Every station a long way off usually means your PC clock is wrong.</td></tr>
-        <tr><td>SNR</td><td>How strong the signal is compared with the noise, in dB. Higher is stronger. FT4 still works well below 0.</td></tr>
+        <tr><td>SNR</td><td>How strong the signal is compared with the noise, in dB, on the same 2500 Hz scale as WSJT-X. Higher is stronger. Below zero is normal.</td></tr>
         <tr><td>Message</td><td>The text that was decoded.</td></tr>
         <tr><td>Hz</td><td>Where the signal sits on the waterfall.</td></tr>
       </table>
@@ -449,7 +449,7 @@
         <tr><td>Doppler shift</td><td>The frequency change caused by the satellite moving towards you or away from you.</td></tr>
         <tr><td>Uplink / downlink</td><td>The frequency you send to the satellite, and the frequency it sends back on.</td></tr>
         <tr><td>DT</td><td>How many seconds late a signal was.</td></tr>
-        <tr><td>SNR</td><td>Signal compared with noise, in dB.</td></tr>
+        <tr><td>SNR</td><td>Signal compared with the noise in a 2500 Hz bandwidth, in dB. The same scale as WSJT-X.</td></tr>
         <tr><td>PTT</td><td>Push to talk: switching the radio to transmit.</td></tr>
         <tr><td>VOX</td><td>The radio switches to transmit when it hears audio.</td></tr>
         <tr><td>CAT</td><td>The PC controls the radio over USB or a serial lead.</td></tr>
