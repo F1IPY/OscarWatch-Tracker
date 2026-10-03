@@ -160,6 +160,83 @@ public sealed class Ft4QsoSequencerTests
     }
 
     [Fact]
+    public void Unfinished_call_does_not_lend_its_grid_to_the_next_station()
+    {
+        var seq = new Ft4QsoSequencer(() => "MM9SQL", () => "IO85", () => true);
+        seq.StartAnswer(Msg("CQ M3JFM IO91"), oppositeEvenSlot: false);
+        Assert.Equal("M3JFM", seq.TheirCall);
+        Assert.Equal("IO91", seq.TheirGrid);
+
+        // 2E0SQL's CQ was on screen while the first call was still open.
+        Assert.False(seq.OnDecoded(Msg("CQ 2E0SQL JO01")));
+        Assert.Equal("M3JFM", seq.TheirCall);
+
+        // The click that starts the second contact is a report, which has no locator.
+        seq.StartAnswer(Msg("MM9SQL 2E0SQL +06", snr: 4f), oppositeEvenSlot: true);
+        Assert.Equal("2E0SQL", seq.TheirCall);
+        Assert.Equal("JO01", seq.TheirGrid);
+        Assert.Equal("2E0SQL MM9SQL R+04", seq.CurrentTxMessage);
+
+        Assert.False(seq.OnDecoded(Msg("MM9SQL 2E0SQL R+06")));
+        Assert.False(seq.OnDecoded(Msg("MM9SQL 2E0SQL RR73")));
+        Assert.True(seq.OnTxCompleted());
+        Assert.True(seq.CanLog());
+        Assert.Equal("2E0SQL", seq.TheirCall);
+        Assert.Equal("JO01", seq.TheirGrid);
+    }
+
+    [Fact]
+    public void Next_station_without_a_heard_grid_is_logged_with_a_blank_locator()
+    {
+        var seq = new Ft4QsoSequencer(() => "MM9SQL", () => "IO85", () => true);
+        seq.StartAnswer(Msg("CQ M3JFM IO91"), oppositeEvenSlot: false);
+
+        seq.StartAnswer(Msg("MM9SQL 2E0SQL +06", snr: 4f), oppositeEvenSlot: true);
+        Assert.Equal("2E0SQL", seq.TheirCall);
+        Assert.Null(seq.TheirGrid);
+    }
+
+    [Fact]
+    public void New_cq_uses_the_callers_own_grid_after_an_unfinished_contact()
+    {
+        var seq = new Ft4QsoSequencer(() => "MM9SQL", () => "IO85", () => true);
+        seq.StartCq(evenSlot: true);
+        seq.OnDecoded(Msg("MM9SQL M3JFM IO91"));
+        Assert.Equal("IO91", seq.TheirGrid);
+
+        Assert.False(seq.OnDecoded(Msg("CQ 2E0SQL JO01")));
+        seq.StartCq(evenSlot: true);
+        seq.OnDecoded(Msg("MM9SQL 2E0SQL +04", snr: 4f));
+
+        Assert.Equal("2E0SQL", seq.TheirCall);
+        Assert.Equal("JO01", seq.TheirGrid);
+        Assert.Equal("2E0SQL MM9SQL R+04", seq.CurrentTxMessage);
+    }
+
+    [Fact]
+    public void Answering_another_cq_replaces_the_previous_grid()
+    {
+        var seq = new Ft4QsoSequencer(() => "MM9SQL", () => "IO85", () => true);
+        seq.StartAnswer(Msg("CQ M3JFM IO91"), oppositeEvenSlot: false);
+        seq.StartAnswer(Msg("CQ 2E0SQL JO01"), oppositeEvenSlot: false);
+
+        Assert.Equal("2E0SQL", seq.TheirCall);
+        Assert.Equal("JO01", seq.TheirGrid);
+        Assert.Equal("2E0SQL MM9SQL IO85", seq.CurrentTxMessage);
+    }
+
+    [Fact]
+    public void Repeating_the_same_station_keeps_their_grid()
+    {
+        var seq = new Ft4QsoSequencer(() => "MM9SQL", () => "IO85", () => true);
+        seq.StartAnswer(Msg("CQ M3JFM IO91"), oppositeEvenSlot: false);
+        seq.StartAnswer(Msg("MM9SQL M3JFM +06", snr: 6f), oppositeEvenSlot: true);
+
+        Assert.Equal("M3JFM", seq.TheirCall);
+        Assert.Equal("IO91", seq.TheirGrid);
+    }
+
+    [Fact]
     public void Answer_ignores_own_echo()
     {
         var seq = new Ft4QsoSequencer(() => "MM9SQL", () => "IO85", () => true);

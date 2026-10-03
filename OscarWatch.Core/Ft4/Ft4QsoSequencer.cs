@@ -17,6 +17,7 @@ public sealed class Ft4QsoSequencer
     private readonly Func<bool> _holdTxFrequency;
     private readonly Func<bool> _autoReply;
     private readonly object _gate = new();
+    private readonly Dictionary<string, string> _heardLocators = new(StringComparer.OrdinalIgnoreCase);
     private bool? _autoReplyOverride;
     private bool _weSent73;
     private bool _theySent73;
@@ -85,6 +86,7 @@ public sealed class Ft4QsoSequencer
         QsoCompletedUtc = null;
         _weSent73 = false;
         _theySent73 = false;
+        _heardLocators.Clear();
     }
 
     /// <summary>True when <paramref name="slotUtc"/> is part of the contact that just finished.</summary>
@@ -126,8 +128,7 @@ public sealed class Ft4QsoSequencer
             TxAudioHz = decode.FreqHz;
         _weSent73 = false;
         _theySent73 = false;
-        TheirCall = Ft4MessageCodec.NormalizeCall(callDe);
-        TheirGrid = Ft4MessageCodec.IsGrid(extra) ? extra : TheirGrid;
+        AssignTheirStation(callDe, extra);
         Phase = Ft4QsoPhase.InQso;
         TransmitEnabled = true;
         ReportSent = null;
@@ -271,12 +272,16 @@ public sealed class Ft4QsoSequencer
 
     private bool OnDecodedCore(Ft4DecodedMessage decode)
     {
-        if (!TransmitEnabled
-            && Phase is not Ft4QsoPhase.InQso and not Ft4QsoPhase.CallingCq and not Ft4QsoPhase.Finished)
-            return false;
-
         if (!Ft4MessageCodec.TryParse(decode.Text, out var callTo, out var callDe, out var extra)
             || string.IsNullOrWhiteSpace(callDe))
+            return false;
+
+        // Remember locators even while idle, so a later contact can use this station's
+        // grid instead of one left over from a call that was not finished.
+        RememberLocator(callDe, extra);
+
+        if (!TransmitEnabled
+            && Phase is not Ft4QsoPhase.InQso and not Ft4QsoPhase.CallingCq and not Ft4QsoPhase.Finished)
             return false;
 
         var my = _myCall();
@@ -300,8 +305,7 @@ public sealed class Ft4QsoSequencer
             if (Ft4MessageCodec.IsClosing(extra))
                 return false;
 
-            TheirCall = Ft4MessageCodec.NormalizeCall(callDe);
-            TheirGrid = Ft4MessageCodec.IsGrid(extra) ? extra : TheirGrid;
+            AssignTheirStation(callDe, extra);
             // Stay on our CQ frequency (WSJT-X). Only answering a decode moves TX.
             // Keep our CQ slot parity. The caller answered on the opposite slot; flipping
             // would put both stations on the same TX slots (WSJT-X then cannot decode us).
@@ -433,6 +437,42 @@ public sealed class Ft4QsoSequencer
         _weSent73 = false;
         _theySent73 = false;
     }
+
+    /// <summary>
+    /// Bind the contact to <paramref name="callDe"/>. A locator in this message wins.
+    /// Otherwise keep this station's locator, or the last one heard from them.
+    /// A different station never inherits the previous contact's grid.
+    /// </summary>
+    private void AssignTheirStation(string callDe, string? extra)
+    {
+        var call = Ft4MessageCodec.NormalizeCall(callDe);
+        RememberLocator(call, extra);
+        var sameStation = call.Equals(TheirCall, StringComparison.OrdinalIgnoreCase);
+        TheirCall = call;
+
+        if (IsLocator(extra))
+        {
+            TheirGrid = extra;
+            return;
+        }
+
+        if (sameStation && !string.IsNullOrEmpty(TheirGrid))
+            return;
+
+        TheirGrid = _heardLocators.TryGetValue(call, out var heard) ? heard : null;
+    }
+
+    private void RememberLocator(string call, string? extra)
+    {
+        if (string.IsNullOrEmpty(call) || !IsLocator(extra))
+            return;
+
+        _heardLocators[call] = extra!;
+    }
+
+    /// <summary>RR73 matches the grid shape, but it is a sign-off, not a locator.</summary>
+    private static bool IsLocator(string? extra) =>
+        Ft4MessageCodec.IsGrid(extra) && !Ft4MessageCodec.IsRr73(extra);
 
     /// <summary>True while our next TX is still the first grid reply to their CQ.</summary>
     private bool IsPendingGridReply(string my)
