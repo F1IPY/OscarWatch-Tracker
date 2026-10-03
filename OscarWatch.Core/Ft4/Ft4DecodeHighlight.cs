@@ -13,8 +13,9 @@ public enum Ft4DecodeHighlightKind
 /// <summary>
 /// Which decode rows are painted. A station addressing us is "calling me".
 /// Once that station is the QSO partner, their lines are "replying" instead.
-/// A received CQ uses its own shade. Otherwise, receive lines for a callsign or
-/// grid not yet in the logbook use "new call" / "new grid".
+/// A callsign not yet in the logbook is "new call", including when they are calling CQ,
+/// so a first CQ is not lost among the others. A CQ from a logged station uses the CQ shade.
+/// A grid not yet in the logbook is "new grid".
 /// </summary>
 public static class Ft4DecodeHighlight
 {
@@ -57,11 +58,11 @@ public static class Ft4DecodeHighlight
         if (de.Length == 0 || (mine.Length > 0 && de.Equals(mine, StringComparison.Ordinal)))
             return Ft4DecodeHighlightKind.None;
 
-        if (Ft4MessageCodec.IsCq(message.CallTo))
-            return Ft4DecodeHighlightKind.Cq;
-
         if (workedCalls is not null && !workedCalls.Contains(de))
             return Ft4DecodeHighlightKind.NewCall;
+
+        if (Ft4MessageCodec.IsCq(message.CallTo))
+            return Ft4DecodeHighlightKind.Cq;
 
         var field = GridField(message.Extra);
         if (field is not null

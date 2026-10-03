@@ -73,15 +73,15 @@ public sealed class Ft4DecodeHighlightTests
     }
 
     [Fact]
-    public void Cq_uses_its_own_highlight()
+    public void Cq_from_an_unlogged_call_is_a_new_call()
     {
-        var msg = Line("CQ G4ABC JO01", "CQ", "G4ABC", "JO01");
+        var msg = Line("CQ KC1WAY FN42", "CQ", "KC1WAY", "FN42");
         Assert.Equal(
-            Ft4DecodeHighlightKind.Cq,
+            Ft4DecodeHighlightKind.NewCall,
             Ft4DecodeHighlight.Classify(msg, "MM9SQL", null, Calls(), Grids()));
         Assert.Equal(
             Ft4DecodeHighlightKind.Cq,
-            Ft4DecodeHighlight.Classify(msg, "MM9SQL", null, Calls("G4ABC"), Grids("JO01")));
+            Ft4DecodeHighlight.Classify(msg, "MM9SQL", null, Calls("KC1WAY"), Grids("FN42")));
     }
 
     [Fact]
