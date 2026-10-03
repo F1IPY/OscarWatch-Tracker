@@ -256,6 +256,8 @@ public sealed class Ft4QsoSequencer
     /// Newline-separated messages to try when the first decode misses a weak copy.
     /// Only while a contact is open and both calls are known: their report, RR73, or 73.
     /// RRR is not guessed. A decoded RRR queues our 73, and satellite contacts usually skip that step.
+    /// Once our TX is already 73 or RR73, only those two are tried. A fresh report guess
+    /// at that point would look like another huge report after the contact had moved on.
     /// </summary>
     public bool TryGetApHints(out string hints, out double audioHz)
     {
@@ -280,14 +282,17 @@ public sealed class Ft4QsoSequencer
             return false;
 
         var lines = new List<string>(160);
-        if (!string.IsNullOrWhiteSpace(TheirGrid))
-            lines.Add(Ft4MessageCodec.BuildGridReply(my, them, TheirGrid));
-
-        for (var snr = -30; snr <= 40; snr++)
+        if (!IsOutgoingClosing(CurrentTxMessage))
         {
-            var report = Ft4MessageCodec.FormatSnrReport(snr);
-            lines.Add(Ft4MessageCodec.BuildReport(my, them, report));
-            lines.Add(Ft4MessageCodec.BuildReport(my, them, Ft4MessageCodec.FormatRogerReport(snr)));
+            if (!string.IsNullOrWhiteSpace(TheirGrid))
+                lines.Add(Ft4MessageCodec.BuildGridReply(my, them, TheirGrid));
+
+            for (var snr = -30; snr <= 40; snr++)
+            {
+                var report = Ft4MessageCodec.FormatSnrReport(snr);
+                lines.Add(Ft4MessageCodec.BuildReport(my, them, report));
+                lines.Add(Ft4MessageCodec.BuildReport(my, them, Ft4MessageCodec.FormatRogerReport(snr)));
+            }
         }
 
         lines.Add(Ft4MessageCodec.BuildRr73(my, them));

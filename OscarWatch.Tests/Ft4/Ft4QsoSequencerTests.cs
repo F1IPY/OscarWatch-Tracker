@@ -27,6 +27,7 @@ public sealed class Ft4QsoSequencerTests
         Assert.Contains("MM9SQL G4ABC RR73", hints, StringComparison.Ordinal);
         Assert.DoesNotContain("MM9SQL G4ABC RRR", hints, StringComparison.Ordinal);
         Assert.Contains("MM9SQL G4ABC -12", hints, StringComparison.Ordinal);
+        Assert.Contains("MM9SQL G4ABC R+28", hints, StringComparison.Ordinal);
         Assert.DoesNotContain("G4ABC MM9SQL 73", hints, StringComparison.Ordinal);
 
         Assert.Equal("IO91", seq.TheirGrid);
@@ -83,6 +84,22 @@ public sealed class Ft4QsoSequencerTests
         Assert.Equal(Ft4QsoPhase.Finished, seq.Phase);
         Assert.False(seq.TransmitEnabled);
         Assert.Equal("CQ MM9SQL IO85", seq.CurrentTxMessage);
+    }
+
+    [Fact]
+    public void Closing_tx_does_not_guess_a_fresh_report()
+    {
+        var seq = new Ft4QsoSequencer(() => "GW4VXE", () => "IO71", () => true);
+        seq.StartCq(evenSlot: true);
+        seq.OnDecoded(Msg("GW4VXE R8CEL IO91"));
+        Assert.False(seq.OnDecoded(Msg("GW4VXE R8CEL RRR")));
+        Assert.Equal("R8CEL GW4VXE 73", seq.CurrentTxMessage);
+
+        Assert.True(seq.TryGetApHints(out var hints, out _));
+        Assert.Contains("GW4VXE R8CEL 73", hints, StringComparison.Ordinal);
+        Assert.Contains("GW4VXE R8CEL RR73", hints, StringComparison.Ordinal);
+        Assert.DoesNotContain("R+28", hints, StringComparison.Ordinal);
+        Assert.DoesNotContain("+21", hints, StringComparison.Ordinal);
     }
 
     [Fact]

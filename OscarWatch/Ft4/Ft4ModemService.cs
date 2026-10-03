@@ -1486,7 +1486,10 @@ public sealed class Ft4ModemService : IDisposable
             Ft8Native.ResolveWaterfallSearchBand(out fMin, out fMax);
         string? apHints = null;
         var apHz = 0f;
+        // A transmit slot is our own signal. Guessing the other station's reply
+        // there is how a report appears in the same period as our 73.
         if (!ownOnly
+            && !txSlot
             && Ft4DecodeDepth.UseApriori(_snapshot.GetCurrent().ElevationDeg)
             && _sequencer is not null
             && _sequencer.TryGetApHints(out var hintText, out var hintHz))
@@ -1587,6 +1590,17 @@ public sealed class Ft4ModemService : IDisposable
                 }
 
                 Avalonia.Threading.Dispatcher.UIThread.Post(() => ShowChosenEcho(echo));
+                continue;
+            }
+
+            // Own echoes can sit 1–2 s into the slot (full duplex). Another station
+            // on a satellite cannot: +2 s is a moonbounce delay.
+            if (!Ft4DecodeDepth.IsPlausibleSatelliteDt(timeSec))
+            {
+                Log.Debug(
+                    "FT4 decode ignored, DT {Dt:0.00} s is outside a satellite path: {Text}",
+                    timeSec,
+                    d.text);
                 continue;
             }
 

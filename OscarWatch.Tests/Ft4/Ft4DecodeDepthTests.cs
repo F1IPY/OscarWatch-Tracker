@@ -80,4 +80,25 @@ public sealed class Ft4DecodeDepthTests
     {
         Assert.False(Ft4DecodeDepth.UseApriori(null));
     }
+
+    [Theory]
+    [InlineData(-0.5)]
+    [InlineData(0.5)]
+    [InlineData(0.6)]
+    [InlineData(1.2)]
+    [InlineData(1.5)]
+    public void Satellite_dt_keeps_a_normal_ft4_start(double timeSec)
+    {
+        Assert.True(Ft4DecodeDepth.IsPlausibleSatelliteDt(timeSec));
+    }
+
+    [Theory]
+    [InlineData(-0.6)]
+    [InlineData(1.6)]
+    [InlineData(2.3)]
+    [InlineData(2.5)]
+    public void Moonbounce_dt_is_not_a_satellite_copy(double timeSec)
+    {
+        Assert.False(Ft4DecodeDepth.IsPlausibleSatelliteDt(timeSec));
+    }
 }

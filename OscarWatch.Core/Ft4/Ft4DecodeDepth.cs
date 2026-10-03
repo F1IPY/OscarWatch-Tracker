@@ -28,4 +28,20 @@ public static class Ft4DecodeDepth
     /// </summary>
     public static bool UseApriori(double? elevationDeg) =>
         elevationDeg is >= 0;
+
+    /// <summary>
+    /// Earliest DT still treated as a satellite copy. The native search starts
+    /// about half a second before the slot.
+    /// </summary>
+    public const double MinSatelliteDtSec = -0.5;
+
+    /// <summary>
+    /// Latest DT still treated as a satellite copy. FT4 starts 0.5 s into the
+    /// slot and a satellite adds only milliseconds, so a real line stays near
+    /// that. A moonbounce echo is about +2.5 s.
+    /// </summary>
+    public const double MaxSatelliteDtSec = 1.5;
+
+    public static bool IsPlausibleSatelliteDt(double timeSec) =>
+        timeSec is >= MinSatelliteDtSec and <= MaxSatelliteDtSec;
 }

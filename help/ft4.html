@@ -127,8 +127,10 @@
         Once both calls are known, a report, RR73, or 73 that the first decode missed is tried
         again against those calls. RRR is left to a normal decode, because a guessed one would
         start the 73. That recovers a weak copy near the horizon. It stays off while
-        you are only listening, and after the satellite has set. It is not added when that moment
-        already decoded as a different message.
+        you are only listening, while you are transmitting, and after the satellite has set.
+        It is not added when that moment already decoded as a different message, and once you
+        are already sending 73 or RR73 it does not invent a fresh report. A decode later than
+        1.5 s into the slot is ignored: that delay is a moonbounce echo, not a satellite.
       </p>
       <p>
         If a strong signal sits on a weaker one, the strong signal is taken off the audio and the
