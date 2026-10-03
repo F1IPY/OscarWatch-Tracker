@@ -46,7 +46,7 @@ public sealed class Ft8NativeRoundTripTests
 
         var decoded = Ft8Native.DecodeFt4(pcm);
         Assert.NotEmpty(decoded);
-        Assert.Contains(decoded, d => d.text.Contains("MM9SQL", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(decoded, d => d.text.Contains("MM9SQL", StringComparison.OrdinalIgnoreCase) && d.ap == 0);
         Assert.Contains(decoded, d => d.text.Contains("CQ", StringComparison.OrdinalIgnoreCase));
     }
 
@@ -261,7 +261,7 @@ public sealed class Ft8NativeRoundTripTests
                 plainHits++;
 
             var hinted = Ft8Native.DecodeFt4(noisy, rate, 200f, 2800f, deep: false, hints, apCentreHz: 1500f);
-            if (hinted.Any(d => d.text.Contains("RR73", StringComparison.Ordinal)))
+            if (hinted.Any(d => d.text.Contains("RR73", StringComparison.Ordinal) && d.ap != 0))
                 recovered++;
         }
 

@@ -4014,6 +4014,12 @@ Mais recente: {1} ({2})</value>
   <data name="Ft4.ParallelTxEchoDecode.Note">
     <value>Nas janelas de transmissão, executa o decode normal e um passe de eco tardio juntos para a sua cópia aparecer mais cedo. Usa mais CPU nessa janela. Deixe ligado, a menos que o PC fique sobrecarregado.</value>
   </data>
+  <data name="Ft4.ApEnabled">
+    <value>Sugerir respostas fracas (AP)</value>
+  </data>
+  <data name="Ft4.ApEnabled.Note">
+    <value>Com um contato aberto, um reporte, RR73 ou 73 que a primeira decodificação não leu é tentado de novo. Essas linhas são marcadas AP. Desmarque para mostrar só o que foi lido diretamente.</value>
+  </data>
   <data name="Ft4.TxWatchdogMinutes">
     <value>Vigilância de TX (minutos)</value>
   </data>
@@ -4352,6 +4358,9 @@ Mais recente: {1} ({2})</value>
   </data>
   <data name="Ft4.Decodes.Echo">
     <value>Eco</value>
+  </data>
+  <data name="Ft4.Decodes.Ap">
+    <value>AP</value>
   </data>
   <data name="Ft4.TxMessage">
     <value>Mensagem TX</value>

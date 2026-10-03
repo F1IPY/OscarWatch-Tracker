@@ -9,7 +9,7 @@ public static class Ft4ActivityLog
     public static string FormatLine(Ft4DecodedMessage msg)
     {
         var utc = msg.SlotUtc.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
-        var kind = msg.IsTransmitted ? "TX" : msg.IsOwnEcho ? "Echo" : "RX";
+        var kind = msg.IsTransmitted ? "TX" : msg.IsOwnEcho ? "Echo" : msg.IsApriori ? "AP" : "RX";
         var snr = msg.IsTransmitted
             ? "   -"
             : msg.SnrDb.ToString("+0;-0", CultureInfo.InvariantCulture).PadLeft(4);

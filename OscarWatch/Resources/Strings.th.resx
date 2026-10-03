@@ -4018,6 +4018,12 @@ LOS: {2}
   <data name="Ft4.ParallelTxEchoDecode.Note">
     <value>ในช่วงส่ง จะถอดรหัสปกติและรอบเอคโค่ที่มาช้าพร้อมกัน เพื่อให้เห็นสำเนาของตัวเองเร็วขึ้น ใช้ CPU มากขึ้นในช่วงนั้น เปิดไว้ได้ เว้นแต่เครื่องช้า</value>
   </data>
+  <data name="Ft4.ApEnabled">
+    <value>เดาข้อความตอบที่อ่อน (AP)</value>
+  </data>
+  <data name="Ft4.ApEnabled.Note">
+    <value>ขณะติดต่ออยู่ รายงาน RR73 หรือ 73 ที่ถอดรหัสครั้งแรกพลาดจะถูกลองอีกครั้ง แถวนั้นจะมีเครื่องหมาย AP เอาเครื่องหมายออกเพื่อแสดงเฉพาะที่อ่านได้โดยตรง</value>
+  </data>
   <data name="Ft4.TxWatchdogMinutes">
     <value>ตัวเฝ้า TX (นาที)</value>
   </data>
@@ -4356,6 +4362,9 @@ LOS: {2}
   </data>
   <data name="Ft4.Decodes.Echo">
     <value>เอคโค่</value>
+  </data>
+  <data name="Ft4.Decodes.Ap">
+    <value>AP</value>
   </data>
   <data name="Ft4.TxMessage">
     <value>ข้อความ TX</value>

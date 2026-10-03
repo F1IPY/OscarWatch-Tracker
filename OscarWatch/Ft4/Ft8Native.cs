@@ -86,6 +86,8 @@ internal static class Ft8Native
         public float snr;
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 48)]
         public string text;
+        /// <summary>Non-zero when the text is a hinted reply, not a CRC decode.</summary>
+        public int ap;
     }
 
     [DllImport(LibraryName, CallingConvention = CallingConvention.Cdecl)]

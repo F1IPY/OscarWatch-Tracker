@@ -26,6 +26,8 @@ typedef struct
     float time_sec;
     float snr;
     char text[OW_FT8_MAX_MESSAGE_LEN];
+    /// Non-zero when the text is a hinted reply, not a CRC decode.
+    int ap;
 } ow_ft8_decode_t;
 
 /// Encode a plain FT4/FT8 message text to a 12 kHz float PCM buffer (slot-length with silence padding).

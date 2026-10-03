@@ -988,6 +988,7 @@ static int decode_slot(
         out->snr = estimate_snr_db(mon, cand, tones, nsym, nfsk, skip_ends);
         strncpy(out->text, text, OW_FT8_MAX_MESSAGE_LEN - 1);
         out->text[OW_FT8_MAX_MESSAGE_LEN - 1] = '\0';
+        out->ap = 0;
 
         if (do_subtract && n_jobs < OW_FT8_MAX_DECODES && unpack_status == FTX_MESSAGE_RC_OK)
         {
@@ -1070,6 +1071,7 @@ static int decode_slot(
                 out->snr = estimate_snr_db(mon, cand, tones, FT4_NN, 4, 1);
                 strncpy(out->text, hints[best_hint].text, OW_FT8_MAX_MESSAGE_LEN - 1);
                 out->text[OW_FT8_MAX_MESSAGE_LEN - 1] = '\0';
+                out->ap = 1;
             }
             free(hints);
         }

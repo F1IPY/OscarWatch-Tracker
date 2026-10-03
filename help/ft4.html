@@ -131,6 +131,10 @@
         It is not added when that moment already decoded as a different message, and once you
         are already sending 73 or RR73 it does not invent a fresh report. A decode later than
         1.5 s into the slot is ignored: that delay is a moonbounce echo, not a satellite.
+        A line marked <strong>AP</strong> was not read on its own. It is the closest of the
+        replies already expected in the contact. Guessed reports stop at +20. One at the
+        bottom of the SNR scale, before the slot, or at a different delay from that station's
+        other copies, is left out. Turn it off under <strong>Settings → Modem</strong>.
       </p>
       <p>
         If a strong signal sits on a weaker one, the strong signal is taken off the audio and the
@@ -400,7 +404,7 @@
       <h3>Modem</h3>
       <p>Two groups.</p>
       <ul>
-        <li><strong>Contacts</strong>: <strong>Auto reply</strong>, <strong>Hold Tx Freq</strong>, and the <strong>TX watchdog</strong> in minutes. 0 turns the watchdog off. The same ticks are on the main FT4 window.
+        <li><strong>Contacts</strong>: <strong>Auto reply</strong>, <strong>Hint weak replies (AP)</strong>, <strong>Hold Tx Freq</strong>, and the <strong>TX watchdog</strong> in minutes. 0 turns the watchdog off. Auto reply and Hold Tx Freq are also on the main FT4 window. Untick AP to show only what was read directly.
           <strong>Lower RF power to 30 W</strong> sets the radio to 30 W before transmitting when it reports more. See <a href="#power">Power and good practice</a>.</li>
         <li><strong>Doppler</strong>: audio correction on transmit, audio correction on receive, and looking for your echo in two ways at once during a transmit slot. Leave them on. Turn the last one off only if the PC struggles for a moment at each slot.</li>
       </ul>

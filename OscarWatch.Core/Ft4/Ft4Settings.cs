@@ -7,6 +7,12 @@ public sealed class Ft4Settings
 {
     public bool SkipRrr { get; set; } = true;
 
+    /// <summary>
+    /// When true (default), a report, RR73, or 73 that the first decode missed is tried again
+    /// once both calls are known. Those lines are marked AP.
+    /// </summary>
+    public bool ApEnabled { get; set; } = true;
+
     public Ft4PttMethod PttMethod { get; set; } = Ft4PttMethod.Vox;
 
     public Ft4PttLine PttLine { get; set; } = Ft4PttLine.Rts;

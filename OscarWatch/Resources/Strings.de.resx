@@ -4018,6 +4018,12 @@ Aktuell: {1} ({2})</value>
   <data name="Ft4.ParallelTxEchoDecode.Note">
     <value>In TX-Slots laufen normale Dekodierung und ein später Echo-Durchlauf zusammen, damit die eigene Kopie schneller erscheint. Nutzt mehr CPU in diesem Slot. An lassen, außer der PC kommt nicht mit.</value>
   </data>
+  <data name="Ft4.ApEnabled">
+    <value>Schwache Antworten ergänzen (AP)</value>
+  </data>
+  <data name="Ft4.ApEnabled.Note">
+    <value>Während ein QSO läuft, werden ein Rapport, RR73 oder 73, die der erste Decode verpasst hat, noch einmal versucht. Diese Zeilen sind mit AP markiert. Haken entfernen, um nur direkt Gelesenes zu zeigen.</value>
+  </data>
   <data name="Ft4.TxWatchdogMinutes">
     <value>TX-Watchdog (Minuten)</value>
   </data>
@@ -4356,6 +4362,9 @@ Aktuell: {1} ({2})</value>
   </data>
   <data name="Ft4.Decodes.Echo">
     <value>Echo</value>
+  </data>
+  <data name="Ft4.Decodes.Ap">
+    <value>AP</value>
   </data>
   <data name="Ft4.TxMessage">
     <value>TX-Nachricht</value>

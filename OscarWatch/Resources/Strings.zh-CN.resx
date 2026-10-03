@@ -4014,6 +4014,12 @@
   <data name="Ft4.ParallelTxEchoDecode.Note">
     <value>在发射时隙同时运行正常解码与迟到回波处理，以便更快显示本台回波。该时隙会占用更多 CPU。除非电脑吃力，否则请保持开启。</value>
   </data>
+  <data name="Ft4.ApEnabled">
+    <value>推测弱回复 (AP)</value>
+  </data>
+  <data name="Ft4.ApEnabled.Note">
+    <value>联络进行中时，会再次尝试首次解码错过的信号报告、RR73 或 73。这些行标为 AP。取消勾选则只显示直接解出的内容。</value>
+  </data>
   <data name="Ft4.TxWatchdogMinutes">
     <value>发射看门狗（分钟）</value>
   </data>
@@ -4352,6 +4358,9 @@
   </data>
   <data name="Ft4.Decodes.Echo">
     <value>回波</value>
+  </data>
+  <data name="Ft4.Decodes.Ap">
+    <value>AP</value>
   </data>
   <data name="Ft4.TxMessage">
     <value>TX 消息</value>

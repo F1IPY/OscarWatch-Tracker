@@ -64,6 +64,7 @@ public partial class Ft4ViewModel : ViewModelBase, IDisposable
 
         var ft4 = _settings.Current.Ft4;
         _skipRrr = ft4.SkipRrr;
+        _apEnabled = ft4.ApEnabled;
         _txAudioHz = Math.Clamp(ft4.TxAudioHz, 200, 3000);
         _rxAudioHz = _txAudioHz;
         _txLevel = Math.Clamp(ft4.TxLevel, 0.05, 1.0);
@@ -197,6 +198,7 @@ public partial class Ft4ViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private string _separatePttConflictText = "";
     [ObservableProperty] private double _txPlaybackPeakPercent;
     [ObservableProperty] private bool _skipRrr;
+    [ObservableProperty] private bool _apEnabled = true;
     [ObservableProperty] private bool _preferEvenSlot;
     [ObservableProperty] private bool _holdTxFrequency = true;
     [ObservableProperty] private bool _autoReply = true;
@@ -248,6 +250,12 @@ public partial class Ft4ViewModel : ViewModelBase, IDisposable
     partial void OnSkipRrrChanged(bool value)
     {
         _settings.Current.Ft4.SkipRrr = value;
+        _settings.RequestSave();
+    }
+
+    partial void OnApEnabledChanged(bool value)
+    {
+        _settings.Current.Ft4.ApEnabled = value;
         _settings.RequestSave();
     }
 

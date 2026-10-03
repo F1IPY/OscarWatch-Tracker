@@ -4014,6 +4014,12 @@
   <data name="Ft4.ParallelTxEchoDecode.Note">
     <value>送信スロットでは通常デコードと遅延エコー処理を同時に行い、自分のコピーを早く表示します。そのスロットのCPU使用量が増えます。PCが厳しいとき以外はオンのままにしてください。</value>
   </data>
+  <data name="Ft4.ApEnabled">
+    <value>弱い返信を補完 (AP)</value>
+  </data>
+  <data name="Ft4.ApEnabled.Note">
+    <value>交信中は、最初のデコードで読めなかったレポート、RR73、73をもう一度試します。その行は AP と表示されます。直接読めたものだけにするにはオフにします。</value>
+  </data>
   <data name="Ft4.TxWatchdogMinutes">
     <value>TXウォッチドッグ（分）</value>
   </data>
@@ -4352,6 +4358,9 @@
   </data>
   <data name="Ft4.Decodes.Echo">
     <value>エコー</value>
+  </data>
+  <data name="Ft4.Decodes.Ap">
+    <value>AP</value>
   </data>
   <data name="Ft4.TxMessage">
     <value>TXメッセージ</value>

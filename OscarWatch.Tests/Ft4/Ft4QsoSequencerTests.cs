@@ -27,7 +27,9 @@ public sealed class Ft4QsoSequencerTests
         Assert.Contains("MM9SQL G4ABC RR73", hints, StringComparison.Ordinal);
         Assert.DoesNotContain("MM9SQL G4ABC RRR", hints, StringComparison.Ordinal);
         Assert.Contains("MM9SQL G4ABC -12", hints, StringComparison.Ordinal);
-        Assert.Contains("MM9SQL G4ABC R+28", hints, StringComparison.Ordinal);
+        Assert.Contains("MM9SQL G4ABC R+20", hints, StringComparison.Ordinal);
+        Assert.DoesNotContain("MM9SQL G4ABC R+21", hints, StringComparison.Ordinal);
+        Assert.DoesNotContain("MM9SQL G4ABC R+35", hints, StringComparison.Ordinal);
         Assert.DoesNotContain("G4ABC MM9SQL 73", hints, StringComparison.Ordinal);
 
         Assert.Equal("IO91", seq.TheirGrid);

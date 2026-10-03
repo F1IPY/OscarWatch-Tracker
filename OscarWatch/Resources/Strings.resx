@@ -4014,6 +4014,12 @@ Latest: {1} ({2})</value>
   <data name="Ft4.ParallelTxEchoDecode.Note">
     <value>On transmit slots, run the normal decode and a late-echo pass together so your own copy appears sooner. Uses more CPU for that slot. Leave on unless the PC struggles.</value>
   </data>
+  <data name="Ft4.ApEnabled">
+    <value>Hint weak replies (AP)</value>
+  </data>
+  <data name="Ft4.ApEnabled.Note">
+    <value>While a contact is open, a report, RR73, or 73 that the first decode missed is tried again. Those lines are marked AP. Untick to show only what was read directly.</value>
+  </data>
   <data name="Ft4.TxWatchdogMinutes">
     <value>TX watchdog (minutes)</value>
   </data>
@@ -4349,6 +4355,9 @@ Latest: {1} ({2})</value>
   </data>
   <data name="Ft4.Decodes.Echo">
     <value>Echo</value>
+  </data>
+  <data name="Ft4.Decodes.Ap">
+    <value>AP</value>
   </data>
   <data name="Ft4.Decodes.Message">
     <value>Message</value>

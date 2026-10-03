@@ -57,6 +57,7 @@ public sealed class Ft4ModemService : IDisposable
     private bool _decodeQueuedThisSlot;
     private bool? _deepDecodeActive;
     private readonly HashSet<string> _postedDecodeKeys = new(StringComparer.Ordinal);
+    private readonly Ft4CallDt _callDt = new();
     private readonly Dictionary<string, Ft4DecodedMessage> _postedEchoes = new(StringComparer.Ordinal);
     private readonly object _decodePostGate = new();
     private DateTime _txWatchdogResetUtc = DateTime.UtcNow;
@@ -303,6 +304,7 @@ public sealed class Ft4ModemService : IDisposable
         {
             _postedDecodeKeys.Clear();
             _postedEchoes.Clear();
+            _callDt.Clear();
             _lastEchoCalibrationSlot = DateTime.MinValue;
         }
         _txWatchdogResetUtc = DateTime.UtcNow;
@@ -700,6 +702,7 @@ public sealed class Ft4ModemService : IDisposable
             {
                 _postedDecodeKeys.Clear();
                 _postedEchoes.Clear();
+                _callDt.Clear();
             }
             Status = _l.Get("Ft4.Status.DecodesCleared");
             Changed?.Invoke();
@@ -1490,6 +1493,7 @@ public sealed class Ft4ModemService : IDisposable
         // there is how a report appears in the same period as our 73.
         if (!ownOnly
             && !txSlot
+            && _settings.Current.Ft4.ApEnabled
             && Ft4DecodeDepth.UseApriori(_snapshot.GetCurrent().ElevationDeg)
             && _sequencer is not null
             && _sequencer.TryGetApHints(out var hintText, out var hintHz))
@@ -1604,13 +1608,38 @@ public sealed class Ft4ModemService : IDisposable
                 continue;
             }
 
+            // A hinted reply on the SNR floor has no measurable signal. R+35 was −21 dB.
+            var hinted = d.ap != 0;
+            if (hinted && !Ft4DecodeDepth.IsPublishableHint(timeSec, d.snr))
+            {
+                Log.Debug(
+                    "FT4 hinted reply ignored, SNR {Snr:0} dB at DT {Dt:0.00} s: {Text}",
+                    d.snr,
+                    timeSec,
+                    d.text);
+                continue;
+            }
+
             // Same text in one slot is the same transmission. A later pass often
             // reports it a few hertz away, which a 5 Hz bucket let through as a second line.
             var dedupeKey = slotStart.Ticks + "|" + d.text;
             lock (_decodePostGate)
             {
+                if (hinted && !_callDt.AllowsHint(callDe, timeSec))
+                {
+                    Log.Debug(
+                        "FT4 hinted reply ignored, DT {Dt:0.00} s does not match {Call}: {Text}",
+                        timeSec,
+                        callDe,
+                        d.text);
+                    continue;
+                }
+
                 if (!_postedDecodeKeys.Add(dedupeKey))
                     continue;
+
+                if (!hinted)
+                    _callDt.NoteReliable(callDe, timeSec, d.snr);
             }
 
             var msg = new Ft4DecodedMessage(
@@ -1622,7 +1651,8 @@ public sealed class Ft4ModemService : IDisposable
                 callTo,
                 callDe,
                 extra,
-                isOwn);
+                isOwn,
+                IsApriori: d.ap != 0);
 
             any = true;
             if (isOwn)

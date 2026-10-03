@@ -4018,6 +4018,12 @@ LOS: {2}
   <data name="Ft4.ParallelTxEchoDecode.Note">
     <value>В TX-слотах обычная декодировка и поздний проход эха идут вместе, чтобы своя копия появлялась быстрее. Больше нагрузка на CPU в этом слоте. Оставляйте включённым, если ПК не слабый.</value>
   </data>
+  <data name="Ft4.ApEnabled">
+    <value>Подсказывать слабые ответы (AP)</value>
+  </data>
+  <data name="Ft4.ApEnabled.Note">
+    <value>Пока идёт связь, отчёт, RR73 или 73, пропущенные первым декодированием, пробуются снова. Такие строки помечаются AP. Снимите флажок, чтобы показывать только прочитанное напрямую.</value>
+  </data>
   <data name="Ft4.TxWatchdogMinutes">
     <value>Сторож TX (минуты)</value>
   </data>
@@ -4356,6 +4362,9 @@ LOS: {2}
   </data>
   <data name="Ft4.Decodes.Echo">
     <value>Эхо</value>
+  </data>
+  <data name="Ft4.Decodes.Ap">
+    <value>AP</value>
   </data>
   <data name="Ft4.TxMessage">
     <value>TX-сообщение</value>

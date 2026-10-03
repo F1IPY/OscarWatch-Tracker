@@ -186,6 +186,11 @@
             <TextBlock Classes="ft4-note"
                        Margin="24,0,0,0"
                        Text="{loc:Localize Key=Ft4.AutoReply.Note}" />
+            <CheckBox Content="{loc:Localize Key=Ft4.ApEnabled}"
+                      IsChecked="{Binding ApEnabled}" />
+            <TextBlock Classes="ft4-note"
+                       Margin="24,0,0,0"
+                       Text="{loc:Localize Key=Ft4.ApEnabled.Note}" />
             <CheckBox Content="{loc:Localize Key=Ft4.HoldTxFrequency}"
                       IsChecked="{Binding HoldTxFrequency}" />
             <TextBlock Classes="ft4-note"

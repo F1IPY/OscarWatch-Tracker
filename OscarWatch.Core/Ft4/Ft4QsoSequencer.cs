@@ -287,7 +287,7 @@ public sealed class Ft4QsoSequencer
             if (!string.IsNullOrWhiteSpace(TheirGrid))
                 lines.Add(Ft4MessageCodec.BuildGridReply(my, them, TheirGrid));
 
-            for (var snr = -30; snr <= 40; snr++)
+            for (var snr = -30; snr <= Ft4DecodeDepth.MaxHintedReportDb; snr++)
             {
                 var report = Ft4MessageCodec.FormatSnrReport(snr);
                 lines.Add(Ft4MessageCodec.BuildReport(my, them, report));

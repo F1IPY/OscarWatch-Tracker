@@ -4018,6 +4018,12 @@ Terbaru: {1} ({2})</value>
   <data name="Ft4.ParallelTxEchoDecode.Note">
     <value>Pada slot TX, decode biasa dan pass gema terlambat dijalankan bersama agar salinan Anda muncul lebih cepat. Memakai lebih banyak CPU pada slot itu. Biarkan aktif kecuali PC kewalahan.</value>
   </data>
+  <data name="Ft4.ApEnabled">
+    <value>Tebak balasan lemah (AP)</value>
+  </data>
+  <data name="Ft4.ApEnabled.Note">
+    <value>Saat kontak terbuka, laporan, RR73, atau 73 yang terlewat pada decode pertama dicoba lagi. Baris itu ditandai AP. Hapus centang untuk menampilkan hanya yang terbaca langsung.</value>
+  </data>
   <data name="Ft4.TxWatchdogMinutes">
     <value>Pengawas TX (menit)</value>
   </data>
@@ -4356,6 +4362,9 @@ Terbaru: {1} ({2})</value>
   </data>
   <data name="Ft4.Decodes.Echo">
     <value>Echo</value>
+  </data>
+  <data name="Ft4.Decodes.Ap">
+    <value>AP</value>
   </data>
   <data name="Ft4.TxMessage">
     <value>Pesan TX</value>

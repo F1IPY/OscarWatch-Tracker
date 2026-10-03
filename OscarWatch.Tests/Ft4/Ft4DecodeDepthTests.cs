@@ -82,7 +82,8 @@ public sealed class Ft4DecodeDepthTests
     }
 
     [Theory]
-    [InlineData(-0.5)]
+    [InlineData(0)]
+    [InlineData(0.4)]
     [InlineData(0.5)]
     [InlineData(0.6)]
     [InlineData(1.2)]
@@ -93,6 +94,7 @@ public sealed class Ft4DecodeDepthTests
     }
 
     [Theory]
+    [InlineData(-0.5)]
     [InlineData(-0.6)]
     [InlineData(1.6)]
     [InlineData(2.3)]
@@ -100,5 +102,12 @@ public sealed class Ft4DecodeDepthTests
     public void Moonbounce_dt_is_not_a_satellite_copy(double timeSec)
     {
         Assert.False(Ft4DecodeDepth.IsPlausibleSatelliteDt(timeSec));
+    }
+
+    [Fact]
+    public void Hinted_reply_on_the_snr_floor_is_not_published()
+    {
+        Assert.False(Ft4DecodeDepth.IsPublishableHint(0.4, Ft4DecodeDepth.ApSnrFloorDb));
+        Assert.True(Ft4DecodeDepth.IsPublishableHint(0.4, -18));
     }
 }

@@ -30,10 +30,23 @@ public static class Ft4DecodeDepth
         elevationDeg is >= 0;
 
     /// <summary>
-    /// Earliest DT still treated as a satellite copy. The native search starts
-    /// about half a second before the slot.
+    /// Earliest DT still treated as a satellite copy. FT4 starts 0.5 s into the
+    /// slot, so a burst at DT 0 is already half a second early. The R+35 guess
+    /// sat at −0.5 s, a full second before the real copies.
     /// </summary>
-    public const double MinSatelliteDtSec = -0.5;
+    public const double MinSatelliteDtSec = 0;
+
+    /// <summary>
+    /// SNR estimator floor. A hinted reply parked on this value has no measurable signal.
+    /// </summary>
+    public const float ApSnrFloorDb = -21f;
+
+    /// <summary>Highest report a hint may invent. A louder one still decodes on its own.</summary>
+    public const int MaxHintedReportDb = 20;
+
+    /// <summary>A hinted reply needs a satellite DT and a signal above the SNR floor.</summary>
+    public static bool IsPublishableHint(double timeSec, float snrDb) =>
+        IsPlausibleSatelliteDt(timeSec) && snrDb > ApSnrFloorDb;
 
     /// <summary>
     /// Latest DT still treated as a satellite copy. FT4 starts 0.5 s into the

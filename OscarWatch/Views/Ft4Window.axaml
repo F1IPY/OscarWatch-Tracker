@@ -241,6 +241,11 @@
                              FontWeight="SemiBold"
                              Foreground="#6DB3F2"
                              IsVisible="{Binding Message.IsOwnEcho}" />
+                  <TextBlock Grid.Column="1"
+                             Text="{loc:Localize Key=Ft4.Decodes.Ap}"
+                             FontWeight="SemiBold"
+                             Foreground="#E0A84A"
+                             IsVisible="{Binding Message.IsApriori}" />
                   <TextBlock Grid.Column="2"
                              Classes.ft4-ink="{Binding HasRowForeground}"
                              Text="{Binding Message.TimeSec, StringFormat={}{0:+0.0;-0.0}}"

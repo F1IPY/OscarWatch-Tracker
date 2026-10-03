@@ -34,7 +34,21 @@ public sealed class Ft4ActivityLogTests
 
         Assert.Contains("CQ G4ABC JO01", text);
         Assert.Contains("G4ABC MM9SQL IO85", text);
+        var hinted = new Ft4DecodedMessage(
+            new DateTime(2026, 9, 21, 12, 0, 15, DateTimeKind.Utc),
+            "MM9SQL G4ABC R+35",
+            1500f,
+            -0.5f,
+            -21f,
+            "MM9SQL",
+            "G4ABC",
+            "R+35",
+            IsOwnEcho: false,
+            IsApriori: true);
+        text = Ft4ActivityLog.FormatAll([newerTx, older, hinted]);
+
         Assert.Contains(" TX ", text);
+        Assert.Contains(" AP ", text);
         Assert.Contains(" RX ", text);
         var cqIndex = text.IndexOf("CQ G4ABC JO01", StringComparison.Ordinal);
         var txIndex = text.IndexOf("G4ABC MM9SQL IO85", StringComparison.Ordinal);

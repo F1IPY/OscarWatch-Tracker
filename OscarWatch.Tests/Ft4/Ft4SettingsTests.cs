@@ -24,6 +24,7 @@ public sealed class Ft4SettingsTests
     {
         var settings = new Ft4Settings();
         Assert.True(settings.SkipRrr);
+        Assert.True(settings.ApEnabled);
         Assert.Equal(Ft4PttMethod.Vox, settings.PttMethod);
         Assert.Equal(Ft4PttLine.Rts, settings.PttLine);
         Assert.Equal(200, settings.PttLeadMs);
