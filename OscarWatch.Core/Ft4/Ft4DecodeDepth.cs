@@ -11,4 +11,14 @@ public static class Ft4DecodeDepth
 
     public static bool UseDeep(double? elevationDeg) =>
         elevationDeg is >= 0 and < HorizonElevationDeg;
+
+    /// <summary>Also decode the full receive slot while the satellite is up and below this elevation.</summary>
+    public const double FullSlotElevationDeg = 5;
+
+    /// <summary>
+    /// The first few degrees: a weak or slightly late burst can miss the 6 s early decode,
+    /// so receive slots get a second pass over the whole 7.5 s capture.
+    /// </summary>
+    public static bool UseFullSlotDecode(double? elevationDeg) =>
+        elevationDeg is >= 0 and < FullSlotElevationDeg;
 }

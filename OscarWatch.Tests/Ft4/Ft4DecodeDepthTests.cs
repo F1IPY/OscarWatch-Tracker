@@ -33,4 +33,28 @@ public sealed class Ft4DecodeDepthTests
     {
         Assert.False(Ft4DecodeDepth.UseDeep(null));
     }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(2.5)]
+    [InlineData(4.9)]
+    public void First_few_degrees_decode_the_full_slot(double elevationDeg)
+    {
+        Assert.True(Ft4DecodeDepth.UseFullSlotDecode(elevationDeg));
+    }
+
+    [Theory]
+    [InlineData(5)]
+    [InlineData(12)]
+    [InlineData(-0.5)]
+    public void Full_slot_decode_is_off_outside_the_first_few_degrees(double elevationDeg)
+    {
+        Assert.False(Ft4DecodeDepth.UseFullSlotDecode(elevationDeg));
+    }
+
+    [Fact]
+    public void Full_slot_decode_is_off_when_elevation_is_unknown()
+    {
+        Assert.False(Ft4DecodeDepth.UseFullSlotDecode(null));
+    }
 }

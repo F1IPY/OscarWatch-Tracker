@@ -758,8 +758,12 @@ public sealed class Ft4ModemService : IDisposable
                     var kickedTicks = Interlocked.Read(ref _txKickedSlotTicks);
                     var alreadyTx = kickedTicks == slotStart.Ticks;
                     var previousWasTx = previousSlot != DateTime.MinValue && kickedTicks == previousSlot.Ticks;
+                    var fullSlotPass = previousSlot != DateTime.MinValue
+                        && !previousWasTx
+                        && _decodeQueuedThisSlot
+                        && Ft4DecodeDepth.UseFullSlotDecode(_snapshot.GetCurrent().ElevationDeg);
                     var needEndDecode = previousSlot != DateTime.MinValue
-                        && (!_decodeQueuedThisSlot || previousWasTx);
+                        && (!_decodeQueuedThisSlot || previousWasTx || fullSlotPass);
                     lock (_gate)
                     {
                         if (needEndDecode && _slotBuffer.Count >= (int)(12000 * Ft4SlotClock.Ft4SlotSeconds / 2))
@@ -800,7 +804,7 @@ public sealed class Ft4ModemService : IDisposable
                     RefreshClockFromGps();
 
                     if (previousSamples is not null)
-                        QueueDecode(previousSlot, previousSamples, previousWasTx);
+                        QueueDecode(previousSlot, previousSamples, previousWasTx, fullSlotPass);
                 }
 
                 // Build the next TX burst before its slot, so the boundary only starts playback.
@@ -1305,7 +1309,7 @@ public sealed class Ft4ModemService : IDisposable
         QueueDecode(_currentSlotStart, snapshot, txSlot: _txThisSlot);
     }
 
-    private void QueueDecode(DateTime slotStart, float[] samples, bool txSlot)
+    private void QueueDecode(DateTime slotStart, float[] samples, bool txSlot, bool fullSlotPass = false)
     {
         // Long-running: native decode must not occupy a thread-pool worker the modem loop needs.
         _ = Task.Factory.StartNew(
@@ -1313,7 +1317,7 @@ public sealed class Ft4ModemService : IDisposable
             {
                 try
                 {
-                    DecodeSamples(slotStart, samples, txSlot);
+                    DecodeSamples(slotStart, samples, txSlot, fullSlotPass);
                 }
                 catch (Exception ex)
                 {
@@ -1356,15 +1360,20 @@ public sealed class Ft4ModemService : IDisposable
         return deep;
     }
 
-    private void DecodeSamples(DateTime slotStart, float[] samples, bool txSlot)
+    /// <param name="fullSlotPass">
+    /// Second receive decode of the whole slot near the horizon. Also tries the raw capture,
+    /// because a slightly wrong Doppler slope can smear a weak sync in the corrected copy.
+    /// </param>
+    private void DecodeSamples(DateTime slotStart, float[] samples, bool txSlot, bool fullSlotPass = false)
     {
         if (samples.Length < (int)(12000 * Ft4SlotClock.Ft4SlotSeconds / 2))
             return;
 
         var raw = samples;
         var corrected = raw;
+        // Slope over the on-air burst: the symbols the decoder uses, not the quiet end of the slot.
         if (_settings.Current.Ft4.AudioDopplerRx
-            && TryGetDopplerSlopeHzPerSec(slotStart, Ft4SlotClock.Ft4SlotSeconds, out var dlSlope, out _)
+            && TryGetDopplerSlopeHzPerSec(slotStart, Ft4SlotClock.Ft4SymbolBurstSeconds, out var dlSlope, out _)
             && Math.Abs(dlSlope) >= 0.05)
         {
             corrected = Ft4AudioDoppler.RemoveLinearDrift(raw, 12000, dlSlope);
@@ -1379,6 +1388,8 @@ public sealed class Ft4ModemService : IDisposable
         }
 
         var foundOwn = PublishDecoded(slotStart, corrected, txSlot, timeShiftSec: 0, ownOnly: false, txHz, deep);
+        if (fullSlotPass && !txSlot && !ReferenceEquals(corrected, raw))
+            PublishDecoded(slotStart, raw, txSlot: false, timeShiftSec: 0, ownOnly: false, txHz, deep);
         if (!txSlot || foundOwn)
             return;
 
