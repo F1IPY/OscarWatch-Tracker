@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace OscarWatch.Core.Ft4;
 
 public enum Ft4QsoPhase
@@ -443,6 +445,7 @@ public sealed class Ft4QsoSequencer
     /// Otherwise keep this station's locator, or the last one heard from them.
     /// A different station never inherits the previous contact's grid.
     /// </summary>
+    [MemberNotNull(nameof(TheirCall))]
     private void AssignTheirStation(string callDe, string? extra)
     {
         var call = Ft4MessageCodec.NormalizeCall(callDe);
