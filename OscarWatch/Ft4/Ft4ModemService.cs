@@ -1484,7 +1484,15 @@ public sealed class Ft4ModemService : IDisposable
             Ft8Native.ResolveSearchBand(txHz, txHz, out fMin, out fMax);
         else
             Ft8Native.ResolveWaterfallSearchBand(out fMin, out fMax);
-        var decoded = Ft8Native.DecodeFt4(samples, 12000, fMin, fMax, deep);
+        string? apHints = null;
+        var apHz = 0f;
+        if (!ownOnly && _sequencer is not null && _sequencer.TryGetApHints(out var hintText, out var hintHz))
+        {
+            apHints = hintText;
+            apHz = (float)hintHz;
+        }
+
+        var decoded = Ft8Native.DecodeFt4(samples, 12000, fMin, fMax, deep, apHints, apHz);
         var my = Ft4MessageCodec.NormalizeCall(_settings.Current.GroundStation.Callsign ?? "");
         var any = false;
         var foundOwn = false;

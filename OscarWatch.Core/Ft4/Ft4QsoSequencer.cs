@@ -62,6 +62,9 @@ public sealed class Ft4QsoSequencer
     public string CurrentTxMessage { get; private set; } = "";
     public bool TransmitEnabled { get; private set; }
 
+    /// <summary>Audio frequency, in Hz, of the station we are working.</summary>
+    public double TheirAudioHz { get; private set; }
+
     /// <summary>
     /// UTC when the last contact reached 73. Decodes at or before this belong to that
     /// contact, so a new CQ must not answer them again.
@@ -88,6 +91,7 @@ public sealed class Ft4QsoSequencer
         QsoCompletedUtc = null;
         _weSent73 = false;
         _theySent73 = false;
+        TheirAudioHz = 0;
         _heardLocators.Clear();
     }
 
@@ -131,6 +135,7 @@ public sealed class Ft4QsoSequencer
         _weSent73 = false;
         _theySent73 = false;
         AssignTheirStation(callDe, extra);
+        NoteTheirAudio(decode.FreqHz);
         Phase = Ft4QsoPhase.InQso;
         TransmitEnabled = true;
         ReportSent = null;
@@ -237,6 +242,7 @@ public sealed class Ft4QsoSequencer
         Phase = Ft4QsoPhase.CallingCq;
         TheirCall = null;
         TheirGrid = null;
+        TheirAudioHz = 0;
         ReportSent = null;
         ReportReceived = null;
         _weSent73 = false;
@@ -244,6 +250,56 @@ public sealed class Ft4QsoSequencer
         if (!keepMessage || string.IsNullOrWhiteSpace(CurrentTxMessage))
             CurrentTxMessage = Ft4MessageCodec.BuildCq(_myCall(), _myGrid());
         TransmitEnabled = true;
+    }
+
+    /// <summary>
+    /// Newline-separated messages to try when the first decode misses a weak copy.
+    /// Only while a contact is open and both calls are known: their report, RRR, RR73, or 73.
+    /// </summary>
+    public bool TryGetApHints(out string hints, out double audioHz)
+    {
+        lock (_gate)
+            return TryGetApHintsCore(out hints, out audioHz);
+    }
+
+    private bool TryGetApHintsCore(out string hints, out double audioHz)
+    {
+        hints = "";
+        audioHz = TheirAudioHz;
+        if (Phase != Ft4QsoPhase.InQso)
+            return false;
+        if (string.IsNullOrWhiteSpace(TheirCall))
+            return false;
+        if (TheirAudioHz is < 200 or > 3000)
+            return false;
+
+        var my = Ft4MessageCodec.NormalizeCall(_myCall());
+        var them = TheirCall;
+        if (string.IsNullOrWhiteSpace(my))
+            return false;
+
+        var lines = new List<string>(160);
+        if (!string.IsNullOrWhiteSpace(TheirGrid))
+            lines.Add(Ft4MessageCodec.BuildGridReply(my, them, TheirGrid));
+
+        for (var snr = -30; snr <= 40; snr++)
+        {
+            var report = Ft4MessageCodec.FormatSnrReport(snr);
+            lines.Add(Ft4MessageCodec.BuildReport(my, them, report));
+            lines.Add(Ft4MessageCodec.BuildReport(my, them, Ft4MessageCodec.FormatRogerReport(snr)));
+        }
+
+        lines.Add(Ft4MessageCodec.BuildRrr(my, them));
+        lines.Add(Ft4MessageCodec.BuildRr73(my, them));
+        lines.Add(Ft4MessageCodec.Build73(my, them));
+        hints = string.Join('\n', lines);
+        return true;
+    }
+
+    private void NoteTheirAudio(double hz)
+    {
+        if (hz is >= 200 and <= 3000)
+            TheirAudioHz = hz;
     }
 
     /// <summary>Operator-edited TX text from the FT4 window.</summary>
@@ -308,6 +364,7 @@ public sealed class Ft4QsoSequencer
                 return false;
 
             AssignTheirStation(callDe, extra);
+            NoteTheirAudio(decode.FreqHz);
             // Stay on our CQ frequency (WSJT-X). Only answering a decode moves TX.
             // Keep our CQ slot parity. The caller answered on the opposite slot; flipping
             // would put both stations on the same TX slots (WSJT-X then cannot decode us).
@@ -333,6 +390,7 @@ public sealed class Ft4QsoSequencer
 
         if (!callDe.Equals(TheirCall, StringComparison.OrdinalIgnoreCase))
             return false;
+        NoteTheirAudio(decode.FreqHz);
         if (!Ft4MessageCodec.IsAddressedTo(callTo, my) && !Ft4MessageCodec.IsCq(callTo))
             return false;
 

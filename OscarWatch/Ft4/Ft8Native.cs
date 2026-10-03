@@ -111,6 +111,21 @@ internal static class Ft8Native
         int deep);
 
     [DllImport(LibraryName, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int ow_ft8_decode_pcm_ap(
+        float[] samples,
+        int numSamples,
+        int sampleRate,
+        int isFt4,
+        float fMinHz,
+        float fMaxHz,
+        [Out] Decode[] outDecodes,
+        int outCapacity,
+        int deep,
+        [MarshalAs(UnmanagedType.LPUTF8Str)] string? hints,
+        float hintHz,
+        float hintHalfHz);
+
+    [DllImport(LibraryName, CallingConvention = CallingConvention.Cdecl)]
     private static extern void ow_ft8_remember_callsign(
         [MarshalAs(UnmanagedType.LPUTF8Str)] string callsign);
 
@@ -252,8 +267,11 @@ internal static class Ft8Native
     {
         var fMin = (float)Math.Clamp(centreHz - halfWidthHz, 100, 2900);
         var fMax = (float)Math.Clamp(centreHz + halfWidthHz, fMin + 100, 3000);
-        return DecodeFt4(samples, sampleRate, fMin, fMax);
+        return DecodeFt4(samples, sampleRate, fMin, fMax, deep: false);
     }
+
+    /// <summary>Half-width around the station we are working when trying hinted messages (Hz).</summary>
+    public const float ApSearchHalfWidthHz = 200;
 
     public static Decode[] DecodeFt4(float[] samples, int sampleRate, float fMinHz, float fMaxHz) =>
         DecodeFt4(samples, sampleRate, fMinHz, fMaxHz, deep: false);
@@ -263,19 +281,43 @@ internal static class Ft8Native
         int sampleRate,
         float fMinHz,
         float fMaxHz,
-        bool deep)
+        bool deep) =>
+        DecodeFt4(samples, sampleRate, fMinHz, fMaxHz, deep, apHints: null, apCentreHz: 0);
+
+    public static Decode[] DecodeFt4(
+        float[] samples,
+        int sampleRate,
+        float fMinHz,
+        float fMaxHz,
+        bool deep,
+        string? apHints,
+        float apCentreHz)
     {
         var output = new Decode[50];
-        var n = ow_ft8_decode_pcm(
-            samples,
-            samples.Length,
-            sampleRate,
-            isFt4: 1,
-            fMinHz,
-            fMaxHz,
-            output,
-            output.Length,
-            deep ? 1 : 0);
+        var n = string.IsNullOrEmpty(apHints)
+            ? ow_ft8_decode_pcm(
+                samples,
+                samples.Length,
+                sampleRate,
+                isFt4: 1,
+                fMinHz,
+                fMaxHz,
+                output,
+                output.Length,
+                deep ? 1 : 0)
+            : ow_ft8_decode_pcm_ap(
+                samples,
+                samples.Length,
+                sampleRate,
+                isFt4: 1,
+                fMinHz,
+                fMaxHz,
+                output,
+                output.Length,
+                deep ? 1 : 0,
+                apHints,
+                apCentreHz,
+                ApSearchHalfWidthHz);
         if (n <= 0)
             return [];
         var result = new Decode[n];

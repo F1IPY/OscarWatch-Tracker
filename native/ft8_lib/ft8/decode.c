@@ -319,6 +319,8 @@ static void ftx_normalize_logl(float* log174)
     }
     float inv_n = 1.0f / FTX_LDPC_N;
     float variance = (sum2 - (sum * sum * inv_n)) * inv_n;
+    if (!(variance > 1e-8f))
+        return;
 
     // Normalize log174 distribution and scale it with experimentally found coefficient
     float norm_factor = sqrtf(24.0f / variance);
@@ -328,19 +330,19 @@ static void ftx_normalize_logl(float* log174)
     }
 }
 
+void ftx_candidate_llr(const ftx_waterfall_t* wf, const ftx_candidate_t* cand, float* log174)
+{
+    if (wf->protocol == FTX_PROTOCOL_FT4)
+        ft4_extract_likelihood(wf, cand, log174);
+    else
+        ft8_extract_likelihood(wf, cand, log174);
+    ftx_normalize_logl(log174);
+}
+
 bool ftx_decode_candidate(const ftx_waterfall_t* wf, const ftx_candidate_t* cand, int max_iterations, ftx_message_t* message, ftx_decode_status_t* status)
 {
     float log174[FTX_LDPC_N]; // message bits encoded as likelihood
-    if (wf->protocol == FTX_PROTOCOL_FT4)
-    {
-        ft4_extract_likelihood(wf, cand, log174);
-    }
-    else
-    {
-        ft8_extract_likelihood(wf, cand, log174);
-    }
-
-    ftx_normalize_logl(log174);
+    ftx_candidate_llr(wf, cand, log174);
 
     uint8_t plain174[FTX_LDPC_N]; // message bits (0/1)
     bp_decode(log174, max_iterations, plain174, &status->ldpc_errors);

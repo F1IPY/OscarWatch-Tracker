@@ -238,4 +238,113 @@ public sealed class Ft8NativeRoundTripTests
 
         return mixed;
     }
+
+    [Fact]
+    public void Ap_hints_recover_a_weak_message_plain_decode_misses()
+    {
+        if (!RequireNativeOrReturn())
+            return;
+
+        const int rate = 12000;
+        const string message = "MM9SQL G4ABC RR73";
+        var pcm = Ft8Native.EncodeFt4(message, freqHz: 1500f);
+        Assert.NotNull(pcm);
+
+        var hints = ApHintsFor("MM9SQL", "G4ABC");
+        var recovered = 0;
+        var plainHits = 0;
+        for (var seed = 1; seed <= 6; seed++)
+        {
+            var noisy = AddWhiteNoise(pcm!, rate, snrDb: -18, seed);
+            var plain = Ft8Native.DecodeFt4(noisy, rate, 200f, 2800f);
+            if (plain.Any(d => d.text.Contains("RR73", StringComparison.Ordinal)))
+                plainHits++;
+
+            var hinted = Ft8Native.DecodeFt4(noisy, rate, 200f, 2800f, deep: false, hints, apCentreHz: 1500f);
+            if (hinted.Any(d => d.text.Contains("RR73", StringComparison.Ordinal)))
+                recovered++;
+        }
+
+        Assert.True(recovered >= 4, $"a priori recovered {recovered}/6 at -18 dB (plain {plainHits}/6)");
+        Assert.True(plainHits <= 2, $"plain decode was unexpectedly reliable at -18 dB ({plainHits}/6)");
+    }
+
+    [Fact]
+    public void Ap_hints_do_not_invent_a_message_from_noise()
+    {
+        if (!RequireNativeOrReturn())
+            return;
+
+        var hints = ApHintsFor("MM9SQL", "G4ABC");
+        for (var seed = 1; seed <= 4; seed++)
+        {
+            var noise = UnitNoise(12000 * 15 / 2, seed);
+            var decoded = Ft8Native.DecodeFt4(noise, 12000, 200f, 2800f, deep: false, hints, apCentreHz: 1500f);
+            Assert.Empty(decoded);
+        }
+    }
+
+    [Fact]
+    public void Ap_hints_do_not_replace_a_different_station()
+    {
+        if (!RequireNativeOrReturn())
+            return;
+
+        const int rate = 12000;
+        var pcm = Ft8Native.EncodeFt4("CQ M0XYZ IO91", freqHz: 1500f);
+        Assert.NotNull(pcm);
+        var noisy = AddWhiteNoise(pcm!, rate, snrDb: -8, seed: 3);
+        var hints = ApHintsFor("MM9SQL", "G4ABC");
+        var decoded = Ft8Native.DecodeFt4(noisy, rate, 200f, 2800f, deep: false, hints, apCentreHz: 1500f);
+        Assert.Contains(decoded, d => d.text.Contains("M0XYZ", StringComparison.Ordinal));
+        Assert.DoesNotContain(decoded, d => d.text.Contains("G4ABC", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Ap_hints_ignore_a_signal_away_from_the_contact()
+    {
+        if (!RequireNativeOrReturn())
+            return;
+
+        const int rate = 12000;
+        var pcm = Ft8Native.EncodeFt4("MM9SQL G4ABC RR73", freqHz: 1500f);
+        Assert.NotNull(pcm);
+        var noisy = AddWhiteNoise(pcm!, rate, snrDb: -18, seed: 2);
+        var hints = ApHintsFor("MM9SQL", "G4ABC");
+        var plain = Ft8Native.DecodeFt4(noisy, rate, 200f, 2800f);
+        var hinted = Ft8Native.DecodeFt4(noisy, rate, 200f, 2800f, deep: false, hints, apCentreHz: 2400f);
+        var plainRr73 = plain.Any(d => d.text.Contains("RR73", StringComparison.Ordinal));
+        var hintedRr73 = hinted.Any(d => d.text.Contains("RR73", StringComparison.Ordinal));
+        Assert.Equal(plainRr73, hintedRr73);
+    }
+
+    private static string ApHintsFor(string myCall, string theirCall)
+    {
+        var lines = new List<string>();
+        for (var snr = -30; snr <= 40; snr++)
+        {
+            var report = Ft4MessageCodec.FormatSnrReport(snr);
+            lines.Add(Ft4MessageCodec.BuildReport(myCall, theirCall, report));
+            lines.Add(Ft4MessageCodec.BuildReport(myCall, theirCall, Ft4MessageCodec.FormatRogerReport(snr)));
+        }
+
+        lines.Add(Ft4MessageCodec.BuildRrr(myCall, theirCall));
+        lines.Add(Ft4MessageCodec.BuildRr73(myCall, theirCall));
+        lines.Add(Ft4MessageCodec.Build73(myCall, theirCall));
+        return string.Join('\n', lines);
+    }
+
+    private static float[] UnitNoise(int sampleCount, int seed)
+    {
+        var rng = new Random(seed);
+        var noise = new float[sampleCount];
+        for (var i = 0; i < noise.Length; i++)
+        {
+            var u1 = 1.0 - rng.NextDouble();
+            var u2 = 1.0 - rng.NextDouble();
+            noise[i] = (float)(Math.Sqrt(-2.0 * Math.Log(u1)) * Math.Cos(2.0 * Math.PI * u2));
+        }
+
+        return noise;
+    }
 }

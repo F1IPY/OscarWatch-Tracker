@@ -62,6 +62,29 @@ static void encode174(const uint8_t* message, uint8_t* codeword)
     }
 }
 
+int ftx_codeword_bits(int is_ft4, const uint8_t* payload, uint8_t* bits)
+{
+    uint8_t src[FTX_LDPC_K_BYTES];
+    for (int i = 0; i < FTX_LDPC_K_BYTES; ++i)
+        src[i] = payload[i];
+
+    if (is_ft4)
+    {
+        for (int i = 0; i < 10; ++i)
+            src[i] ^= kFT4_XOR_sequence[i];
+    }
+
+    uint8_t a91[FTX_LDPC_K_BYTES];
+    ftx_add_crc(src, a91);
+
+    uint8_t packed[FTX_LDPC_N_BYTES];
+    encode174(a91, packed);
+
+    for (int i = 0; i < FTX_LDPC_N; ++i)
+        bits[i] = (packed[i >> 3] & (uint8_t)(0x80u >> (i & 7))) ? 1 : 0;
+    return 0;
+}
+
 void ft8_encode(const uint8_t* payload, uint8_t* tones)
 {
     uint8_t a91[FTX_LDPC_K_BYTES]; // Store 77 bits of payload + 14 bits CRC

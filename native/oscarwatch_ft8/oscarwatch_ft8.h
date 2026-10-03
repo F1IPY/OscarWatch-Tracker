@@ -68,6 +68,24 @@ OW_FT8_API int ow_ft8_decode_pcm(
     int out_capacity,
     int deep);
 
+/// Decode one slot, then try newline-separated hint messages on candidates the
+/// CRC decode missed. Hints are the report, RRR, RR73 and 73 for a contact
+/// whose calls are already known. hint_half_hz <= 0 searches every candidate.
+/// @return number of decoded messages, or negative on error
+OW_FT8_API int ow_ft8_decode_pcm_ap(
+    const float* samples,
+    int num_samples,
+    int sample_rate,
+    int is_ft4,
+    float f_min_hz,
+    float f_max_hz,
+    ow_ft8_decode_t* out_decodes,
+    int out_capacity,
+    int deep,
+    const char* hints_nl,
+    float hint_hz,
+    float hint_half_hz);
+
 /// Remember a callsign for hash-table resolution during later decodes.
 OW_FT8_API void ow_ft8_remember_callsign(const char* callsign);
 

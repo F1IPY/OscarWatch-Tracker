@@ -497,7 +497,88 @@ static float estimate_snr_db(
     return snr;
 }
 
-OW_FT8_API int ow_ft8_decode_pcm(
+#define kApMaxHints 160
+/* Soft agreement (matched LLR energy over total LLR energy). Set above the
+   best score noise produced with this hint list, and below a real message
+   at about -18 dB. Tuned in the native round-trip tests. */
+#define kApQualityMin 0.40f
+#define kApMinBits 150
+
+typedef struct
+{
+    char text[OW_FT8_MAX_MESSAGE_LEN];
+    uint8_t bits[FTX_LDPC_N];
+    uint8_t payload[FTX_PAYLOAD_LENGTH_BYTES];
+} ap_hint_t;
+
+static int build_ap_hints(const char* hints_nl, int is_ft4, ap_hint_t* hints, int cap)
+{
+    int count = 0;
+    const char* p = hints_nl;
+    while (p && *p && count < cap)
+    {
+        while (*p == '\n' || *p == '\r')
+            ++p;
+        if (*p == '\0')
+            break;
+
+        const char* eol = p;
+        while (*eol && *eol != '\n' && *eol != '\r')
+            ++eol;
+
+        int len = (int)(eol - p);
+        if (len > 0 && len < OW_FT8_MAX_MESSAGE_LEN)
+        {
+            char text[OW_FT8_MAX_MESSAGE_LEN];
+            memcpy(text, p, (size_t)len);
+            text[len] = '\0';
+
+            ftx_message_t msg;
+            if (ftx_message_encode(&msg, &hash_if, text) == FTX_MESSAGE_RC_OK
+                && ftx_codeword_bits(is_ft4, msg.payload, hints[count].bits) == 0)
+            {
+                memcpy(hints[count].text, text, (size_t)len + 1);
+                memcpy(hints[count].payload, msg.payload, FTX_PAYLOAD_LENGTH_BYTES);
+                ++count;
+            }
+        }
+        p = eol;
+    }
+    return count;
+}
+
+/* 1 when the hypothesized bits agree with the LLRs, weighted by how sure each bit is. */
+static float ap_quality(const float* llr, const uint8_t* bits, int* usable)
+{
+    float agree = 0.0f;
+    float energy = 0.0f;
+    int n = 0;
+    for (int i = 0; i < FTX_LDPC_N; ++i)
+    {
+        float x = llr[i];
+        if (x == 0.0f)
+            continue;
+        ++n;
+        energy += fabsf(x);
+        agree += bits[i] ? x : -x;
+    }
+    *usable = n;
+    if (energy < 1.0f)
+        return -1.0f;
+    return agree / energy;
+}
+
+static int text_already_decoded(const ow_ft8_decode_t* decoded, int count, const char* text)
+{
+    for (int i = 0; i < count; ++i)
+    {
+        if (strcmp(decoded[i].text, text) == 0)
+            return 1;
+    }
+    return 0;
+}
+
+static int decode_slot(
     const float* samples,
     int num_samples,
     int sample_rate,
@@ -506,7 +587,10 @@ OW_FT8_API int ow_ft8_decode_pcm(
     float f_max_hz,
     ow_ft8_decode_t* out_decodes,
     int out_capacity,
-    int deep)
+    int deep,
+    const char* hints_nl,
+    float hint_hz,
+    float hint_half_hz)
 {
     ensure_hashtable();
     if (!samples || num_samples <= 0 || sample_rate <= 0 || !out_decodes || out_capacity <= 0)
@@ -541,6 +625,8 @@ OW_FT8_API int ow_ft8_decode_pcm(
 
     ftx_candidate_t candidate_list[kMax_candidates_deep];
     int num_candidates = ftx_find_candidates(&mon->wf, max_candidates, candidate_list, min_score);
+    uint8_t candidate_decoded[kMax_candidates_deep];
+    memset(candidate_decoded, 0, (size_t)num_candidates);
 
     int num_decoded = 0;
     ftx_message_t decoded[OW_FT8_MAX_DECODES];
@@ -562,6 +648,8 @@ OW_FT8_API int ow_ft8_decode_pcm(
         {
             continue;
         }
+
+        candidate_decoded[idx] = 1;
 
         int idx_hash = message.hash % OW_FT8_MAX_DECODES;
         bool found_empty_slot = false;
@@ -616,5 +704,106 @@ OW_FT8_API int ow_ft8_decode_pcm(
         out->text[OW_FT8_MAX_MESSAGE_LEN - 1] = '\0';
     }
 
+    /* A priori: both calls are known, so try the report / RRR / RR73 / 73 list
+       against candidates the CRC decode missed. One winner per slot. */
+    if (is_ft4 && hints_nl && hints_nl[0] != '\0' && num_decoded < out_capacity)
+    {
+        ap_hint_t* hints = (ap_hint_t*)malloc((size_t)kApMaxHints * sizeof(ap_hint_t));
+        if (hints)
+        {
+            int hint_count = build_ap_hints(hints_nl, 1, hints, kApMaxHints);
+            float best_q = -1.0f;
+            int best_hint = -1;
+            int best_cand = -1;
+
+            for (int idx = 0; idx < num_candidates && hint_count > 0; ++idx)
+            {
+                if (candidate_decoded[idx])
+                    continue;
+
+                const ftx_candidate_t* cand = &candidate_list[idx];
+                float freq_hz = (mon->min_bin + cand->freq_offset + (float)cand->freq_sub / mon->wf.freq_osr) / mon->symbol_period;
+                if (hint_half_hz > 0.0f && fabsf(freq_hz - hint_hz) > hint_half_hz)
+                    continue;
+
+                float llr[FTX_LDPC_N];
+                ftx_candidate_llr(&mon->wf, cand, llr);
+
+                float local_best = -1.0f;
+                int local_hint = -1;
+                for (int h = 0; h < hint_count; ++h)
+                {
+                    int usable = 0;
+                    float q = ap_quality(llr, hints[h].bits, &usable);
+                    if (usable < kApMinBits)
+                        continue;
+                    if (q > local_best)
+                    {
+                        local_best = q;
+                        local_hint = h;
+                    }
+                }
+
+                if (local_hint < 0 || local_best < kApQualityMin)
+                    continue;
+                if (local_best <= best_q)
+                    continue;
+
+                best_q = local_best;
+                best_hint = local_hint;
+                best_cand = idx;
+            }
+
+            if (best_hint >= 0
+                && !text_already_decoded(out_decodes, num_decoded, hints[best_hint].text))
+            {
+                const ftx_candidate_t* cand = &candidate_list[best_cand];
+                uint8_t tones[FT4_NN];
+                ft4_encode(hints[best_hint].payload, tones);
+
+                ow_ft8_decode_t* out = &out_decodes[num_decoded++];
+                out->freq_hz = (mon->min_bin + cand->freq_offset + (float)cand->freq_sub / mon->wf.freq_osr) / mon->symbol_period;
+                out->time_sec = (cand->time_offset + (float)cand->time_sub / mon->wf.time_osr) * mon->symbol_period;
+                out->snr = estimate_snr_db(mon, cand, tones, FT4_NN, 4, 1);
+                strncpy(out->text, hints[best_hint].text, OW_FT8_MAX_MESSAGE_LEN - 1);
+                out->text[OW_FT8_MAX_MESSAGE_LEN - 1] = '\0';
+            }
+            free(hints);
+        }
+    }
+
     return num_decoded;
+}
+
+OW_FT8_API int ow_ft8_decode_pcm(
+    const float* samples,
+    int num_samples,
+    int sample_rate,
+    int is_ft4,
+    float f_min_hz,
+    float f_max_hz,
+    ow_ft8_decode_t* out_decodes,
+    int out_capacity,
+    int deep)
+{
+    return decode_slot(samples, num_samples, sample_rate, is_ft4, f_min_hz, f_max_hz,
+        out_decodes, out_capacity, deep, NULL, 0.0f, 0.0f);
+}
+
+OW_FT8_API int ow_ft8_decode_pcm_ap(
+    const float* samples,
+    int num_samples,
+    int sample_rate,
+    int is_ft4,
+    float f_min_hz,
+    float f_max_hz,
+    ow_ft8_decode_t* out_decodes,
+    int out_capacity,
+    int deep,
+    const char* hints_nl,
+    float hint_hz,
+    float hint_half_hz)
+{
+    return decode_slot(samples, num_samples, sample_rate, is_ft4, f_min_hz, f_max_hz,
+        out_decodes, out_capacity, deep, hints_nl, hint_hz, hint_half_hz);
 }

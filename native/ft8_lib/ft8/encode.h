@@ -34,6 +34,11 @@ void ft8_encode(const uint8_t* payload, uint8_t* tones);
 /// @param[out] tones  - array of FT4_NN (105) bytes to store the generated tones (encoded as 0..3)
 void ft4_encode(const uint8_t* payload, uint8_t* tones);
 
+/// LDPC codeword bits in decoder LLR order (one 0/1 per byte, length FTX_LDPC_N).
+/// FT4 payloads are XOR-scrambled before the CRC, matching ft4_encode.
+/// @return 0 on success
+int ftx_codeword_bits(int is_ft4, const uint8_t* payload, uint8_t* bits);
+
 #ifdef __cplusplus
 }
 #endif

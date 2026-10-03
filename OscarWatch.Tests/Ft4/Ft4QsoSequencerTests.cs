@@ -15,10 +15,19 @@ public sealed class Ft4QsoSequencerTests
         Assert.Equal(Ft4QsoPhase.CallingCq, seq.Phase);
         Assert.Equal("CQ MM9SQL IO85", seq.CurrentTxMessage);
         Assert.True(seq.PreferEvenSlot);
+        Assert.False(seq.TryGetApHints(out _, out _));
 
         Assert.False(seq.OnDecoded(Msg("MM9SQL G4ABC IO91")));
         Assert.Equal(Ft4QsoPhase.InQso, seq.Phase);
         Assert.Equal("G4ABC", seq.TheirCall);
+        Assert.Equal(1200, seq.TheirAudioHz);
+        Assert.True(seq.TryGetApHints(out var hints, out var hz));
+        Assert.Equal(1200, hz);
+        Assert.Contains("MM9SQL G4ABC 73", hints, StringComparison.Ordinal);
+        Assert.Contains("MM9SQL G4ABC RR73", hints, StringComparison.Ordinal);
+        Assert.Contains("MM9SQL G4ABC -12", hints, StringComparison.Ordinal);
+        Assert.DoesNotContain("G4ABC MM9SQL 73", hints, StringComparison.Ordinal);
+
         Assert.Equal("IO91", seq.TheirGrid);
         Assert.StartsWith("G4ABC MM9SQL", seq.CurrentTxMessage);
         Assert.NotNull(seq.ReportSent);
