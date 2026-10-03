@@ -432,6 +432,93 @@ public class QsoLogbookRepositoryTests : IDisposable
     }
 
     [Fact]
+    public async Task Add_qso_without_a_grid_uses_the_latest_logged_grid_for_that_call()
+    {
+        await _repository.InitializeAsync();
+
+        var logbook = await _repository.CreateLogbookAsync(new QsoLogbookCreateRequest
+        {
+            Name = "Grid memory",
+            MyCallsign = "MM9SQL"
+        });
+        var other = await _repository.CreateLogbookAsync(new QsoLogbookCreateRequest
+        {
+            Name = "Other",
+            MyCallsign = "MM9SQL"
+        });
+
+        await _repository.AddQsoAsync(new QsoRecordCreateRequest
+        {
+            LogbookId = logbook.Id,
+            QsoUtc = new DateTime(2026, 1, 1, 12, 0, 0, DateTimeKind.Utc),
+            Call = "m3jfm",
+            GridSquare = "IO91"
+        });
+        var latest = await _repository.AddQsoAsync(new QsoRecordCreateRequest
+        {
+            LogbookId = logbook.Id,
+            QsoUtc = new DateTime(2026, 6, 1, 12, 0, 0, DateTimeKind.Utc),
+            Call = "M3JFM",
+            GridSquare = "JO01"
+        });
+        // Clearing the newer locator must not hide the earlier one.
+        await _repository.UpdateQsoAsync(new QsoRecordUpdateRequest
+        {
+            Id = latest.Id,
+            QsoUtc = latest.QsoUtc,
+            Call = latest.Call,
+            GridSquare = ""
+        });
+        await _repository.AddQsoAsync(new QsoRecordCreateRequest
+        {
+            LogbookId = other.Id,
+            QsoUtc = new DateTime(2026, 8, 1, 12, 0, 0, DateTimeKind.Utc),
+            Call = "M3JFM",
+            GridSquare = "FN20"
+        });
+        await _repository.AddQsoAsync(new QsoRecordCreateRequest
+        {
+            LogbookId = logbook.Id,
+            QsoUtc = new DateTime(2026, 8, 1, 12, 0, 0, DateTimeKind.Utc),
+            Call = "2E0SQL",
+            GridSquare = "IO87"
+        });
+
+        var filled = await _repository.AddQsoAsync(new QsoRecordCreateRequest
+        {
+            LogbookId = logbook.Id,
+            QsoUtc = new DateTime(2026, 9, 1, 12, 0, 0, DateTimeKind.Utc),
+            Call = "M3JFM"
+        });
+        Assert.Equal("IO91", filled.GridSquare);
+
+        var explicitGrid = await _repository.AddQsoAsync(new QsoRecordCreateRequest
+        {
+            LogbookId = logbook.Id,
+            QsoUtc = new DateTime(2026, 9, 2, 12, 0, 0, DateTimeKind.Utc),
+            Call = "M3JFM",
+            GridSquare = "IO92"
+        });
+        Assert.Equal("IO92", explicitGrid.GridSquare);
+
+        var latestGrid = await _repository.AddQsoAsync(new QsoRecordCreateRequest
+        {
+            LogbookId = logbook.Id,
+            QsoUtc = new DateTime(2026, 9, 3, 12, 0, 0, DateTimeKind.Utc),
+            Call = "M3JFM"
+        });
+        Assert.Equal("IO92", latestGrid.GridSquare);
+
+        var unknown = await _repository.AddQsoAsync(new QsoRecordCreateRequest
+        {
+            LogbookId = logbook.Id,
+            QsoUtc = new DateTime(2026, 9, 4, 12, 0, 0, DateTimeKind.Utc),
+            Call = "G4ABC"
+        });
+        Assert.Equal("", unknown.GridSquare);
+    }
+
+    [Fact]
     public async Task UpdateQsoAsync_updates_entry_fields_and_preserves_time_and_satellite()
     {
         await _repository.InitializeAsync();

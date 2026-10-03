@@ -353,6 +353,32 @@ public sealed class QsoLogbookRepository : IQsoLogbookRepository, IDisposable
         return await ReadQsosAsync(command, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Most recent non-empty locator logged for this call in this logbook.
+    /// Used when a new contact arrives without a grid.
+    /// </summary>
+    private static async Task<string> FindLatestGridForCallAsync(
+        SqliteConnection connection,
+        long logbookId,
+        string call,
+        CancellationToken cancellationToken)
+    {
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT grid_square
+            FROM qsos
+            WHERE logbook_id = $logbookId
+              AND call = $call
+              AND TRIM(grid_square) <> ''
+            ORDER BY datetime(qso_utc) DESC, id DESC
+            LIMIT 1
+            """;
+        command.Parameters.AddWithValue("$logbookId", logbookId);
+        command.Parameters.AddWithValue("$call", call);
+        var result = await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+        return result is string grid ? MaidenheadLocator.NormalizeGrids(grid) : "";
+    }
+
     private static string Clean(string? value) => value?.Trim() ?? "";
 
     private static string CleanMode(string? value) => Clean(value).ToUpperInvariant();
@@ -369,7 +395,13 @@ public sealed class QsoLogbookRepository : IQsoLogbookRepository, IDisposable
 
         var createdUtc = DateTime.UtcNow;
         var qsoUtc = QsoLogbookTime.NormalizeToUtc(request.QsoUtc);
+        var call = MaidenheadLocator.NormalizeCallsign(request.Call);
+        var grid = MaidenheadLocator.NormalizeGrids(request.GridSquare);
         await using var connection = OpenConnection();
+        if (grid.Length == 0)
+            grid = await FindLatestGridForCallAsync(connection, request.LogbookId, call, cancellationToken)
+                .ConfigureAwait(false);
+
         await using var command = connection.CreateCommand();
         command.CommandText = """
             INSERT INTO qsos (
@@ -384,10 +416,10 @@ public sealed class QsoLogbookRepository : IQsoLogbookRepository, IDisposable
             """;
         command.Parameters.AddWithValue("$logbookId", request.LogbookId);
         command.Parameters.AddWithValue("$qsoUtc", FormatUtc(qsoUtc));
-        command.Parameters.AddWithValue("$call", MaidenheadLocator.NormalizeCallsign(request.Call));
+        command.Parameters.AddWithValue("$call", call);
         command.Parameters.AddWithValue("$rstSent", Clean(request.RstSent));
         command.Parameters.AddWithValue("$rstRcvd", Clean(request.RstRcvd));
-        command.Parameters.AddWithValue("$gridSquare", MaidenheadLocator.NormalizeGrids(request.GridSquare));
+        command.Parameters.AddWithValue("$gridSquare", grid);
         command.Parameters.AddWithValue("$name", Clean(request.Name));
         command.Parameters.AddWithValue("$comment", Clean(request.Comment));
         command.Parameters.AddWithValue("$satName", Clean(request.SatName));
@@ -409,10 +441,10 @@ public sealed class QsoLogbookRepository : IQsoLogbookRepository, IDisposable
             Id = id,
             LogbookId = request.LogbookId,
             QsoUtc = qsoUtc,
-            Call = MaidenheadLocator.NormalizeCallsign(request.Call),
+            Call = call,
             RstSent = Clean(request.RstSent),
             RstRcvd = Clean(request.RstRcvd),
-            GridSquare = MaidenheadLocator.NormalizeGrids(request.GridSquare),
+            GridSquare = grid,
             Name = Clean(request.Name),
             Comment = Clean(request.Comment),
             SatName = Clean(request.SatName),
