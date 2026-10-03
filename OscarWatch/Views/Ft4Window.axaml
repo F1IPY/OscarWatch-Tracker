@@ -248,10 +248,10 @@
                              IsVisible="{Binding Message.IsApriori}" />
                   <TextBlock Grid.Column="2"
                              Classes.ft4-ink="{Binding HasRowForeground}"
-                             Text="{Binding Message.TimeSec, StringFormat={}{0:+0.0;-0.0}}"
+                             Text="{Binding Message.TimeSec, StringFormat={}{0:+0.0;-0.0;0.0}}"
                              IsVisible="{Binding Message.IsReceiveActivity}" />
                   <TextBlock Grid.Column="2"
-                             Text="{Binding Message.TimeSec, StringFormat={}{0:+0.0;-0.0}}"
+                             Text="{Binding Message.TimeSec, StringFormat={}{0:+0.0;-0.0;0.0}}"
                              Foreground="#6DB3F2"
                              IsVisible="{Binding Message.IsOwnEcho}" />
                   <TextBlock Grid.Column="2"
@@ -260,10 +260,10 @@
                              IsVisible="{Binding Message.IsTransmitted}" />
                   <TextBlock Grid.Column="3"
                              Classes.ft4-ink="{Binding HasRowForeground}"
-                             Text="{Binding Message.SnrDb, StringFormat={}{0:+0;-0} dB}"
+                             Text="{Binding Message.SnrDb, StringFormat={}{0:+0;-0;0} dB}"
                              IsVisible="{Binding Message.IsReceiveActivity}" />
                   <TextBlock Grid.Column="3"
-                             Text="{Binding Message.SnrDb, StringFormat={}{0:+0;-0} dB}"
+                             Text="{Binding Message.SnrDb, StringFormat={}{0:+0;-0;0} dB}"
                              Foreground="#6DB3F2"
                              IsVisible="{Binding Message.IsOwnEcho}" />
                   <TextBlock Grid.Column="3"

@@ -12,7 +12,8 @@ public static class Ft4ActivityLog
         var kind = msg.IsTransmitted ? "TX" : msg.IsOwnEcho ? "Echo" : msg.IsApriori ? "AP" : "RX";
         var snr = msg.IsTransmitted
             ? "   -"
-            : msg.SnrDb.ToString("+0;-0", CultureInfo.InvariantCulture).PadLeft(4);
+            // The zero section stops a value such as −0.4 printing as "-+0".
+            : msg.SnrDb.ToString("+0;-0;0", CultureInfo.InvariantCulture).PadLeft(4);
         var hz = msg.FreqHz.ToString("0", CultureInfo.InvariantCulture).PadLeft(5);
         return $"{utc}  {kind,-4}  {snr} dB  {hz} Hz  {msg.Text}";
     }

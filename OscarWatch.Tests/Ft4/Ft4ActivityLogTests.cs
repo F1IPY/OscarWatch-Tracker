@@ -54,4 +54,22 @@ public sealed class Ft4ActivityLogTests
         var txIndex = text.IndexOf("G4ABC MM9SQL IO85", StringComparison.Ordinal);
         Assert.True(cqIndex < txIndex);
     }
+
+    [Fact]
+    public void Near_zero_snr_is_not_both_signs()
+    {
+        var line = Ft4ActivityLog.FormatLine(new Ft4DecodedMessage(
+            new DateTime(2026, 10, 3, 22, 16, 45, DateTimeKind.Utc),
+            "CQ MM9SQL IO87",
+            1396f,
+            0.7f,
+            -0.4f,
+            "CQ",
+            "MM9SQL",
+            "IO87",
+            IsOwnEcho: true));
+
+        Assert.Contains(" 0 dB", line);
+        Assert.DoesNotContain("-+", line);
+    }
 }
