@@ -825,6 +825,9 @@
   <data name="Status.TleReloadFailed">
     <value>Error al recargar TLE: {0}</value>
   </data>
+  <data name="Status.TleDownloadBlocked">
+    <value>{0} está rechazando las descargas (demasiadas solicitudes). Se conservan los últimos datos de satélites guardados. Inténtelo más tarde o elija la fuente OscarWatch en Configuración → TLE.</value>
+  </data>
   <data name="Status.TransponderChecking">
     <value>Comprobando la base de datos de transpondedores…</value>
   </data>

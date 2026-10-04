@@ -51,34 +51,32 @@ public sealed class TleService : ITleService
         if (_catalog.Count > 0 && string.Equals(_loadedSourceKey, sourceKey, StringComparison.Ordinal))
             return;
 
-        _catalog = [];
-        _loadedSourceKey = sourceKey;
-        LastFetchedUtc = null;
-
         Directory.CreateDirectory(Path.GetDirectoryName(CachePath)!);
-        if (await TryLoadFromCacheAsync(settings, cancellationToken).ConfigureAwait(false))
-            return;
+        var loaded = await TryLoadFromCacheAsync(settings, allowOtherSource: false, cancellationToken).ConfigureAwait(false)
+                     || (CanRefreshFromNetwork(settings)
+                         && await TryRefreshFromNetworkAsync(cancellationToken).ConfigureAwait(false))
+                     || (TleSourceResolver.TryGetLocalFilePath(settings) is { } localPath && TryLoadFromFile(localPath));
 
-        if (CanRefreshFromNetwork(settings))
-            await TryRefreshFromNetworkAsync(cancellationToken).ConfigureAwait(false);
-
-        if (_catalog.Count > 0)
-            return;
-
-        if (TleSourceResolver.TryGetLocalFilePath(settings) is { } localPath)
+        if (!loaded)
         {
-            TryLoadFromFile(localPath);
-            return;
+            // The source is unavailable (for example the server returned 403). Keep showing whatever
+            // catalogue we already have rather than leaving the operator with no satellites at all.
+            if (_catalog.Count == 0 && settings.Mode == TleSourceMode.OscarWatch)
+                TryLoadBundledSeed();
+
+            if (_catalog.Count == 0)
+                await TryLoadFromCacheAsync(settings, allowOtherSource: true, cancellationToken).ConfigureAwait(false);
         }
 
-        if (settings.Mode == TleSourceMode.OscarWatch)
-            TryLoadBundledSeed();
+        // Settle on this source even after a fallback so other callers of EnsureLoadedAsync do not
+        // retry a failing download in a loop. Manual and scheduled refreshes still use RefreshAsync.
+        if (_catalog.Count > 0)
+            _loadedSourceKey = sourceKey;
     }
 
     public async Task RefreshAsync(bool force = false, CancellationToken cancellationToken = default)
     {
         var settings = EffectiveSettings;
-        _loadedSourceKey = TleSourceResolver.GetSourceKey(settings);
 
         if (TleSourceResolver.TryGetLocalFilePath(settings) is { } localPath)
         {
@@ -118,7 +116,10 @@ public sealed class TleService : ITleService
     private TleSourceSettings EffectiveSettings =>
         _settings?.Current.TleSource ?? new TleSourceSettings();
 
-    private async Task<bool> TryLoadFromCacheAsync(TleSourceSettings settings, CancellationToken cancellationToken)
+    private async Task<bool> TryLoadFromCacheAsync(
+        TleSourceSettings settings,
+        bool allowOtherSource,
+        CancellationToken cancellationToken)
     {
         if (!File.Exists(CachePath))
             return false;
@@ -127,12 +128,14 @@ public sealed class TleService : ITleService
         var sourceKey = TleSourceResolver.GetSourceKey(settings);
         if (!await CacheMatchesCurrentSourceAsync(sourceKey, cancellationToken).ConfigureAwait(false))
         {
-            Trace.TraceWarning("TLE cache was fetched for a different source; discarding cached file.");
-            TryDeleteCacheFile();
-            return false;
-        }
+            // Keep the file: it is overwritten once the new source downloads, and is the only
+            // fallback if that download fails.
+            if (!allowOtherSource)
+                return false;
 
-        if (ShouldDiscardBuiltInTextCache(settings, cached))
+            Trace.TraceWarning("TLE source unavailable; using cached catalogue from the previous source.");
+        }
+        else if (ShouldDiscardBuiltInTextCache(settings, cached))
         {
             Trace.TraceWarning("Discarding legacy text TLE cache for GP JSON source.");
             TryDeleteCacheFile();
@@ -161,7 +164,7 @@ public sealed class TleService : ITleService
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            Trace.TraceWarning("TLE network refresh failed after cache discard: {0}", ex.Message);
+            Trace.TraceWarning("TLE network refresh failed: {0}", ex.Message);
             return false;
         }
     }
@@ -175,15 +178,16 @@ public sealed class TleService : ITleService
         if (!TryParseCatalogText(text, out var entries, out var diagnostics, out var failureReason))
             throw new InvalidOperationException($"TLE data could not be parsed: {failureReason}");
 
+        var sourceKey = TleSourceResolver.GetSourceKey(EffectiveSettings);
         if (persistCache)
         {
             Directory.CreateDirectory(Path.GetDirectoryName(CachePath)!);
             await File.WriteAllTextAsync(CachePath, text, cancellationToken).ConfigureAwait(false);
-            await WriteCacheMetaAsync(_loadedSourceKey!, cancellationToken).ConfigureAwait(false);
+            await WriteCacheMetaAsync(sourceKey, cancellationToken).ConfigureAwait(false);
         }
 
         _catalog = entries.ToList();
-        _loadedSourceKey = TleSourceResolver.GetSourceKey(EffectiveSettings);
+        _loadedSourceKey = sourceKey;
         LastFetchedUtc = fromNetwork
             ? DateTime.UtcNow
             : persistCache && File.Exists(CachePath)
@@ -256,21 +260,19 @@ public sealed class TleService : ITleService
             diagnostics.SkippedOrbitalSanity);
     }
 
-    private void TryLoadFromFile(string path)
+    private bool TryLoadFromFile(string path)
     {
         if (!File.Exists(path))
-            return;
+            return false;
 
         var text = File.ReadAllText(path);
         if (!TryParseCatalogText(text, out var entries, out var diagnostics, out _))
-            return;
+            return false;
 
         _catalog = entries.ToList();
-        if (_catalog.Count > 0)
-        {
-            LastFetchedUtc = File.GetLastWriteTimeUtc(path);
-            RecordSuccessfulLoad(TleLoadOrigin.LocalFile, diagnostics);
-        }
+        LastFetchedUtc = File.GetLastWriteTimeUtc(path);
+        RecordSuccessfulLoad(TleLoadOrigin.LocalFile, diagnostics);
+        return true;
     }
 
     private static bool ShouldDiscardBuiltInTextCache(TleSourceSettings settings, string cached)

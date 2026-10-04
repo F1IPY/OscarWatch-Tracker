@@ -732,6 +732,9 @@
   <data name="Status.TleReloadFailed">
     <value>TLEの再読み込みに失敗: {0}</value>
   </data>
+  <data name="Status.TleDownloadBlocked">
+    <value>{0} がダウンロードを拒否しています（リクエストが多すぎます）。最後に保存した衛星データを引き続き使用します。後で再試行するか、設定 → TLE で OscarWatch ソースを選択してください。</value>
+  </data>
   <data name="Status.NoTle">
     <value>TLEデータなし — 設定→TLEを確認するか、衛星→TLEを更新</value>
   </data>

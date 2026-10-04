@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Net;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -811,7 +812,7 @@ public partial class MainViewModel : ViewModelBase
             catch (Exception ex)
             {
                 Log.Error(ex, "TLE refresh failed during startup");
-                StatusText = _l.Get("Status.TleRefreshFailed", ex.Message);
+                StatusText = _l.Get("Status.TleRefreshFailed", DescribeTleFailure(ex));
             }
         }
 
@@ -2970,15 +2971,14 @@ public partial class MainViewModel : ViewModelBase
 
     private async Task ReloadTleCatalogAfterSettingsAsync()
     {
-        _tleService.InvalidateCatalog();
         try
         {
+            // No-op when the source is unchanged, so saving unrelated settings never re-downloads
+            // (servers such as CelesTrak block clients that fetch too often).
             StatusText = _l.Get("Status.LoadingTle");
             await _tleService.EnsureLoadedAsync().ConfigureAwait(true);
 
-            var source = _settings.Current.TleSource;
-            if (TleSourceResolver.UsesNetwork(source)
-                || !string.IsNullOrWhiteSpace(TleSourceResolver.TryGetLocalFilePath(source)))
+            if (!string.IsNullOrWhiteSpace(TleSourceResolver.TryGetLocalFilePath(_settings.Current.TleSource)))
             {
                 StatusText = _l.Get("Status.RefreshingTle");
                 await _tleService.RefreshAsync().ConfigureAwait(true);
@@ -2990,13 +2990,20 @@ public partial class MainViewModel : ViewModelBase
         catch (Exception ex)
         {
             Log.Error(ex, "TLE reload after settings failed");
-            StatusText = _l.Get("Status.TleReloadFailed", ex.Message);
+            StatusText = _l.Get("Status.TleReloadFailed", DescribeTleFailure(ex));
         }
     }
 
-    private async Task MaybeAutoRefreshTlesAsync(bool force = false)
+    private string DescribeTleFailure(Exception ex) =>
+        ex is HttpRequestException { StatusCode: HttpStatusCode.Forbidden or HttpStatusCode.TooManyRequests }
+            ? _l.Get("Status.TleDownloadBlocked", _tleService.ActiveSourceLabel)
+            : ex.Message;
+
+    private async Task MaybeAutoRefreshTlesAsync(bool force = false, bool manual = false)
     {
-        if (!TleSourceResolver.UsesNetwork(_settings.Current.TleSource))
+        var source = _settings.Current.TleSource;
+        var rereadLocalFile = manual && TleSourceResolver.TryGetLocalFilePath(source) is not null;
+        if (!TleSourceResolver.UsesNetwork(source) && !rereadLocalFile)
             return;
 
         var mode = _settings.Current.TleAutoUpdate;
@@ -3019,7 +3026,7 @@ public partial class MainViewModel : ViewModelBase
         catch (Exception ex)
         {
             Log.Error(ex, "TLE auto-refresh failed");
-            StatusText = _l.Get("Status.TleRefreshFailed", ex.Message);
+            StatusText = _l.Get("Status.TleRefreshFailed", DescribeTleFailure(ex));
         }
     }
 
@@ -3355,7 +3362,7 @@ public partial class MainViewModel : ViewModelBase
     [RelayCommand]
     private async Task RefreshTlesAsync()
     {
-        await MaybeAutoRefreshTlesAsync(force: true);
+        await MaybeAutoRefreshTlesAsync(force: true, manual: true);
         await RefreshPassesAsync();
         UpdateStatus();
     }

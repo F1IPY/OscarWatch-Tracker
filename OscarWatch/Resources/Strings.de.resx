@@ -835,6 +835,9 @@ Fortfahren?</value>
   <data name="Status.TleReloadFailed">
     <value>TLE-Neuladen fehlgeschlagen: {0}</value>
   </data>
+  <data name="Status.TleDownloadBlocked">
+    <value>{0} verweigert Downloads (zu viele Anfragen). Die zuletzt gespeicherten Satellitendaten bleiben erhalten. Später erneut versuchen oder unter Einstellungen → TLE die Quelle OscarWatch wählen.</value>
+  </data>
   <data name="Status.TransponderChecking">
     <value>Transponderdatenbank wird geprüft…</value>
   </data>

@@ -157,6 +157,70 @@ public sealed class TleServiceTests : IDisposable
         Assert.Empty(service.Catalog);
     }
 
+    [Fact]
+    public async Task EnsureLoadedAsync_falls_back_to_previous_source_cache_when_new_source_is_forbidden()
+    {
+        var cachePath = CreateCachePath();
+        await File.WriteAllTextAsync(cachePath, Ao07Json);
+        await File.WriteAllTextAsync(cachePath + ".meta", "OscarWatch||");
+
+        var settings = new TestSettingsService();
+        settings.Current.TleSource = CelestrakSource();
+        var handler = new SwitchableHandler { StatusCode = HttpStatusCode.Forbidden };
+        var service = new TleService(settings, new HttpClient(handler), cachePath);
+
+        await service.EnsureLoadedAsync();
+
+        Assert.Equal("AO-07", Assert.Single(service.Catalog).Name);
+        Assert.Equal(TleLoadOrigin.Cache, service.LastLoadDiagnostics?.Origin);
+        Assert.True(File.Exists(cachePath));
+        Assert.Equal(1, handler.RequestCount);
+    }
+
+    [Fact]
+    public async Task EnsureLoadedAsync_keeps_catalogue_and_does_not_retry_when_source_change_download_fails()
+    {
+        var cachePath = CreateCachePath();
+        var settings = new TestSettingsService();
+        var handler = new SwitchableHandler { Body = Ao07Json };
+        var service = new TleService(settings, new HttpClient(handler), cachePath);
+        await service.EnsureLoadedAsync();
+        Assert.Single(service.Catalog);
+
+        settings.Current.TleSource = CelestrakSource();
+        handler.StatusCode = HttpStatusCode.Forbidden;
+        await service.EnsureLoadedAsync();
+        await service.EnsureLoadedAsync();
+
+        Assert.Equal("AO-07", Assert.Single(service.Catalog).Name);
+        Assert.True(File.Exists(cachePath));
+        Assert.Equal(2, handler.RequestCount);
+    }
+
+    [Fact]
+    public async Task EnsureLoadedAsync_does_not_download_again_when_source_is_unchanged()
+    {
+        var cachePath = CreateCachePath();
+        var settings = new TestSettingsService();
+        var handler = new SwitchableHandler { Body = Ao07Json };
+        var service = new TleService(settings, new HttpClient(handler), cachePath);
+
+        await service.EnsureLoadedAsync();
+        await service.EnsureLoadedAsync();
+
+        Assert.Equal(1, handler.RequestCount);
+    }
+
+    private const string Ao07Json = """
+        [{"AMSAT_NAME":"AO-07","OBJECT_NAME":"OSCAR 7","OBJECT_ID":"1974-089B","INCLINATION":101.9901,"ECCENTRICITY":0.00126647,"RA_OF_ASC_NODE":201.9731,"ARG_OF_PERICENTER":92.559,"MEAN_ANOMALY":74.3678,"MEAN_MOTION":12.53698425,"EPOCH":"2026-07-07T12:21:17.710848","NORAD_CAT_ID":7530,"REV_AT_EPOCH":36306,"BSTAR":4.948808e-06,"EPHEMERIS_TYPE":0,"CLASSIFICATION_TYPE":"U","ELEMENT_SET_NO":999,"MEAN_MOTION_DDOT":0.0,"MEAN_MOTION_DOT":-4.6e-07}]
+        """;
+
+    private static TleSourceSettings CelestrakSource() => new()
+    {
+        Mode = TleSourceMode.CustomUrl,
+        CustomUrl = TleSourceResolver.CelestrakAmsatJsonExampleUrl
+    };
+
     private string CreateCachePath()
     {
         var path = Path.Combine(_tempDir, $"tle-cache-{Guid.NewGuid():N}.txt");
@@ -199,6 +263,24 @@ public sealed class TleServiceTests : IDisposable
                 Content = new StringContent(body, Encoding.UTF8, "application/json")
             };
             return Task.FromResult(response);
+        }
+    }
+
+    private sealed class SwitchableHandler : HttpMessageHandler
+    {
+        public HttpStatusCode StatusCode { get; set; } = HttpStatusCode.OK;
+        public string Body { get; set; } = "";
+        public int RequestCount { get; private set; }
+
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            RequestCount++;
+            return Task.FromResult(new HttpResponseMessage(StatusCode)
+            {
+                Content = new StringContent(Body, Encoding.UTF8, "application/json")
+            });
         }
     }
 }

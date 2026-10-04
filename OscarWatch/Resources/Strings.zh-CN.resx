@@ -825,6 +825,9 @@
   <data name="Status.TleReloadFailed">
     <value>TLE 重新加载失败：{0}</value>
   </data>
+  <data name="Status.TleDownloadBlocked">
+    <value>{0} 正在拒绝下载（请求过多）。将继续使用上次保存的卫星数据。请稍后重试，或在 设置 → TLE 中选择 OscarWatch 来源。</value>
+  </data>
   <data name="Status.TransponderChecking">
     <value>正在检查转发器数据库…</value>
   </data>

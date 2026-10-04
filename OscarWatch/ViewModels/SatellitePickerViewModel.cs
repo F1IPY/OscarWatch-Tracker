@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using OscarWatch.Core.Models;
 using OscarWatch.Core.Services;
 using OscarWatch.Localization;
 
@@ -18,6 +19,7 @@ public partial class SatellitePickerViewModel : ViewModelBase
     private readonly ISettingsService _settings;
     private readonly ITleService _tleService;
     private readonly ILocalizationService _l;
+    private List<SatelliteCatalogEntry> _loadedCatalog = [];
 
     [ObservableProperty]
     private string _searchText = "";
@@ -52,11 +54,12 @@ public partial class SatellitePickerViewModel : ViewModelBase
     private void Load()
     {
         Satellites.Clear();
+        _loadedCatalog = _tleService.Catalog.ToList();
         var enabledNames = new HashSet<string>(
             _settings.Current.EnabledSatelliteNames ?? [],
             StringComparer.OrdinalIgnoreCase);
         var enabledIds = SatelliteCatalogMatching.CreateNoradIdSet(_settings.Current.EnabledSatelliteNoradIds);
-        foreach (var sat in _tleService.Catalog.OrderBy(s => s.Name))
+        foreach (var sat in _loadedCatalog.OrderBy(s => s.Name))
         {
             var item = new SatelliteItemViewModel
             {
@@ -119,13 +122,34 @@ public partial class SatellitePickerViewModel : ViewModelBase
     private async Task SaveAsync()
     {
         var enabled = Satellites.Where(s => s.IsEnabled).ToList();
-        _settings.Current.EnabledSatelliteNames = enabled.Select(s => s.Name).ToList();
+
+        // Selections for satellites missing from the loaded catalogue (for example while TLE
+        // downloads are failing) cannot be shown here, so they must survive the save.
+        var catalogIds = SatelliteCatalogMatching.CreateNoradIdSet(_loadedCatalog.Select(s => s.NoradId));
+        var keptIds = (_settings.Current.EnabledSatelliteNoradIds ?? [])
+            .Where(id => !string.IsNullOrWhiteSpace(id) && !SatelliteCatalogMatching.MatchesNoradId(id, catalogIds));
+        var keptNames = (_settings.Current.EnabledSatelliteNames ?? [])
+            .Where(name => !string.IsNullOrWhiteSpace(name) && !MatchesAnyLoadedSatellite(name));
+
+        _settings.Current.EnabledSatelliteNames = enabled
+            .Select(s => s.Name)
+            .Concat(keptNames)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
         _settings.Current.EnabledSatelliteNoradIds = enabled
-            .Select(s => SatelliteCatalogMatching.NormalizeNoradId(s.NoradId))
+            .Select(s => s.NoradId)
+            .Concat(keptIds)
             .Where(id => !string.IsNullOrWhiteSpace(id))
+            .Select(SatelliteCatalogMatching.NormalizeNoradId)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
         await _settings.SaveAsync();
+    }
+
+    private bool MatchesAnyLoadedSatellite(string enabledName)
+    {
+        var names = new HashSet<string>([enabledName], StringComparer.OrdinalIgnoreCase);
+        return _loadedCatalog.Any(s => SatelliteCatalogMatching.IsEnabled(s, names));
     }
 }
 

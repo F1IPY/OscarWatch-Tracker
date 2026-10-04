@@ -835,6 +835,9 @@ LOS: {2}
   <data name="Status.TleReloadFailed">
     <value>โหลด TLE ใหม่ล้มเหลว: {0}</value>
   </data>
+  <data name="Status.TleDownloadBlocked">
+    <value>{0} ปฏิเสธการดาวน์โหลด (คำขอมากเกินไป) ยังคงใช้ข้อมูลดาวเทียมที่บันทึกไว้ล่าสุด ลองใหม่ภายหลัง หรือเลือกแหล่ง OscarWatch ใน การตั้งค่า → TLE</value>
+  </data>
   <data name="Status.TransponderChecking">
     <value>กำลังตรวจฐานข้อมูลทรานสปอนเดอร์…</value>
   </data>

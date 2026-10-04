@@ -835,6 +835,9 @@ LOS: {2}
   <data name="Status.TleReloadFailed">
     <value>Сбой перезагрузки TLE: {0}</value>
   </data>
+  <data name="Status.TleDownloadBlocked">
+    <value>{0} отклоняет загрузки (слишком много запросов). Сохранены последние сохранённые данные спутников. Повторите попытку позже или выберите источник OscarWatch в разделе Настройки → TLE.</value>
+  </data>
   <data name="Status.TransponderChecking">
     <value>Проверка базы транспондеров…</value>
   </data>

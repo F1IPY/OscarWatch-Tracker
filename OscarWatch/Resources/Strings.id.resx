@@ -835,6 +835,9 @@ Lanjutkan?</value>
   <data name="Status.TleReloadFailed">
     <value>Muat ulang TLE gagal: {0}</value>
   </data>
+  <data name="Status.TleDownloadBlocked">
+    <value>{0} menolak unduhan (terlalu banyak permintaan). Data satelit terakhir yang tersimpan tetap digunakan. Coba lagi nanti, atau pilih sumber OscarWatch di Pengaturan → TLE.</value>
+  </data>
   <data name="Status.TransponderChecking">
     <value>Memeriksa basis data transponder…</value>
   </data>

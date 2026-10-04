@@ -168,6 +168,42 @@ public class SatellitePickerViewModelTests
         Assert.Equal([origami], tle.GetEnabledSatellites(settings.Current));
     }
 
+    [Fact]
+    public async Task Save_with_empty_catalogue_keeps_existing_selection()
+    {
+        using var _ = TestUiCulture.Apply(DefaultLanguage);
+
+        var settings = new TestSettingsService();
+        settings.Current.EnabledSatelliteNames = ["AO-07", "FO-29"];
+        settings.Current.EnabledSatelliteNoradIds = ["07530", "24278"];
+        var vm = new SatellitePickerViewModel(settings, new StubTleService([]), LocalizationService.Instance);
+
+        await vm.SaveCommand.ExecuteAsync(null);
+
+        Assert.Equal(["AO-07", "FO-29"], settings.Current.EnabledSatelliteNames);
+        Assert.Equal(["07530", "24278"], settings.Current.EnabledSatelliteNoradIds.OrderBy(id => id).ToList());
+    }
+
+    [Fact]
+    public async Task Save_keeps_selection_for_satellite_missing_from_catalogue_and_applies_changes_to_loaded_ones()
+    {
+        using var _ = TestUiCulture.Apply(DefaultLanguage);
+
+        var fo29 = Entry("FO-29", "24278");
+        var iss = Entry("ISS", "25544");
+        var settings = new TestSettingsService();
+        settings.Current.EnabledSatelliteNames = ["AO-07", "FO-29"];
+        settings.Current.EnabledSatelliteNoradIds = ["07530", "24278"];
+        var vm = new SatellitePickerViewModel(settings, new StubTleService([fo29, iss]), LocalizationService.Instance);
+
+        Assert.Single(vm.Satellites, s => s.Name == "FO-29").IsEnabled = false;
+        Assert.Single(vm.Satellites, s => s.Name == "ISS").IsEnabled = true;
+        await vm.SaveCommand.ExecuteAsync(null);
+
+        Assert.Equal(["AO-07", "ISS"], settings.Current.EnabledSatelliteNames.OrderBy(n => n).ToList());
+        Assert.Equal(["07530", "25544"], settings.Current.EnabledSatelliteNoradIds.OrderBy(id => id).ToList());
+    }
+
     private static TestSettingsService NameOnlySettings(List<string> names)
     {
         var settings = new TestSettingsService();
