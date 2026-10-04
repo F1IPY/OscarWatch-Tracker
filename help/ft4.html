@@ -13,7 +13,7 @@
         <a href="index.html" class="brand-home" title="Home"><img src="oscarwatch-icon.png" alt="" class="brand-icon" width="56" height="56" /></a>
         <div class="brand-text">
           <h1>OscarWatch FT4</h1>
-          <p class="tagline">Satellite-focused FT4 modem inside OscarWatch</p>
+          <p class="tagline">A plain guide to FT4 contacts through a linear satellite</p>
         </div>
       </div>
       <nav aria-label="Help topics">
@@ -34,10 +34,11 @@
 
     <main>
       <p class="lead">
-        The FT4 window is OscarWatch's own digital modem for linear satellites such as RS-44.
-        It listens to the downlink, sends your messages, switches the radio to transmit, moves the
-        contact along, keeps you on frequency, and saves a finished contact to the logbook.
-        You do not need WSJT-X running at the same time.
+        OscarWatch FT4 is a modem for short digital contacts through a linear satellite such as RS-44.
+        It listens, sends the messages, switches the radio to transmit, keeps you on frequency,
+        and saves a finished contact to the logbook. You can have a go without running WSJT-X,
+        and without already knowing the FT4 abbreviations. They are explained as you go, and again
+        in <a href="#glossary">Words you will see</a>.
       </p>
 
       <div class="subnav">
@@ -45,6 +46,7 @@
         <a href="#what-is-ft4">What FT4 is</a> ·
         <a href="#before-you-start">Before a pass</a> ·
         <a href="#first-contact">A contact</a> ·
+        <a href="#reading">Reading a message</a> ·
         <a href="#logging">Logging</a> ·
         <a href="#power">Power and good practice</a> ·
         <a href="#window">The window</a> ·
@@ -57,15 +59,22 @@
 
       <h2 id="what-is-ft4">What FT4 is</h2>
       <p>
-        FT4 is a way of making a short contact with a few fixed messages. The computer turns each
-        message into a tone. Time is divided into <strong>slots</strong> of 7.5 seconds. You send in
-        one slot and listen in the next, so each exchange takes 15 seconds. A whole contact, from
-        the call to the goodbye, is usually about a minute.
+        FT4 is a short contact made from a handful of fixed messages. The computer turns each
+        message into a tone. Time is split into <strong>slots</strong> of 7.5 seconds. You send in
+        one slot and listen in the next, so one exchange takes 15 seconds. From the first call to
+        the goodbye is usually about a minute.
       </p>
       <p>
-        On a linear satellite you can transmit and listen at the same time, so you hear your own
-        signal come back. OscarWatch shows that copy as <strong>Echo</strong>. An echo means the
-        satellite heard you. OscarWatch also uses it to nudge your uplink onto the right frequency.
+        You and the other station take opposite slots, so you are never transmitting at the same
+        time. Those two turns are called even and odd. When you answer someone, OscarWatch picks
+        the turn they are not using.
+      </p>
+      <p>
+        A linear satellite repeats a whole slice of frequencies, a bit like an SSB section of a band
+        in the sky. Many stations can be on at once, and you can listen while you transmit, so you
+        hear your own signal come back. OscarWatch shows that copy as <strong>Echo</strong>. An echo
+        means the satellite heard you, and OscarWatch uses it to nudge your transmit frequency
+        until that echo sits in the right place.
       </p>
       <div class="tip">
         Every slot starts on an exact second, so the PC clock needs to be right to about half a
@@ -82,20 +91,22 @@
 
       <h2 id="before-you-start">Before a pass</h2>
       <ul>
-        <li><strong>Who you are</strong>: set your callsign and a 4 or 6 character grid square under
-          <strong>Settings → Station</strong>. FT4 will not transmit without them.</li>
-        <li><strong>Radio control</strong>: connect the radio so OscarWatch can correct Doppler.
+        <li><strong>Who you are</strong>: set your callsign and grid square under
+          <strong>Settings → Station</strong>. A grid is a short code for where you are, such as IO87.
+          Four or six characters are enough. FT4 will not transmit without a callsign and a grid.</li>
+        <li><strong>Radio control</strong>: connect the radio so OscarWatch can follow Doppler,
+          the way the frequency slides as the satellite moves.
           See <a href="radio-rotator.html">Radio &amp; rotator</a>.</li>
         <li><strong>Audio</strong>: the radio's receiver has to reach the PC, and the PC's transmit
           audio has to reach the radio. That is usually the radio's USB soundcard, or a separate interface.</li>
         <li><strong>Satellite and mode</strong>: select the satellite on the main window and choose
-          <strong>FT4</strong> in the transponder list.</li>
+          <strong>FT4</strong> as the mode.</li>
       </ul>
-      <p>Transmit is blocked, and the status line says why, when:</p>
+      <p>Transmit stays off, and the status line says why, when:</p>
       <ul>
-        <li>the focused mode is FM (FT4 needs a linear transponder);</li>
-        <li>FO-29 is focused (its licence does not allow this mode);</li>
-        <li>AO-7 is focused (AMSAT has asked that FT4 is not used there);</li>
+        <li>the selected mode is FM. FT4 needs a linear satellite, where you can hear yourself. An FM repeater satellite does not work that way;</li>
+        <li>FO-29 is selected. Its licence does not allow this mode;</li>
+        <li>AO-7 is selected. AMSAT has asked that FT4 is not used there;</li>
         <li>the radio reports more than 30 W. See <a href="#power">Power and good practice</a>.</li>
       </ul>
 
@@ -106,83 +117,92 @@
           <strong>Listening</strong>.</li>
         <li>Press <strong>Settings</strong>. On <strong>Soundcards</strong>, pick the input (audio from
           the radio) and the output (audio to the radio). On <strong>PTT</strong>, pick how the radio
-          is switched to transmit.</li>
+          is switched to transmit. CAT is the usual choice when the radio has a USB control lead.</li>
         <li>Press <strong>Tune</strong>. A steady tone goes out. Set <strong>TX level</strong> so the
-          radio's ALC meter barely moves, and keep the power at 30 W or less
+          radio's ALC meter barely moves. ALC is the radio's own overload meter: if it swings, the
+          sound from the PC is too loud and the tone will distort. Keep the power at 30 W or less
           (see <a href="#power">Power and good practice</a>). Press <strong>Tune</strong>
           again to stop. Tune does not change the saved uplink trim.</li>
-        <li>Watch the list. A station calling CQ looks like <code>CQ EA1ABC IN63</code>.</li>
+        <li>Watch the list. A station calling anyone looks like <code>CQ EA1ABC IN63</code>: CQ, their
+          callsign, then their grid.</li>
         <li>Click their line to answer, or press <strong>CQ</strong> to call yourself. OscarWatch fills
           in the TX message, chooses the right slot, and turns transmit on.</li>
-        <li>Leave it to run. Your sends appear as <strong>TX</strong>. The copy from the satellite
-          appears as <strong>Echo</strong>. The other station's lines appear with no label in the TX column.</li>
-        <li>When both signal reports have been exchanged and both stations have sent 73, it is
-          saved to the <a href="qso-logbook.html">logbook</a>. RR73 counts as that station's 73.</li>
+        <li>Leave it to run. Your sends are marked <strong>TX</strong>. Your signal back from the
+          satellite is marked <strong>Echo</strong>. The other station's lines have a blank TX column.
+          A line marked <strong>AP</strong> is a guess at a weak reply. See
+          <a href="#reading">Reading a message</a>.</li>
+        <li>When both signal reports have been exchanged and both stations have sent 73, the contact
+          is saved to the <a href="qso-logbook.html">logbook</a>. RR73 counts as that station's 73.</li>
       </ol>
       <p>
         Press <strong>Halt Tx</strong> at any time to stop at once. Closing the window while it is
         transmitting asks you to confirm, and then stops the transmission.
       </p>
       <p>
-        Once both calls are known, a report, RR73, or 73 that the first decode missed is tried
-        again against those calls. RRR is left to a normal decode, because a guessed one would
-        start the 73. That recovers a weak copy near the horizon. It stays off while
-        you are only listening, while you are transmitting, and after the satellite has set.
-        It is not added when that moment already decoded as a different message, and once you
-        are already sending 73 or RR73 it does not invent a fresh report. A decode later than
-        1.5 s into the slot is ignored: that delay is a moonbounce echo, not a satellite.
-        A line marked <strong>AP</strong> was not read on its own. It is the closest of the
-        replies already expected in the contact. Guessed reports stop at +20. One at the
-        bottom of the SNR scale, before the slot, or at a different delay from that station's
-        other copies, is left out. Turn it off under <strong>Settings → Modem</strong>.
-      </p>
-      <p>
-        If a strong signal sits on a weaker one, the strong signal is taken off the audio and the
-        slot is decoded again, so the weaker station can still be read.
-      </p>
-      <p>
-        If nobody answers you, transmit stops after the watchdog time (3 minutes unless you change it
+        If nobody answers, transmit stops after the watchdog time (3 minutes unless you change it
         under <strong>Settings → Modem</strong>). Other stations on the waterfall, and your own echo,
         do not count as an answer. Set the watchdog to 0 if you want transmit to stay on.
+        Stay at the radio while you are transmitting.
       </p>
 
-      <h3>What the messages mean</h3>
+      <h2 id="reading">Reading a message</h2>
       <p>
-        You do not have to type these. <strong>CQ</strong>, clicking a line, <strong>Report</strong>,
-        and <strong>73</strong> fill the box. This is a normal contact when <strong>Skip RRR</strong>
-        is ticked, which it is by default.
+        You do not type these. <strong>CQ</strong>, clicking a line, <strong>Report</strong>, and
+        <strong>73</strong> fill the box. Read each line from the left:
+      </p>
+      <ul>
+        <li>the first callsign is who the message is for;</li>
+        <li>the second callsign is who sent it;</li>
+        <li>the last part is a grid, a signal report, or goodbye.</li>
+      </ul>
+      <p>
+        A signal report is a number in dB. Higher is stronger. A minus number means the signal is
+        below the noise, which is still a normal copy on FT4. You will work stations you cannot hear by ear.
+        An <code>R</code> in front of the number means "I copied your report".
+      </p>
+      <p>
+        This is a normal contact when <strong>Skip RRR</strong> is ticked, which it is by default.
+        In the example, you are MM9SQL.
       </p>
       <table>
         <tr><th>You see</th><th>What it is</th></tr>
         <tr><td><code>CQ MM9SQL IO87</code></td><td>You are calling CQ, with your grid.</td></tr>
         <tr><td><code>MM9SQL G4ABC IO91</code></td><td>G4ABC answered you, and sent their grid.</td></tr>
-        <tr><td><code>G4ABC MM9SQL +05</code></td><td>Your signal report to them. Higher is stronger. Below zero is still fine.</td></tr>
-        <tr><td><code>MM9SQL G4ABC R+02</code></td><td>They copied your report, and this is their report to you.</td></tr>
+        <tr><td><code>G4ABC MM9SQL +05</code></td><td>Your signal report to them: 5 dB above the noise.</td></tr>
+        <tr><td><code>MM9SQL G4ABC R+02</code></td><td>They copied your report. Their report to you is +02.</td></tr>
         <tr><td><code>G4ABC MM9SQL RR73</code></td><td>You copied them, and you are saying goodbye in the same message.</td></tr>
-        <tr><td><code>MM9SQL G4ABC 73</code></td><td>They signed off. The contact is finished once you have sent 73 as well, and it can be logged.</td></tr>
+        <tr><td><code>MM9SQL G4ABC 73</code></td><td>They signed off. Once you have sent 73 as well, the contact can be logged.</td></tr>
       </table>
       <p>
-        If you answer someone else's CQ, the first message OscarWatch sends is your grid, not a report.
-        The reports come after they reply.
+        If you answer someone else's CQ, the first message OscarWatch sends is your grid.
+        The reports start after they reply.
       </p>
       <p>
-        A contact is complete when both stations have sent 73. RR73 counts as that station's 73.
-        OscarWatch keeps transmitting 73 or RR73 until the other station has sent theirs.
-        If they do not copy your RR73 and keep sending a report, RR73 is sent again. If nobody replies,
-        transmit stops after the watchdog time. After the contact has finished, the TX message
+        The contact is complete when both stations have sent 73. RR73 counts as that station's 73.
+        OscarWatch keeps sending 73 or RR73 until the other station has sent theirs. If they miss
+        your RR73 and send their report again, RR73 goes out once more. Afterwards the TX message
         goes back to your CQ and transmit stays off. Press <strong>CQ</strong> when you want to
         call again. OscarWatch will not answer the station you have just worked.
       </p>
       <p>
-        Untick <strong>Skip RRR</strong> if you prefer a separate "all received" (RRR) before the 73.
-        Contacts are shorter with it ticked, which matters on a satellite pass.
+        <strong>Skip RRR</strong> folds "all received" into the goodbye, so the contact is one
+        message shorter. Leave it ticked on a satellite: a pass is not long. Untick it if you
+        prefer a separate RRR, then 73.
+      </p>
+      <p>
+        A very weak reply can be filled in from the message the contact is expecting next.
+        That line is marked <strong>AP</strong>. It is a hint, so treat it more carefully than a
+        normal decode. OscarWatch will not guess 73 or RR73 until a signal report has been
+        exchanged, so a noisy hint cannot end the contact early. Turn this off under
+        <strong>Settings → Modem</strong> if you only want messages that were read directly.
+        The limits are under <a href="#decoding">Decoding</a>.
       </p>
 
       <h2 id="logging">Logging</h2>
       <p>
-        A contact is saved when both stations have sent 73 (RR73 counts as 73) and both signal reports
-        have been exchanged. It is written to the
-        <a href="qso-logbook.html">OscarWatch Logbook</a> on its own. If you have no logbook yet,
+        A finished contact is written to the
+        <a href="qso-logbook.html">OscarWatch Logbook</a> on its own. That means both signal reports
+        have been exchanged, and both stations have sent 73 (RR73 counts). If you have no logbook yet,
         OscarWatch creates <strong>Main logbook</strong> and uses the grid from
         <strong>Settings → Station</strong>. Set your callsign afterwards with
         <strong>Logbook → Edit logbook</strong>.
@@ -202,9 +222,10 @@
 
       <h2 id="power">Power and good practice</h2>
       <p>
-        FT4 transmit is limited to 30 W set power on radios OscarWatch can read. Linear satellites share
-        one passband, and a single strong uplink lowers the transponder's gain for everyone. FT4 decodes
-        well below 0 dB, so more power rarely helps you and usually hurts others.
+        Keep the radio at 30 W or less. Everyone on a linear satellite shares one slice of the
+        passband, and one strong signal turns the satellite down for the rest. FT4 still copies a
+        station that is weaker than the noise, so extra watts rarely help you and usually spoil
+        the pass for other people.
       </p>
       <p>
         OscarWatch reads the power setting on ICOM radios that report it over CI-V (for example the
@@ -258,14 +279,19 @@
       <table>
         <tr><th>Column</th><th>Meaning</th></tr>
         <tr><td>UTC</td><td>When that slot started, in UTC.</td></tr>
-        <tr><td>TX</td><td>Blank for someone you heard. <strong>TX</strong> for a message you sent. <strong>Echo</strong> for your own message back from the satellite.</td></tr>
-        <tr><td>DT</td><td>How late the signal was, in seconds from the start of the slot. About +0.5 is on time. Your echo is usually a little later. One station a long way off has a clock problem. Every station a long way off usually means your PC clock is wrong.</td></tr>
-        <tr><td>SNR</td><td>How strong the signal is compared with the noise, in dB, on the same 2500 Hz scale as WSJT-X. Higher is stronger. Below zero is normal.</td></tr>
+        <tr><td>TX</td><td>Blank when you heard someone else. <strong>TX</strong> is a message you sent. <strong>Echo</strong> is your own message back from the satellite. <strong>AP</strong> is a guessed weak reply.</td></tr>
+        <tr><td>DT</td><td>How late the signal was, in seconds. About +0.5 is on time. Your echo is often a little later.</td></tr>
+        <tr><td>SNR</td><td>How strong the signal is compared with the noise, in dB. Higher is stronger. Below zero is normal. This is the same scale WSJT-X uses.</td></tr>
         <tr><td>Message</td><td>The text that was decoded.</td></tr>
         <tr><td>Hz</td><td>Where the signal sits on the waterfall.</td></tr>
       </table>
+      <div class="tip">
+        If one station's DT is a long way from +0.5, that station's clock is off. If every station
+        is a long way off, set your PC clock, or use a GPS. See <a href="#clock-source">Clock source</a>.
+      </div>
       <p>
-        Some received lines are shaded so they are easy to spot:
+        Some received lines are shaded so a useful one stands out. The words in the message still
+        tell you what it is. The shade is only a hint:
       </p>
       <ul>
         <li>someone calling you, who is not the station in the contact;</li>
@@ -299,9 +325,9 @@
         <li><strong>Report</strong> and <strong>73</strong>: send that message again to the station you are working, if they missed it. Both need a contact in progress.</li>
         <li><strong>Log QSO</strong>: save the contact now, even if it has not finished. Finished contacts are saved for you.</li>
         <li><strong>Skip RRR</strong>: ticked by default. The contact ends with RR73 instead of a separate RRR and then 73.</li>
-        <li><strong>Even TX slots</strong>: transmit on even slots instead of odd ones. When you answer someone, OscarWatch picks the opposite slot to theirs.</li>
-        <li><strong>Hold Tx Freq</strong>: ticked by default. Clicking a station does not move your transmit frequency. Untick it to transmit on the same audio frequency as the station you answer. While it is ticked, left-click the waterfall for receive and right-click for transmit.</li>
-        <li><strong>Auto reply</strong>: ticked by default. While you are calling CQ, the first station that calls you is answered. Untick it to keep calling until you click the station you want. Tick it again and the next caller is answered, including someone who called in the last few seconds. A contact you have already started still goes on to the report and the goodbye by itself.</li>
+        <li><strong>Even TX slots</strong>: take the even turn instead of the odd one. When you answer someone, OscarWatch already picks the turn they are not using, so you rarely need this.</li>
+        <li><strong>Hold Tx Freq</strong>: ticked by default. Clicking a station does not move where you transmit, which keeps you from landing on top of them. Untick it to transmit on the same audio frequency as the station you answer. While it is ticked, left-click the waterfall for receive and right-click for transmit.</li>
+        <li><strong>Auto reply</strong>: ticked by default. While you are calling CQ, the first station that calls you is answered. Untick it to keep calling until you click the station you want. Tick it again and the next caller is answered, including someone who called in the last few seconds. A contact you have already started still runs through to the report and the goodbye on its own.</li>
         <li><strong>TX audio (Hz)</strong>: your transmit position on the waterfall (the red bracket).</li>
       </ul>
 
@@ -355,18 +381,29 @@
 
       <h3>Moving to another frequency</h3>
       <p>
-        In FT4 the radio's tuning knob does not stick. OscarWatch puts the radio back on the calculated
-        frequency at the start of every slot. Move like this instead:
+        Turning the radio's tuning knob will not hold. At the start of every slot OscarWatch puts the
+        radio back on the frequency it has worked out. Move from OscarWatch instead. These controls
+        are on the FT4 window and the main frequency panel. They are not in the FT4 Settings window.
       </p>
-      <ul>
-        <li><strong>Inside the audio you can already hear</strong>: click the waterfall, or change <strong>TX audio (Hz)</strong>. Most FT4 activity is reached this way.</li>
-        <li><strong>To slide the whole downlink</strong>: on the main window's satellite panel, set the RX/TX switch to <strong>RX</strong> and use the ±10, ±100, and ±1000 Hz buttons. The change happens at the next slot, within 7.5 seconds. <strong>Store Offset</strong> saves it for that satellite in FT4 only, so your SSB offsets stay as they were.</li>
-      </ul>
+      <p>
+        <strong>A short move, inside the audio you can already hear.</strong>
+        Click the waterfall, or type a new <strong>TX audio (Hz)</strong>. That slides the red bracket
+        along the waterfall. Most FT4 activity is reached this way, without touching the radio's dial.
+      </p>
+      <p>
+        <strong>A longer move, when the station is outside that audio.</strong>
+        On the main window, in the frequency panel next to the uplink and downlink, set the RX/TX
+        switch to <strong>RX</strong>. Then use <strong>+10</strong>, <strong>+100</strong>, and
+        <strong>+1000</strong>, or the matching minus buttons, to slide the whole downlink.
+        The radio follows at the next slot, within 7.5 seconds.
+        <strong>Store Offset</strong> keeps that shift for this satellite while you are on FT4,
+        and leaves your SSB offsets as they were.
+      </p>
 
       <h2 id="settings">Settings</h2>
       <p>
         Press <strong>Settings</strong> in the FT4 window. The pages are in the order you need them:
-        sound, how the radio is keyed, how a contact runs, where decodes are reported, how the window looks, then the saved echo trim.
+        sound, how the radio is switched to transmit, how a contact runs, where decodes are reported, how the window looks, then the saved echo trim.
       </p>
 
       <h3>Soundcards</h3>
@@ -402,11 +439,13 @@
       </p>
 
       <h3>Modem</h3>
-      <p>Two groups.</p>
+      <p>How a contact runs, then how Doppler is handled in the audio. Leave the Doppler ticks on.</p>
       <ul>
-        <li><strong>Contacts</strong>: <strong>Auto reply</strong>, <strong>Hint weak replies (AP)</strong>, <strong>Hold Tx Freq</strong>, and the <strong>TX watchdog</strong> in minutes. 0 turns the watchdog off. Auto reply and Hold Tx Freq are also on the main FT4 window. Untick AP to show only what was read directly.
-          <strong>Lower RF power to 30 W</strong> sets the radio to 30 W before transmitting when it reports more. See <a href="#power">Power and good practice</a>.</li>
-        <li><strong>Doppler</strong>: audio correction on transmit, audio correction on receive, and looking for your echo in two ways at once during a transmit slot. Leave them on. Turn the last one off only if the PC struggles for a moment at each slot.</li>
+        <li><strong>Auto reply</strong> and <strong>Hold Tx Freq</strong>: the same ticks as on the main FT4 window.</li>
+        <li><strong>Hint weak replies (AP)</strong>: fill in a very weak reply from the message the contact is expecting. Untick it to show only what was read directly. See <a href="#decoding">Decoding</a>.</li>
+        <li><strong>TX watchdog</strong>: minutes to keep calling if nobody answers. 0 leaves transmit on.</li>
+        <li><strong>Lower RF power to 30 W</strong>: sets the radio to 30 W before transmitting when it reports more. See <a href="#power">Power and good practice</a>.</li>
+        <li><strong>Doppler</strong>: take the remaining frequency drift out of the transmit audio, and out of the receive audio. There is also a second look for your echo during a transmit slot. Turn that last one off only if the PC struggles for a moment at each slot.</li>
       </ul>
 
       <h3>Reporting</h3>
@@ -444,7 +483,7 @@
         <li><strong>The radio does not transmit</strong>: check the PTT method and the output soundcard. For VOX, the radio's VOX or data VOX has to be on.</li>
         <li><strong>Transmit is blocked</strong>: read the status line. It names the reason: the satellite, power above 30 W, or a missing callsign or grid. For power, see <a href="#power">Power and good practice</a>.</li>
         <li><strong>Few decodes low on the horizon</strong>: this is normal for the first few degrees. Signals are weak and the frequency changes quickly. OscarWatch already works harder on decoding there (see <a href="#decoding">Decoding</a>). A clear view of the horizon helps more than extra power.</li>
-        <li><strong>No echo</strong>: you need to be inside the footprint, on a frequency the transponder will repeat, with enough power. Tune shows whether a tone comes back.</li>
+        <li><strong>No echo</strong>: the satellite has to be above your horizon, on a frequency it will repeat, with enough power to come back. Tune shows whether a tone returns.</li>
         <li><strong>Echo sits away from the red bracket</strong>: wait a slot or two for echo calibration. If it keeps jumping, clear that satellite under <strong>Settings → Echo calibration</strong> and set the satellite panel TX offset to zero.</li>
         <li><strong>"Native FT4 library not found"</strong>: see <a href="#advanced">More detail</a>.</li>
       </ul>
@@ -459,9 +498,11 @@
         <tr><td>RRR</td><td>All received.</td></tr>
         <tr><td>RR73</td><td>All received, and goodbye, in one message.</td></tr>
         <tr><td>73</td><td>Best wishes. The sign-off.</td></tr>
+        <tr><td>AP</td><td>A guessed reply. Both callsigns were already known, and this was the closest message the contact was expecting. Marked AP in the list.</td></tr>
         <tr><td>QSO</td><td>A contact between two stations.</td></tr>
         <tr><td>Slot</td><td>7.5 seconds. You transmit in one and listen in the next.</td></tr>
-        <tr><td>Even / odd slot</td><td>Slots take turns. The two stations in a contact use opposite ones, so they are not transmitting together.</td></tr>
+        <tr><td>Even / odd slot</td><td>The two turns. The stations in a contact use opposite ones, so one is always listening.</td></tr>
+        <tr><td>Watchdog</td><td>A timer that stops transmit when nobody answers. Three minutes unless you change it.</td></tr>
         <tr><td>Echo</td><td>Your own transmission, heard back from the satellite.</td></tr>
         <tr><td>Doppler shift</td><td>The frequency change caused by the satellite moving towards you or away from you.</td></tr>
         <tr><td>Uplink / downlink</td><td>The frequency you send to the satellite, and the frequency it sends back on.</td></tr>
@@ -478,7 +519,7 @@
       <p>
         While FT4 is running, the radio is tuned at the slot boundary and then held, in the same way as
         OrbitDeck for iOS. Inside the slot, the remaining drift is removed in the audio. Transmit audio
-        is shifted in advance, with the direction reversed on an inverting transponder. Receive audio is
+        is shifted in advance. On a satellite that flips the sideband, that shift is applied the other way. Receive audio is
         shifted back before it is decoded.
       </p>
 
@@ -502,6 +543,25 @@
       </ul>
       <p>
         Higher up, signals are stronger and the quick decode keeps your replies in time for the next slot.
+      </p>
+      <p>
+        During a contact, a reply the first pass missed can be tried again as a hint. The line is
+        marked <strong>AP</strong>. While you are still sending your opening grid, the hints are
+        that station's grid and a signal report. 73 and RR73 are added only after a report has
+        been sent or received. RRR is never guessed, because a guessed one would start the goodbye.
+        Once you are already sending 73 or RR73, only those two are tried, so a fresh report is
+        not invented after the contact has moved on.
+      </p>
+      <p>
+        Hints stay off while you are only listening, while you are transmitting, and after the
+        satellite has set. A moment that already decoded as a different message is left as that
+        message. Guessed reports stop at +20. A hint on the bottom of the SNR scale, before the
+        slot has started, or at a different delay from that station's other copies, is left out.
+      </p>
+      <p>
+        A decode later than 1.5 seconds into the slot is ignored. That delay is a moonbounce echo,
+        not a satellite path. If a strong signal sits on a weaker one, the strong signal is taken
+        off the audio and the slot is decoded again, so the weaker station can still be read.
       </p>
 
       <h3>The decoder file</h3>
