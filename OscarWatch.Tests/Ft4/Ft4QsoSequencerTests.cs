@@ -4,8 +4,8 @@ namespace OscarWatch.Tests.Ft4;
 
 public sealed class Ft4QsoSequencerTests
 {
-    private static Ft4DecodedMessage Msg(string text, float snr = -8f, float freq = 1200f) =>
-        new(DateTime.UtcNow, text, freq, 0.4f, snr, null, null, null, false);
+    private static Ft4DecodedMessage Msg(string text, float snr = -8f, float freq = 1200f, bool ap = false) =>
+        new(DateTime.UtcNow, text, freq, 0.4f, snr, null, null, null, false, IsApriori: ap);
 
     [Fact]
     public void Cq_then_grid_reply_then_rr73_when_skip_rrr()
@@ -142,6 +142,31 @@ public sealed class Ft4QsoSequencerTests
         // Hold Tx Freq default: keep 1500 Hz rather than jump to their 1200 Hz.
         Assert.Equal(1500f, seq.TxAudioHz);
         Assert.True(seq.TransmitEnabled);
+    }
+
+    [Fact]
+    public void Answer_cq_does_not_guess_73_before_a_report()
+    {
+        var seq = new Ft4QsoSequencer(() => "GW4VXE", () => "IO71", () => true);
+        seq.StartAnswer(Msg("CQ G8KJJ IO92", freq: 1400f), oppositeEvenSlot: false);
+        Assert.Equal("G8KJJ GW4VXE IO71", seq.CurrentTxMessage);
+        Assert.Null(seq.ReportSent);
+        Assert.Null(seq.ReportReceived);
+
+        Assert.True(seq.TryGetApHints(out var hints, out _));
+        Assert.Contains("GW4VXE G8KJJ IO92", hints, StringComparison.Ordinal);
+        Assert.Contains("GW4VXE G8KJJ -14", hints, StringComparison.Ordinal);
+        Assert.DoesNotContain("73", hints, StringComparison.Ordinal);
+
+        // His CQ can score as a hinted 73. That must not become our sign-off.
+        Assert.False(seq.OnDecoded(Msg("GW4VXE G8KJJ 73", snr: -14f, ap: true)));
+        Assert.Equal("G8KJJ GW4VXE IO71", seq.CurrentTxMessage);
+        Assert.Equal(Ft4QsoPhase.InQso, seq.Phase);
+        Assert.True(seq.TransmitEnabled);
+
+        // A CRC-valid 73 is still his sign-off.
+        Assert.False(seq.OnDecoded(Msg("GW4VXE G8KJJ 73", snr: -14f)));
+        Assert.Equal("G8KJJ GW4VXE 73", seq.CurrentTxMessage);
     }
 
     [Fact]

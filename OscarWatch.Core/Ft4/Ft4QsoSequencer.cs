@@ -254,8 +254,12 @@ public sealed class Ft4QsoSequencer
 
     /// <summary>
     /// Newline-separated messages to try when the first decode misses a weak copy.
-    /// Only while a contact is open and both calls are known: their report, RR73, or 73.
+    /// Only while a contact is open and both calls are known: their grid, a report, and,
+    /// once a report has been exchanged, RR73 or 73.
     /// RRR is not guessed. A decoded RRR queues our 73, and satellite contacts usually skip that step.
+    /// 73 and RR73 are not guessed while we are still sending the opening grid. That guess
+    /// can win on the other station's CQ (the two messages share his callsign) and the
+    /// sequencer would then send 73 before any report existed.
     /// Once our TX is already 73 or RR73, only those two are tried. A fresh report guess
     /// at that point would look like another huge report after the contact had moved on.
     /// </summary>
@@ -295,8 +299,12 @@ public sealed class Ft4QsoSequencer
             }
         }
 
-        lines.Add(Ft4MessageCodec.BuildRr73(my, them));
-        lines.Add(Ft4MessageCodec.Build73(my, them));
+        if (IsOutgoingClosing(CurrentTxMessage) || ReportSent is not null || ReportReceived is not null)
+        {
+            lines.Add(Ft4MessageCodec.BuildRr73(my, them));
+            lines.Add(Ft4MessageCodec.Build73(my, them));
+        }
+
         hints = string.Join('\n', lines);
         return true;
     }
@@ -409,6 +417,11 @@ public sealed class Ft4QsoSequencer
 
         if (Ft4MessageCodec.Is73(extra) || Ft4MessageCodec.IsRr73(extra))
         {
+            // A hinted 73 before any report is the opening-grid false decode: his CQ
+            // shares the callsign, and 73 can be the best of a long hint list.
+            if (decode.IsApriori && ReportSent is null && ReportReceived is null)
+                return false;
+
             // RR73 is that station's 73. The contact ends only after we have sent one too.
             _theySent73 = true;
             if (!IsOutgoingClosing(CurrentTxMessage))
