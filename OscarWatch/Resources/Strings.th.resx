@@ -2234,7 +2234,7 @@ LOS: {2}
     <value>เปิดการควบคุมวิทยุ</value>
   </data>
   <data name="Settings.Radio.DualEnable">
-    <value>วิทยุคู่ (ดาวน์ลิงก์และอัปลิงก์แยก: FT-817/818, FT-991(A), IC-705, IC-7300, IC-905, IC-7100, ชุด IC-706, TH-D74/D75 หรือผสม)</value>
+    <value>วิทยุคู่ (ดาวน์ลิงก์และอัปลิงก์แยก: FT-817/818, FT-857, FT-991(A), IC-705, IC-7300, IC-905, IC-7100, ชุด IC-706, TH-D74/D75 หรือผสม)</value>
   </data>
   <data name="Settings.Radio.DualIncompleteBoth">
     <value>เลือกพอร์ต COM สำหรับทั้งวิทยุดาวน์ลิงก์และอัปลิงก์</value>
@@ -2427,6 +2427,9 @@ LOS: {2}
   </data>
   <data name="Settings.Radio.RefreshComPorts">
     <value>รีเฟรชพอร์ต COM</value>
+  </data>
+  <data name="Settings.Radio.Ft857Hint">
+    <value>FT-857 / FT-857D: ใช้แจ็ค CAT/LINEAR ด้านหลัง (CT-62 หรือเทียบเท่า) ตั้งเมนู 019 เป็น CAT (ไม่ใช่ LIN หรือ TUN) และเมนู 020 CAT RATE เป็น 4800 บอด (9600 และ 38400 ก็ใช้ได้) CAT 8N2: หนึ่ง COM ต่อขา ครอบคลุม HF/6 ม., 2 ม. และ 70 ซม. (ดาวน์ลิงก์ AO-07 Mode A บน 10 ม.) ไม่รองรับ 23 ซม. เชิงเส้น: หมุนดาวน์ลิงก์สำหรับพาสแบนด์; FM ล็อกลูกบิดขณะติดตาม ตั้งกำลังส่งที่ตัววิทยุ (CAT เปลี่ยนไม่ได้)</value>
   </data>
   <data name="Settings.Radio.Ft817Hint">
     <value>FT-817 / FT-818: ตั้งเมนู #14 เป็น 4800 บอดบนแต่ละเครื่อง (38400 ก็ใช้ได้) CAT 8N2: หนึ่ง COM ต่อขา ครอบคลุม HF/6 ม., 2ม. และ 70ซม. (ดาวน์ลิงก์ AO-07 Mode A บน 10 ม.) เชิงเส้น: หมุนดาวน์ลิงก์สำหรับพาสแบนด์; FM ล็อกลูกบิดขณะติดตาม</value>

@@ -2230,7 +2230,7 @@
     <value>Habilitar control CAT</value>
   </data>
   <data name="Settings.Radio.DualEnable">
-    <value>Doble radio (bajada y subida separadas: FT-817/818, FT-991(A), IC-705, IC-7300, IC-905, IC-7100, serie IC-706, TH-D74/D75 o mixtas)</value>
+    <value>Doble radio (bajada y subida separadas: FT-817/818, FT-857, FT-991(A), IC-705, IC-7300, IC-905, IC-7100, serie IC-706, TH-D74/D75 o mixtas)</value>
   </data>
   <data name="Settings.Radio.DualIncompleteBoth">
     <value>Selecciona puertos COM para las radios de bajada y subida.</value>
@@ -2423,6 +2423,9 @@
   </data>
   <data name="Settings.Radio.RefreshComPorts">
     <value>Actualizar puertos COM</value>
+  </data>
+  <data name="Settings.Radio.Ft857Hint">
+    <value>FT-857 / FT-857D: Usa el conector trasero CAT/LINEAR (CT-62 o equivalente). Pon el menú 019 en CAT (no LIN ni TUN) y el menú 020 CAT RATE a 4800 baudios (9600 y 38400 también funcionan). CAT 8N2, un COM por tramo. Cubre HF/6 m, 2 m y 70 cm (bajada AO-07 Modo A en 10 m); sin 23 cm. Lineal: gira la bajada para la banda de paso; FM bloquea el dial mientras hace seguimiento. Ajusta la potencia en la radio (CAT no puede cambiarla).</value>
   </data>
   <data name="Settings.Radio.Ft817Hint">
     <value>FT-817 / FT-818: Configura el menú n.º 14 a 4800 baudios en cada radio (38400 también funciona). CAT 8N2 — un COM por tramo. Cubre HF/6 m, 2 m y 70 cm (bajada AO-07 Modo A en 10 m). Lineal: gira la bajada para la banda de paso; FM bloquea el dial mientras hace seguimiento.</value>

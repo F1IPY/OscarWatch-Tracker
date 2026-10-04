@@ -796,6 +796,11 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
         && (SelectedDownlinkRigTypeChoice?.Value == RigType.IcomIc706MkiiG
             || SelectedUplinkRigTypeChoice?.Value == RigType.IcomIc706MkiiG);
 
+    public bool ShowRigFt857CatHint =>
+        DualRadioEnabled
+        && (SelectedDownlinkRigTypeChoice?.Value == RigType.YaesuFt857
+            || SelectedUplinkRigTypeChoice?.Value == RigType.YaesuFt857);
+
     public bool ShowRigFt991CatHint =>
         DualRadioEnabled
         && (SelectedDownlinkRigTypeChoice?.Value is RigType.YaesuFt991 or RigType.YaesuFt991a
@@ -920,6 +925,7 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
         [
             new(RigType.YaesuFt817, "Yaesu FT-817"),
             new(RigType.YaesuFt818, "Yaesu FT-818"),
+            new(RigType.YaesuFt857, "Yaesu FT-857 / FT-857D"),
             new(RigType.YaesuFt991, "Yaesu FT-991"),
             new(RigType.YaesuFt991a, "Yaesu FT-991A"),
             new(RigType.YaesuFtx1, "Yaesu FTX-1"),
@@ -2345,6 +2351,7 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
         OnPropertyChanged(nameof(ShowRigIc705CatHint));
         OnPropertyChanged(nameof(ShowRigIc7300CatHint));
         OnPropertyChanged(nameof(ShowRigIc905CatHint));
+        OnPropertyChanged(nameof(ShowRigFt857CatHint));
         OnPropertyChanged(nameof(ShowRigFt991CatHint));
         OnPropertyChanged(nameof(ShowRigFtx1CatHint));
         RefreshComPortConflictIfReady();
@@ -2439,6 +2446,7 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
         OnPropertyChanged(nameof(ShowRigIc7300CatHint));
         OnPropertyChanged(nameof(ShowRigIc905CatHint));
         OnPropertyChanged(nameof(ShowRigIc7100CatHint));
+        OnPropertyChanged(nameof(ShowRigFt857CatHint));
         OnPropertyChanged(nameof(ShowRigFt991CatHint));
         OnPropertyChanged(nameof(ShowRigFtx1CatHint));
         if (_isSynchronizing || value is null)
@@ -2446,6 +2454,9 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
 
         if (value.Value is RigType.YaesuFt817 or RigType.YaesuFt818)
             DownlinkBaudRate = RigSettings.Ft817818DefaultBaudRate;
+
+        if (value.Value == RigType.YaesuFt857)
+            DownlinkBaudRate = RigSettings.Ft857DefaultBaudRate;
 
         if (value.Value is RigType.YaesuFt991 or RigType.YaesuFt991a)
             DownlinkBaudRate = RigSettings.Ft991DefaultBaudRate;
@@ -2510,6 +2521,7 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
         OnPropertyChanged(nameof(ShowRigIc7300CatHint));
         OnPropertyChanged(nameof(ShowRigIc905CatHint));
         OnPropertyChanged(nameof(ShowRigIc7100CatHint));
+        OnPropertyChanged(nameof(ShowRigFt857CatHint));
         OnPropertyChanged(nameof(ShowRigFt991CatHint));
         OnPropertyChanged(nameof(ShowRigFtx1CatHint));
         if (_isSynchronizing || value is null)
@@ -2517,6 +2529,9 @@ public partial class SettingsViewModel : ViewModelBase, IDisposable
 
         if (value.Value is RigType.YaesuFt817 or RigType.YaesuFt818)
             UplinkBaudRate = RigSettings.Ft817818DefaultBaudRate;
+
+        if (value.Value == RigType.YaesuFt857)
+            UplinkBaudRate = RigSettings.Ft857DefaultBaudRate;
 
         if (value.Value is RigType.YaesuFt991 or RigType.YaesuFt991a)
             UplinkBaudRate = RigSettings.Ft991DefaultBaudRate;

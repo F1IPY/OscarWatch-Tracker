@@ -2234,7 +2234,7 @@ Lanjutkan?</value>
     <value>Aktifkan kontrol radio</value>
   </data>
   <data name="Settings.Radio.DualEnable">
-    <value>Radio ganda (downlink dan uplink terpisah: FT-817/818, FT-991(A), IC-705, IC-7300, IC-905, IC-7100, seri IC-706, TH-D74/D75, atau campuran)</value>
+    <value>Radio ganda (downlink dan uplink terpisah: FT-817/818, FT-857, FT-991(A), IC-705, IC-7300, IC-905, IC-7100, seri IC-706, TH-D74/D75, atau campuran)</value>
   </data>
   <data name="Settings.Radio.DualIncompleteBoth">
     <value>Pilih port COM untuk radio downlink dan uplink.</value>
@@ -2427,6 +2427,9 @@ Lanjutkan?</value>
   </data>
   <data name="Settings.Radio.RefreshComPorts">
     <value>Segarkan port COM</value>
+  </data>
+  <data name="Settings.Radio.Ft857Hint">
+    <value>FT-857 / FT-857D: Pakai jack CAT/LINEAR di belakang (CT-62 atau setara). Setel menu 019 ke CAT (bukan LIN atau TUN) dan menu 020 CAT RATE ke 4800 baud (9600 dan 38400 juga jalan). CAT 8N2: satu COM per kaki. Mencakup HF/6 m, 2 m, dan 70 cm (downlink AO-07 Mode A di 10 m); tanpa 23 cm. Linear: putar downlink untuk passband; FM mengunci dial saat pelacakan. Atur daya di radio (CAT tidak bisa mengubahnya).</value>
   </data>
   <data name="Settings.Radio.Ft817Hint">
     <value>FT-817 / FT-818: Setel menu #14 ke 4800 baud di tiap radio (38400 juga jalan). CAT 8N2: satu COM per kaki. Mencakup HF/6 m, 2m, dan 70cm (downlink AO-07 Mode A di 10 m). Linear: putar downlink untuk passband; FM mengunci dial saat pelacakan.</value>

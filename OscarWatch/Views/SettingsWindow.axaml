@@ -777,6 +777,11 @@
             <TextBlock Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
                        FontSize="11"
                        TextWrapping="Wrap"
+                       IsVisible="{Binding ShowRigFt857CatHint}"
+                       Text="{loc:Localize Key=Settings.Radio.Ft857Hint}" />
+            <TextBlock Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                       FontSize="11"
+                       TextWrapping="Wrap"
                        IsVisible="{Binding ShowRigIc705CatHint}"
                        Text="{loc:Localize Key=Settings.Radio.Ic705Hint}" />
             <TextBlock Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"

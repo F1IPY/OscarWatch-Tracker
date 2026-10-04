@@ -27,5 +27,7 @@ public enum RigType
     SdrRigCtlTcp,
     /// <summary>FlexRadio SmartSDR TCP/IP API (single-radio full duplex).</summary>
     FlexSmartSdr,
-    Dummy
+    Dummy,
+    /// <summary>Yaesu FT-857 / FT-857D (dual-radio leg; FT-817 five-byte CAT).</summary>
+    YaesuFt857
 }

@@ -2234,7 +2234,7 @@ Fortfahren?</value>
     <value>Funkgerätsteuerung aktivieren</value>
   </data>
   <data name="Settings.Radio.DualEnable">
-    <value>Dual-Funkgerät (getrennter Downlink und Uplink: FT-817/818, FT-991(A), IC-705, IC-7300, IC-905, IC-7100, IC-706-Serie, TH-D74/D75 oder gemischt)</value>
+    <value>Dual-Funkgerät (getrennter Downlink und Uplink: FT-817/818, FT-857, FT-991(A), IC-705, IC-7300, IC-905, IC-7100, IC-706-Serie, TH-D74/D75 oder gemischt)</value>
   </data>
   <data name="Settings.Radio.DualIncompleteBoth">
     <value>COM-Ports für Downlink- und Uplink-Funkgerät auswählen.</value>
@@ -2427,6 +2427,9 @@ Fortfahren?</value>
   </data>
   <data name="Settings.Radio.RefreshComPorts">
     <value>COM-Ports aktualisieren</value>
+  </data>
+  <data name="Settings.Radio.Ft857Hint">
+    <value>FT-857 / FT-857D: Rückseitige CAT/LINEAR-Buchse verwenden (CT-62 oder gleichwertig). Menü 019 auf CAT stellen (nicht LIN oder TUN) und Menü 020 CAT RATE auf 4800 Baud (9600 und 38400 funktionieren ebenfalls). 8N2 CAT, ein COM pro Strecke. Deckt KW/6 m, 2 m und 70 cm ab (AO-07 Mode A Downlink auf 10 m); kein 23 cm. Linear: Downlink für das Passband drehen; FM sperrt den VFO während der Nachführung. Sendeleistung am Gerät einstellen (per CAT nicht änderbar).</value>
   </data>
   <data name="Settings.Radio.Ft817Hint">
     <value>FT-817 / FT-818: Menü Nr. 14 an jedem Funkgerät auf 4800 Baud setzen (38400 funktioniert ebenfalls). 8N2 CAT, ein COM pro Strecke. Deckt KW/6 m, 2 m und 70 cm ab (AO-07 Mode A Downlink auf 10 m). Linear: Downlink für das Passband drehen; FM sperrt den VFO während der Nachführung.</value>

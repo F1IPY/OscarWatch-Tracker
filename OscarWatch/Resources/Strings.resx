@@ -2230,7 +2230,7 @@ Continue?</value>
     <value>Enable radio control</value>
   </data>
   <data name="Settings.Radio.DualEnable">
-    <value>Dual radio (separate downlink and uplink: FT-817/818, FT-991(A), IC-705, IC-7300, IC-905, IC-7100, IC-706 series, TH-D74/D75, or mixed)</value>
+    <value>Dual radio (separate downlink and uplink: FT-817/818, FT-857, FT-991(A), IC-705, IC-7300, IC-905, IC-7100, IC-706 series, TH-D74/D75, or mixed)</value>
   </data>
   <data name="Settings.Radio.DualIncompleteBoth">
     <value>Select COM ports for both downlink and uplink radios.</value>
@@ -2423,6 +2423,9 @@ Continue?</value>
   </data>
   <data name="Settings.Radio.RefreshComPorts">
     <value>Refresh COM ports</value>
+  </data>
+  <data name="Settings.Radio.Ft857Hint">
+    <value>FT-857 / FT-857D: Use the rear CAT/LINEAR jack (CT-62 or equivalent). Set menu 019 to CAT (not LIN or TUN) and menu 020 CAT RATE to 4800 baud (9600 and 38400 also work). 8N2 CAT, one COM per leg. Covers HF/6 m, 2 m, and 70 cm (AO-07 Mode A downlink on 10 m); no 23 cm. Linear: spin downlink for passband; FM locks dial while tracking. Set RF power on the radio (CAT cannot change it).</value>
   </data>
   <data name="Settings.Radio.Ft817Hint">
     <value>FT-817 / FT-818: Set menu #14 to 4800 baud on each radio (38400 also works). 8N2 CAT — one COM per leg. Covers HF/6 m, 2m, and 70cm (AO-07 Mode A downlink on 10 m). Linear: spin downlink for passband; FM locks dial while tracking.</value>

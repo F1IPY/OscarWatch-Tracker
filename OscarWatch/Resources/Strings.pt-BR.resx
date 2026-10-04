@@ -2230,7 +2230,7 @@ Continuar?</value>
     <value>Habilitar controle de rádio</value>
   </data>
   <data name="Settings.Radio.DualEnable">
-    <value>Dois rádios (downlink e uplink separados: FT-817/818, FT-991(A), IC-705, IC-7300, IC-905, IC-7100, série IC-706, TH-D74/D75 ou misto)</value>
+    <value>Dois rádios (downlink e uplink separados: FT-817/818, FT-857, FT-991(A), IC-705, IC-7300, IC-905, IC-7100, série IC-706, TH-D74/D75 ou misto)</value>
   </data>
   <data name="Settings.Radio.DualIncompleteBoth">
     <value>Selecione portas COM para os rádios de downlink e uplink.</value>
@@ -2423,6 +2423,9 @@ Continuar?</value>
   </data>
   <data name="Settings.Radio.RefreshComPorts">
     <value>Atualizar portas COM</value>
+  </data>
+  <data name="Settings.Radio.Ft857Hint">
+    <value>FT-857 / FT-857D: Use o conector traseiro CAT/LINEAR (CT-62 ou equivalente). Defina o menu 019 como CAT (não LIN nem TUN) e o menu 020 CAT RATE para 4800 baud (9600 e 38400 também funcionam). CAT 8N2, uma COM por perna. Cobre HF/6 m, 2 m e 70 cm (downlink AO-07 Modo A em 10 m); sem 23 cm. Linear: gire o downlink para a passband; FM trava o dial durante o rastreamento. Ajuste a potência no rádio (o CAT não pode alterá-la).</value>
   </data>
   <data name="Settings.Radio.Ft817Hint">
     <value>FT-817 / FT-818: Defina o menu #14 para 4800 baud em cada rádio (38400 também funciona). CAT 8N2 — uma COM por perna. Cobre HF/6 m, 2 m e 70 cm (downlink AO-07 Modo A em 10 m). Linear: gire o downlink para a passband; FM trava o dial durante o rastreamento.</value>

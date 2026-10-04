@@ -19,6 +19,34 @@ public sealed class RigDriverFactoryTests
     }
 
     [Fact]
+    public void Create_endpoint_ft857_returns_driver()
+    {
+        var driver = RigDriverFactory.Create(new RigEndpointSettings
+        {
+            Type = RigType.YaesuFt857,
+            Port = "COM_TEST",
+            BaudRate = RigSettings.Ft857DefaultBaudRate
+        });
+
+        Assert.IsType<YaesuFt857Driver>(driver);
+        Assert.Equal(RigType.YaesuFt857, driver.RigType);
+    }
+
+    [Fact]
+    public void Create_settings_ft857_when_not_dual_throws()
+    {
+        Assert.Throws<InvalidOperationException>(() => RigDriverFactory.Create(new RigSettings
+        {
+            Type = RigType.YaesuFt857,
+            Port = "COM857"
+        }));
+    }
+
+    [Fact]
+    public void IsDualCapableSerialEndpoint_includes_ft857() =>
+        Assert.True(RigSettings.IsDualCapableSerialEndpoint(RigType.YaesuFt857));
+
+    [Fact]
     public void Create_endpoint_ic705_returns_driver_with_civ_address()
     {
         var driver = RigDriverFactory.Create(new RigEndpointSettings

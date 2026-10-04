@@ -1366,7 +1366,7 @@
     <value>無線機制御を有効</value>
   </data>
   <data name="Settings.Radio.DualEnable">
-    <value>デュアル無線機（ダウン/アップリンク別: FT-817/818、FT-991(A)、IC-705、IC-7300、IC-905、IC-7100、IC-706シリーズ、TH-D74/D75、または混合）</value>
+    <value>デュアル無線機（ダウン/アップリンク別: FT-817/818、FT-857、FT-991(A)、IC-705、IC-7300、IC-905、IC-7100、IC-706シリーズ、TH-D74/D75、または混合）</value>
   </data>
   <data name="Settings.Radio.DualIncompleteBoth">
     <value>ダウンリンクとアップリンクの両方の無線機にCOMポートを選択してください。</value>
@@ -1562,6 +1562,9 @@
   </data>
   <data name="Settings.Radio.RefreshComPorts">
     <value>COMポートを更新</value>
+  </data>
+  <data name="Settings.Radio.Ft857Hint">
+    <value>FT-857 / FT-857D: 背面のCAT/LINEAR端子（CT-62または同等品）を使用。メニュー019をCAT（LINやTUNではない）、メニュー020 CAT RATEを4800に（9600、38400も可）。8N2 CAT、レッグごとに1 COM。HF/6m、2m、70cm対応（AO-07 Mode Aの10mダウンリンク可）、23cmは非対応。リニア: ダウンリンクでパスバンド調整。FMは追跡中ダイヤル固定。送信出力は無線機で設定（CATでは変更不可）。</value>
   </data>
   <data name="Settings.Radio.Ft817Hint">
     <value>FT-817 / FT-818: 各無線機でメニュー#14を4800に（38400も可）。8N2 CAT — レッグごとに1 COM。HF/6m、2m、70cm対応（AO-07 Mode Aの10mダウンリンク可）。リニア: ダウンリンクでパスバンド調整。FMは追跡中ダイヤル固定。</value>

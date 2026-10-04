@@ -5,6 +5,9 @@ public sealed class RigSettings
     /// <summary>Factory / Hamlib-style default CAT rate for FT-817 and FT-818 (menu #14).</summary>
     public const int Ft817818DefaultBaudRate = 4800;
 
+    /// <summary>Default CAT rate for FT-857 / FT-857D (menu 020 CAT RATE; 9600 and 38400 also supported).</summary>
+    public const int Ft857DefaultBaudRate = 4800;
+
     /// <summary>Factory CI-V USB default baud for IC-705 (must match radio menu).</summary>
     public const int Ic705DefaultBaudRate = 115200;
 
@@ -155,7 +158,7 @@ public sealed class RigSettings
         IsDualCapableSerialEndpoint(type) || IsSdrDownlinkEndpoint(type);
 
     public static bool IsDualCapableSerialEndpoint(RigType type) =>
-        type is RigType.YaesuFt817 or RigType.YaesuFt818 or RigType.YaesuFtx1
+        type is RigType.YaesuFt817 or RigType.YaesuFt818 or RigType.YaesuFt857 or RigType.YaesuFtx1
             or RigType.YaesuFt991 or RigType.YaesuFt991a
             or RigType.IcomIc705 or RigType.IcomIc7300 or RigType.IcomIc905
             or RigType.IcomIc7100

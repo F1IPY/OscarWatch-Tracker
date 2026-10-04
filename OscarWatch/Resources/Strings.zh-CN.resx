@@ -2230,7 +2230,7 @@
     <value>启用电台控制</value>
   </data>
   <data name="Settings.Radio.DualEnable">
-    <value>双电台（独立的下行和上行: FT-817/818、FT-991(A)、IC-705、IC-7300、IC-905、IC-7100、IC-706 系列、TH-D74/D75 或混合）</value>
+    <value>双电台（独立的下行和上行: FT-817/818、FT-857、FT-991(A)、IC-705、IC-7300、IC-905、IC-7100、IC-706 系列、TH-D74/D75 或混合）</value>
   </data>
   <data name="Settings.Radio.DualIncompleteBoth">
     <value>请为下行和上行电台选择 COM 端口。</value>
@@ -2423,6 +2423,9 @@
   </data>
   <data name="Settings.Radio.RefreshComPorts">
     <value>刷新 COM 端口</value>
+  </data>
+  <data name="Settings.Radio.Ft857Hint">
+    <value>FT-857 / FT-857D：使用背面 CAT/LINEAR 接口（CT-62 或同类线缆）。将菜单 019 设为 CAT（不是 LIN 或 TUN），菜单 020 CAT RATE 设为 4800 波特（9600 和 38400 亦可）。8N2 CAT，每台电台一个 COM 口。覆盖 HF/6 m、2 m 和 70 cm（AO-07 Mode A 10 m 下行），不支持 23 cm。线性模式：旋转下行旋钮调谐过境频段；FM 跟踪时锁定旋钮。请在电台上设置发射功率（CAT 无法更改）。</value>
   </data>
   <data name="Settings.Radio.Ft817Hint">
     <value>FT-817 / FT-818：在每台电台上将菜单 #14 设为 4800 波特（38400 亦可）。8N2 CAT — 每台电台一个 COM 口。覆盖 HF/6 m、2m 和 70cm（AO-07 Mode A 10m 下行）。线性模式：旋转下行旋钮调谐过境频段；FM 锁定时跟踪。</value>

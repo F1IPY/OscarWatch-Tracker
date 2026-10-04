@@ -13,7 +13,7 @@
         <a href="index.html" class="brand-home" title="Home"><img src="oscarwatch-icon.png" alt="" class="brand-icon" width="56" height="56" /></a>
         <div class="brand-text">
           <h1>Yaesu radios</h1>
-          <p class="tagline">FT-847 and dual FT-817 / FT-818 / FT-991 / FTX-1</p>
+          <p class="tagline">FT-847 and dual FT-817 / FT-818 / FT-857 / FT-991 / FTX-1</p>
         </div>
       </div>
       <nav aria-label="Help topics">
@@ -61,7 +61,7 @@
         <li>On linear SSB, you can spin the receive dial to hunt the passband — see <a href="radio-doppler-tuning.html#passband-knob">spinning the dial</a>.</li>
       </ul>
 
-      <h2 id="dual-radio">Dual radio — FT-817, FT-818, FT-991, FTX-1</h2>
+      <h2 id="dual-radio">Dual radio: FT-817, FT-818, FT-857, FT-991, FTX-1</h2>
       <p>
         These models do <strong>not</strong> appear as a single-rig type. Enable
         <strong>Settings → Radio → Dual radio</strong> and assign each leg a type and COM port.
@@ -88,7 +88,13 @@
             <td>FT-817 / FT-818</td>
             <td>Menu <strong>#14</strong></td>
             <td><strong>4800</strong> (38400 also works)</td>
-            <td>Simple CAT; on FM the dial may be locked during tracking — use Pause CAT to tune by hand.</td>
+            <td>Simple CAT; on FM the dial may be locked during tracking. Use Pause CAT to tune by hand.</td>
+          </tr>
+          <tr>
+            <td>FT-857 / FT-857D</td>
+            <td>Menu <strong>019</strong> = <strong>CAT</strong>, menu <strong>020</strong> CAT RATE</td>
+            <td><strong>4800</strong> (9600 and 38400 also work)</td>
+            <td>Rear CAT/LINEAR jack (CT-62 or equivalent). Same CAT behaviour as FT-817/818. Set RF power on the radio.</td>
           </tr>
           <tr>
             <td>FT-991 / FT-991A</td>
@@ -112,7 +118,19 @@
         frequency while transmitting; VFO B can, so uplink tracking stays correct during keydown.
       </p>
 
-      <h3>FT-817 / FT-818: downlink stuck, uplink tracks</h3>
+      <h3 id="ft-857">FT-857 / FT-857D</h3>
+      <p>
+        The FT-857 has a single receiver, so it works as one leg of a dual-radio station (for example an FT-857D on
+        70 cm downlink and a second radio on 2 m uplink). It covers HF/6 m, 2 m, and 70 cm; there is no 23 cm.
+      </p>
+      <ul>
+        <li>Connect the rear <strong>CAT/LINEAR</strong> jack with a CT-62 or equivalent USB CAT cable.</li>
+        <li>Set menu <strong>019</strong> to <strong>CAT</strong> (not LIN or TUN), and menu <strong>020 CAT RATE</strong> to match OscarWatch.</li>
+        <li>OscarWatch cannot read or set RF power on this radio, so the 30 W uplink cap does not apply. Set power on the front panel (up to 50 W on 2 m and 20 W on 70 cm).</li>
+        <li>Tracking, passband tuning, and FM dial lock behave as on the FT-817 / FT-818 (see below).</li>
+      </ul>
+
+      <h3>FT-817 / FT-818 / FT-857: downlink stuck, uplink tracks</h3>
       <ul>
         <li>Use <strong>Full</strong> Doppler in the frequency panel.</li>
         <li>On linear SSB, tune the downlink, then pause ~1 s so passband trim is captured.</li>

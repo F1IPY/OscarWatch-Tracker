@@ -65,6 +65,17 @@ public sealed class YaesuFt817DriverTests
     }
 
     [Fact]
+    public void Ft857_reports_correct_rig_type_and_unlocks_dial_on_open()
+    {
+        var transport = new RecordingYaesuCatTransport();
+        var driver = new YaesuFt857Driver(transport);
+        driver.Open();
+
+        Assert.Equal(RigType.YaesuFt857, driver.RigType);
+        Assert.Equal(YaesuFt817CatCodec.DialLockOff.ToArray(), transport.SentFrames[0]);
+    }
+
+    [Fact]
     public void SetFrequencyHz_accepts_10m_hf()
     {
         var transport = new RecordingYaesuCatTransport();
