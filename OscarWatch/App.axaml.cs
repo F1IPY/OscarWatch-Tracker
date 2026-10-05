@@ -131,8 +131,7 @@ public partial class App : Application
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "dev";
-            Log.Information("OscarWatch {Version} starting", version);
+            Log.Information("OscarWatch {Version} starting", AppVersionHelper.GetDisplayVersionText());
 
             var startupStopwatch = Stopwatch.StartNew();
             var mainVm = Services.GetRequiredService<MainViewModel>();

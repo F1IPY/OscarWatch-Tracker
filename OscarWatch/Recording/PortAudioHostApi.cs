@@ -16,6 +16,11 @@ internal static class PortAudioHostApi
 
     public static int GetTypeId(int hostApiIndex)
     {
+        // The type ids only steer WASAPI / WDM-KS / ASIO choices. Elsewhere the lookup is
+        // unsafe: a module base address is not a dlopen handle, and dlsym on it segfaults.
+        if (!OperatingSystem.IsWindows())
+            return 0;
+
         lock (TypeByIndex)
         {
             if (TypeByIndex.TryGetValue(hostApiIndex, out var cached))

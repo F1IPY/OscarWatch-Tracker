@@ -152,34 +152,6 @@ public sealed class RecordingDeviceResolverTests
     }
 
     [Fact]
-    public void OrderLinuxOpenAttempts_TriesDefaultFirst_ThenUsbHardware_SkippingOtherMixers()
-    {
-        var devices = new[]
-        {
-            Dev(0, "bcm2835 Headphones: Audio (hw:0,0)"),
-            Dev(1, "vc4hdmi0: HDMI (hw:1,0)"),
-            Dev(2, "USB PnP Sound Device: Audio (hw:2,0)"),
-            Dev(8, "dmix"),
-            Dev(11, "default")
-        };
-
-        var order = RecordingDeviceResolver.OrderLinuxOpenAttempts(11, devices);
-
-        Assert.Equal(new[] { 11, 2, 0, 1 }, order);
-        Assert.Equal(new[] { 2, 0, 1 }, RecordingDeviceResolver.OrderLinuxSafeOpens(11, devices));
-    }
-
-    [Fact]
-    public void IsAlsaVirtualMixer_RecognisesDefaultAndDmix_NotHardware()
-    {
-        Assert.True(RecordingDeviceResolver.IsAlsaVirtualMixer("default"));
-        Assert.True(RecordingDeviceResolver.IsAlsaVirtualMixer("sysdefault:CARD=Headphones"));
-        Assert.True(RecordingDeviceResolver.IsAlsaVirtualMixer("dmix"));
-        Assert.False(RecordingDeviceResolver.IsAlsaVirtualMixer("USB PnP Sound Device: Audio (hw:2,0)"));
-        Assert.False(RecordingDeviceResolver.IsAlsaVirtualMixer("pulse"));
-    }
-
-    [Fact]
     public void IsLegacyNumericDeviceId_DetectsPureDigits()
     {
         Assert.True(RecordingDeviceResolver.IsLegacyNumericDeviceId("5"));

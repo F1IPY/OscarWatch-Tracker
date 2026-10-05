@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Globalization;
 using System.Text;
 
 namespace OscarWatch.Recording;
@@ -20,30 +19,7 @@ internal static class PortAudioOutOfProcessProbe
             ? "OscarWatch.PortAudioProbe.exe"
             : "OscarWatch.PortAudioProbe";
 
-    /// <summary>
-    /// Open one stream in the probe process. A segfault inside PortAudio must not kill OscarWatch.
-    /// </summary>
-    internal static bool TryOpenStream(
-        bool input,
-        int deviceIndex,
-        int sampleRate,
-        int channels,
-        int framesPerBuffer,
-        out string? errorMessage,
-        TimeSpan? timeout = null)
-    {
-        var args = new[]
-        {
-            input ? "input" : "output",
-            deviceIndex.ToString(CultureInfo.InvariantCulture),
-            sampleRate.ToString(CultureInfo.InvariantCulture),
-            channels.ToString(CultureInfo.InvariantCulture),
-            framesPerBuffer.ToString(CultureInfo.InvariantCulture),
-        };
-        return TryRun(out errorMessage, timeout ?? TimeSpan.FromSeconds(8), args);
-    }
-
-    internal static bool TryRun(out string? errorMessage, TimeSpan? timeout = null, IReadOnlyList<string>? arguments = null)
+    internal static bool TryRun(out string? errorMessage, TimeSpan? timeout = null)
     {
         errorMessage = null;
         var probePath = ResolveProbePath();
@@ -66,11 +42,6 @@ internal static class PortAudioOutOfProcessProbe
                 StandardErrorEncoding = Encoding.UTF8,
             }
         };
-        if (arguments is not null)
-        {
-            foreach (var arg in arguments)
-                process.StartInfo.ArgumentList.Add(arg);
-        }
 
         try
         {
@@ -106,31 +77,20 @@ internal static class PortAudioOutOfProcessProbe
         }
 
         Task.WaitAll([stdout, stderr]);
-        var stderrText = Tail(stderr.Result.Trim());
+        var stderrText = stderr.Result.Trim();
         if (process.ExitCode == ExitSuccess)
             return true;
 
-        // 139 = 128 + SIGSEGV, 134 = 128 + SIGABRT. PortAudio's ALSA dmix path uses both.
-        errorMessage = process.ExitCode switch
-        {
-            ExitInitFailed when string.IsNullOrWhiteSpace(stderrText) =>
-                "PortAudio initialisation failed in the probe process.",
-            ExitInitFailed => stderrText,
-            139 or 134 or < 0 =>
-                "PortAudio probe crashed while opening the sound device.",
-            _ when !string.IsNullOrWhiteSpace(stderrText) => stderrText,
-            _ => $"PortAudio probe exited with code {process.ExitCode}."
-        };
+        errorMessage = string.IsNullOrWhiteSpace(stderrText)
+            ? process.ExitCode switch
+            {
+                ExitInitFailed => "PortAudio initialisation failed in the probe process.",
+                < 0 => "PortAudio probe crashed. If SmartSDR or DAX is running, close it and try again.",
+                _ => $"PortAudio probe exited with code {process.ExitCode}."
+            }
+            : stderrText;
 
         return false;
-    }
-
-    private static string Tail(string text)
-    {
-        const int max = 500;
-        if (text.Length <= max)
-            return text;
-        return text[^max..];
     }
 
     internal static string? ResolveProbePath()
