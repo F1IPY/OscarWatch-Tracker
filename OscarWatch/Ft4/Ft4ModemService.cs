@@ -1377,12 +1377,19 @@ public sealed class Ft4ModemService : IDisposable
 
         var raw = samples;
         var corrected = raw;
+        var dlSlope = 0.0;
+        IReadOnlyList<double> driftSlopes = [];
         // Slope over the on-air burst: the symbols the decoder uses, not the quiet end of the slot.
         if (_settings.Current.Ft4.AudioDopplerRx
-            && TryGetDopplerSlopeHzPerSec(slotStart, Ft4SlotClock.Ft4SymbolBurstSeconds, out var dlSlope, out _)
-            && Math.Abs(dlSlope) >= 0.05)
+            && TryGetDopplerSlopeHzPerSec(slotStart, Ft4SlotClock.Ft4SymbolBurstSeconds, out var dl, out var ul))
         {
-            corrected = Ft4AudioDoppler.RemoveLinearDrift(raw, 12000, dlSlope);
+            if (Math.Abs(dl) >= 0.05)
+            {
+                dlSlope = dl;
+                corrected = Ft4AudioDoppler.RemoveLinearDrift(raw, 12000, dl);
+            }
+
+            driftSlopes = Ft4DriftSearch.ResidualSlopes(ul);
         }
 
         var txHz = _sequencer?.TxAudioHz ?? _settings.Current.Ft4.TxAudioHz;
@@ -1393,13 +1400,51 @@ public sealed class Ft4ModemService : IDisposable
             return;
         }
 
+        Task? driftSearch = null;
+        if (!txSlot && driftSlopes.Count > 0)
+        {
+            driftSearch = Task.Factory.StartNew(
+                () => DecodeDriftingStations(slotStart, raw, dlSlope, driftSlopes, txHz, deep),
+                CancellationToken.None,
+                TaskCreationOptions.LongRunning | TaskCreationOptions.DenyChildAttach,
+                TaskScheduler.Default);
+        }
+
         var foundOwn = PublishDecoded(slotStart, corrected, txSlot, timeShiftSec: 0, ownOnly: false, txHz, deep);
         if (fullSlotPass && !txSlot && !ReferenceEquals(corrected, raw))
             PublishDecoded(slotStart, raw, txSlot: false, timeShiftSec: 0, ownOnly: false, txHz, deep);
+        driftSearch?.Wait();
         if (!txSlot || foundOwn)
             return;
 
         RecoverOwnEchoSequential(slotStart, raw, corrected, txHz, deep);
+    }
+
+    /// <summary>
+    /// Receive passes at extra slopes for stations whose uplink slides while they transmit.
+    /// A pass that finds nothing costs a few milliseconds, so the grid stays cheap.
+    /// </summary>
+    private void DecodeDriftingStations(
+        DateTime slotStart,
+        float[] raw,
+        double downlinkSlopeHzPerSec,
+        IReadOnlyList<double> residualSlopes,
+        double txHz,
+        bool deep)
+    {
+        foreach (var residual in residualSlopes)
+        {
+            var aligned = Ft4AudioDoppler.RemoveLinearDrift(raw, 12000, downlinkSlopeHzPerSec + residual);
+            PublishDecoded(
+                slotStart,
+                aligned,
+                txSlot: false,
+                timeShiftSec: 0,
+                ownOnly: false,
+                txHz,
+                deep,
+                residualSlopeHzPerSec: residual);
+        }
     }
 
     /// <summary>
@@ -1476,6 +1521,10 @@ public sealed class Ft4ModemService : IDisposable
     }
 
     /// <summary>Post decoder output. Returns true when our own callsign was published.</summary>
+    /// <param name="residualSlopeHzPerSec">
+    /// Extra slide removed beyond the downlink Doppler. Non-zero passes skip hinted replies:
+    /// guessing across a grid of slopes would turn noise into reports.
+    /// </param>
     private bool PublishDecoded(
         DateTime slotStart,
         float[] samples,
@@ -1483,7 +1532,8 @@ public sealed class Ft4ModemService : IDisposable
         double timeShiftSec,
         bool ownOnly,
         double txHz,
-        bool deep)
+        bool deep,
+        double residualSlopeHzPerSec = 0)
     {
         float fMin, fMax;
         if (ownOnly)
@@ -1496,6 +1546,7 @@ public sealed class Ft4ModemService : IDisposable
         // there is how a report appears in the same period as our 73.
         if (!ownOnly
             && !txSlot
+            && residualSlopeHzPerSec == 0
             && _settings.Current.Ft4.ApEnabled
             && Ft4DecodeDepth.UseApriori(_snapshot.GetCurrent().ElevationDeg)
             && _sequencer is not null
@@ -1643,6 +1694,16 @@ public sealed class Ft4ModemService : IDisposable
 
                 if (!hinted)
                     _callDt.NoteReliable(callDe, timeSec, d.snr);
+            }
+
+            if (residualSlopeHzPerSec != 0)
+            {
+                Log.Information(
+                    "FT4 decode needed {Slope:+0;-0} Hz/s beyond the downlink Doppler: {Text} at {Hz:0} Hz, SNR {Snr:0} dB",
+                    residualSlopeHzPerSec,
+                    d.text,
+                    d.freq_hz,
+                    d.snr);
             }
 
             var msg = new Ft4DecodedMessage(
