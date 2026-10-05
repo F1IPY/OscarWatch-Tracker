@@ -511,7 +511,7 @@ public sealed class Ft4AudioService : IDisposable
 
     private void EnsureOutputUnlocked(string? deviceId, string? deviceDisplayName)
     {
-        var deviceIndex = ResolveDeviceIndex(deviceId, deviceDisplayName, input: false);
+        var deviceIndex = ResolveOutputDeviceIndex(deviceId, deviceDisplayName);
         if (deviceIndex < 0)
         {
             throw new InvalidOperationException(
@@ -539,9 +539,13 @@ public sealed class Ft4AudioService : IDisposable
             if (shared < 0 || shared == deviceIndex)
                 throw;
 
+            var sharedInfo = PortAudio.GetDeviceInfo(shared);
+            // Do not fall back onto ALSA default/dmix. That open segfaults instead of throwing.
+            if (OperatingSystem.IsLinux() && RecordingDeviceResolver.IsAlsaVirtualMixer(sharedInfo.name))
+                throw;
+
             Log.Warning(ex, "FT4 low-latency output open failed; retrying the shareable device");
             StopOutputUnlocked();
-            var sharedInfo = PortAudio.GetDeviceInfo(shared);
             _playbackSampleRate = (int)Math.Round(sharedInfo.defaultSampleRate);
             if (_playbackSampleRate < 8000)
                 _playbackSampleRate = 48000;
@@ -576,11 +580,16 @@ public sealed class Ft4AudioService : IDisposable
         PaStream? stream = null;
         try
         {
+            // Linux dmix (the ALSA device named "default") segfaults inside PortAudio 19.7
+            // when the buffer size is left unspecified. Capture already uses 256 frames.
+            var frames = OperatingSystem.IsLinux()
+                ? 256
+                : PortAudio.FramesPerBufferUnspecified;
             stream = new PaStream(
                 inParams: null,
                 outParams: param,
                 sampleRate: _playbackSampleRate,
-                framesPerBuffer: PortAudio.FramesPerBufferUnspecified,
+                framesPerBuffer: frames,
                 streamFlags: StreamFlags.ClipOff,
                 callback: OnOutput,
                 userData: IntPtr.Zero);
@@ -651,6 +660,101 @@ public sealed class Ft4AudioService : IDisposable
         if (string.IsNullOrWhiteSpace(deviceId) && string.IsNullOrWhiteSpace(deviceDisplayName))
             return input ? PortAudio.DefaultInputDevice : PortAudio.DefaultOutputDevice;
 
+        var snapshots = CollectDeviceSnapshots(input);
+
+        // WASAPI when it is available: shared with other apps, and much faster to start
+        // than the MME/DirectSound copy the pass-recording list prefers.
+        return RecordingDeviceResolver.ResolveIndex(
+            deviceId,
+            deviceDisplayName,
+            snapshots,
+            preferLowLatencyShared);
+    }
+
+    /// <summary>
+    /// Pick an output device. On Linux, opening ALSA <c>default</c> (dmix) can segfault
+    /// PortAudio instead of returning an error, so that open is tried in a child process first.
+    /// </summary>
+    private int ResolveOutputDeviceIndex(string? deviceId, string? deviceDisplayName)
+    {
+        var preferred = ResolveDeviceIndex(deviceId, deviceDisplayName, input: false);
+        if (!OperatingSystem.IsLinux() || preferred < 0)
+            return preferred;
+
+        var preferredInfo = PortAudio.GetDeviceInfo(preferred);
+        if (!RecordingDeviceResolver.IsAlsaVirtualMixer(preferredInfo.name))
+            return preferred;
+
+        var snapshots = CollectDeviceSnapshots(input: false);
+        var attempts = RecordingDeviceResolver.OrderLinuxOpenAttempts(preferred, snapshots);
+        string? preferredFailure = null;
+        foreach (var index in attempts)
+        {
+            var info = PortAudio.GetDeviceInfo(index);
+            var rate = (int)Math.Round(info.defaultSampleRate);
+            if (rate < 8000)
+                rate = 48000;
+
+            if (!TryProbeOutput(index, rate, info.maxOutputChannels, out var error))
+            {
+                if (index == preferred)
+                    preferredFailure = error;
+                Log.Warning(
+                    "FT4 skipped output device '{Device}' index {Index}: {Error}",
+                    info.name,
+                    index,
+                    error);
+                continue;
+            }
+
+            if (index != preferred)
+            {
+                Log.Warning(
+                    "FT4 output '{Preferred}' could not be opened ({Error}). Using '{Device}' index {Index} instead.",
+                    preferredInfo.name,
+                    preferredFailure,
+                    info.name,
+                    index);
+            }
+
+            return index;
+        }
+
+        return -1;
+    }
+
+    /// <summary>
+    /// Mono first. A crash is not retried as stereo: that is the dmix segfault, and a second
+    /// open of the same device would die the same way. A managed refusal can still be stereo.
+    /// </summary>
+    private static bool TryProbeOutput(int index, int sampleRate, int maxChannels, out string? error)
+    {
+        if (PortAudioOutOfProcessProbe.TryOpenStream(
+                input: false,
+                index,
+                sampleRate,
+                channels: 1,
+                framesPerBuffer: 256,
+                out error))
+            return true;
+
+        if (maxChannels < 2 || IsProbeCrash(error))
+            return false;
+
+        return PortAudioOutOfProcessProbe.TryOpenStream(
+            input: false,
+            index,
+            sampleRate,
+            channels: 2,
+            framesPerBuffer: 256,
+            out error);
+    }
+
+    private static bool IsProbeCrash(string? error) =>
+        error?.Contains("crashed", StringComparison.OrdinalIgnoreCase) == true;
+
+    private static List<RecordingDeviceResolver.InputDeviceSnapshot> CollectDeviceSnapshots(bool input)
+    {
         var snapshots = new List<RecordingDeviceResolver.InputDeviceSnapshot>();
         for (var i = 0; i < PortAudio.DeviceCount; i++)
         {
@@ -658,6 +762,7 @@ public sealed class Ft4AudioService : IDisposable
             var channels = input ? info.maxInputChannels : info.maxOutputChannels;
             if (channels <= 0)
                 continue;
+
             var latency = input ? info.defaultLowInputLatency : info.defaultLowOutputLatency;
             snapshots.Add(new RecordingDeviceResolver.InputDeviceSnapshot(
                 i,
@@ -667,13 +772,7 @@ public sealed class Ft4AudioService : IDisposable
                 PortAudioHostApi.GetTypeId(info.hostApi)));
         }
 
-        // WASAPI when it is available: shared with other apps, and much faster to start
-        // than the MME/DirectSound copy the pass-recording list prefers.
-        return RecordingDeviceResolver.ResolveIndex(
-            deviceId,
-            deviceDisplayName,
-            snapshots,
-            preferLowLatencyShared);
+        return snapshots;
     }
 
     private static float[] Resample(float[] input, int inRate, int outRate)
