@@ -143,7 +143,11 @@ public sealed class Ft4AudioService : IDisposable
 
     private void OpenCaptureUnlocked(string? deviceId, string? deviceDisplayName, bool preferLowLatencyShared)
     {
-        var deviceIndex = ResolveDeviceIndex(deviceId, deviceDisplayName, input: true, preferLowLatencyShared);
+        var deviceIndex = ResolveOpenableDeviceIndex(
+            deviceId,
+            deviceDisplayName,
+            input: true,
+            preferLowLatencyShared);
         if (deviceIndex < 0)
         {
             throw new InvalidOperationException(
@@ -511,7 +515,7 @@ public sealed class Ft4AudioService : IDisposable
 
     private void EnsureOutputUnlocked(string? deviceId, string? deviceDisplayName)
     {
-        var deviceIndex = ResolveOutputDeviceIndex(deviceId, deviceDisplayName);
+        var deviceIndex = ResolveOpenableDeviceIndex(deviceId, deviceDisplayName, input: false);
         if (deviceIndex < 0)
         {
             throw new InvalidOperationException(
@@ -672,22 +676,31 @@ public sealed class Ft4AudioService : IDisposable
     }
 
     /// <summary>
-    /// Pick an output device. On Linux, opening ALSA <c>default</c> (dmix) can segfault
-    /// PortAudio instead of returning an error, so that open is tried in a child process first.
+    /// Pick a device and, on Linux, prove the open in a child process first.
+    /// ALSA <c>default</c> / <c>dmix</c> is never opened: that plugin segfaults the
+    /// process that touches it, which is what killed capture on <c>default</c>.
     /// </summary>
-    private int ResolveOutputDeviceIndex(string? deviceId, string? deviceDisplayName)
+    private int ResolveOpenableDeviceIndex(
+        string? deviceId,
+        string? deviceDisplayName,
+        bool input,
+        bool preferLowLatencyShared = true)
     {
-        var preferred = ResolveDeviceIndex(deviceId, deviceDisplayName, input: false);
+        var preferred = ResolveDeviceIndex(deviceId, deviceDisplayName, input, preferLowLatencyShared);
         if (!OperatingSystem.IsLinux() || preferred < 0)
             return preferred;
 
         var preferredInfo = PortAudio.GetDeviceInfo(preferred);
-        if (!RecordingDeviceResolver.IsAlsaVirtualMixer(preferredInfo.name))
-            return preferred;
+        var snapshots = CollectDeviceSnapshots(input);
+        var attempts = RecordingDeviceResolver.OrderLinuxSafeOpens(preferred, snapshots);
+        if (RecordingDeviceResolver.IsAlsaVirtualMixer(preferredInfo.name))
+        {
+            Log.Warning(
+                "FT4 {Direction} device '{Device}' is an ALSA mixer that crashes PortAudio. Choosing another card.",
+                input ? "input" : "output",
+                preferredInfo.name);
+        }
 
-        var snapshots = CollectDeviceSnapshots(input: false);
-        var attempts = RecordingDeviceResolver.OrderLinuxOpenAttempts(preferred, snapshots);
-        string? preferredFailure = null;
         foreach (var index in attempts)
         {
             var info = PortAudio.GetDeviceInfo(index);
@@ -695,12 +708,12 @@ public sealed class Ft4AudioService : IDisposable
             if (rate < 8000)
                 rate = 48000;
 
-            if (!TryProbeOutput(index, rate, info.maxOutputChannels, out var error))
+            var maxChannels = input ? info.maxInputChannels : info.maxOutputChannels;
+            if (!TryProbeStream(input, index, rate, maxChannels, out var error))
             {
-                if (index == preferred)
-                    preferredFailure = error;
                 Log.Warning(
-                    "FT4 skipped output device '{Device}' index {Index}: {Error}",
+                    "FT4 skipped {Direction} device '{Device}' index {Index}: {Error}",
+                    input ? "input" : "output",
                     info.name,
                     index,
                     error);
@@ -710,11 +723,11 @@ public sealed class Ft4AudioService : IDisposable
             if (index != preferred)
             {
                 Log.Warning(
-                    "FT4 output '{Preferred}' could not be opened ({Error}). Using '{Device}' index {Index} instead.",
-                    preferredInfo.name,
-                    preferredFailure,
+                    "FT4 {Direction} using '{Device}' index {Index} instead of '{Preferred}'.",
+                    input ? "input" : "output",
                     info.name,
-                    index);
+                    index,
+                    preferredInfo.name);
             }
 
             return index;
@@ -727,10 +740,10 @@ public sealed class Ft4AudioService : IDisposable
     /// Mono first. A crash is not retried as stereo: that is the dmix segfault, and a second
     /// open of the same device would die the same way. A managed refusal can still be stereo.
     /// </summary>
-    private static bool TryProbeOutput(int index, int sampleRate, int maxChannels, out string? error)
+    private static bool TryProbeStream(bool input, int index, int sampleRate, int maxChannels, out string? error)
     {
         if (PortAudioOutOfProcessProbe.TryOpenStream(
-                input: false,
+                input,
                 index,
                 sampleRate,
                 channels: 1,
@@ -742,7 +755,7 @@ public sealed class Ft4AudioService : IDisposable
             return false;
 
         return PortAudioOutOfProcessProbe.TryOpenStream(
-            input: false,
+            input,
             index,
             sampleRate,
             channels: 2,

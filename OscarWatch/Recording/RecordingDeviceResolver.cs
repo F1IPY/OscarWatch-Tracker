@@ -168,6 +168,29 @@ internal static class RecordingDeviceResolver
     }
 
     /// <summary>
+    /// Devices that may be opened in-process. ALSA <c>default</c> and <c>dmix</c> are omitted:
+    /// PortAudio 19.7 segfaults when dmix rejects the format, including while another stream
+    /// on <c>default</c> is already running.
+    /// </summary>
+    internal static IReadOnlyList<int> OrderLinuxSafeOpens(
+        int preferredIndex,
+        IReadOnlyList<InputDeviceSnapshot> devices)
+    {
+        var safe = new List<int>();
+        foreach (var index in OrderLinuxOpenAttempts(preferredIndex, devices))
+        {
+            var device = devices.FirstOrDefault(d => d.Index == index);
+            if (device.MaxInputChannels <= 0)
+                continue;
+            if (IsAlsaVirtualMixer(device.RawName))
+                continue;
+            safe.Add(index);
+        }
+
+        return safe;
+    }
+
+    /// <summary>
     /// True for ALSA plugin names that route through dmix or a similar mixer.
     /// Hardware names such as <c>USB PnP Sound Device: Audio (hw:2,0)</c> are not mixers.
     /// </summary>

@@ -166,6 +166,7 @@ public sealed class RecordingDeviceResolverTests
         var order = RecordingDeviceResolver.OrderLinuxOpenAttempts(11, devices);
 
         Assert.Equal(new[] { 11, 2, 0, 1 }, order);
+        Assert.Equal(new[] { 2, 0, 1 }, RecordingDeviceResolver.OrderLinuxSafeOpens(11, devices));
     }
 
     [Fact]
