@@ -52,6 +52,10 @@ void monitor_init(monitor_t* me, const monitor_config_t* cfg);
 void monitor_reset(monitor_t* me);
 void monitor_process(monitor_t* me, const float* frame);
 void monitor_free(monitor_t* me);
+/// Remove each (freq_sub, bin) column's noise floor, taken as a low percentile
+/// over the whole capture. Takes out passband slope and steady birdies, which
+/// sit in one column for the whole slot, and leaves short FSK tones in place.
+void monitor_flatten(monitor_t* me);
 
 #ifdef WATERFALL_USE_PHASE
 void monitor_resynth(const monitor_t* me, const candidate_t* candidate, float* signal);

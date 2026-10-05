@@ -14,7 +14,10 @@ extern "C"
 // ok == 87 means success.
 void ldpc_decode(float codeword[], int max_iters, uint8_t plain[], int* ok);
 
-void bp_decode(float codeword[], int max_iters, uint8_t plain[], int* ok);
+void bp_decode(const float codeword[], int max_iters, uint8_t plain[], int* ok);
+
+// Normalised min-sum variant of bp_decode; scale is usually 0.7 to 0.8.
+void bp_decode_minsum(const float codeword[], int max_iters, float scale, uint8_t plain[], int* ok);
 
 #ifdef __cplusplus
 }

@@ -151,15 +151,10 @@ void monitor_process(monitor_t* me, const float* frame)
         kiss_fft_cpx* freqdata = me->fft_freqdata;
 
         // Shift the new data into analysis frame
-        for (int pos = 0; pos < me->nfft - me->subblock_size; ++pos)
-        {
-            me->last_frame[pos] = me->last_frame[pos + me->subblock_size];
-        }
-        for (int pos = me->nfft - me->subblock_size; pos < me->nfft; ++pos)
-        {
-            me->last_frame[pos] = frame[frame_pos];
-            ++frame_pos;
-        }
+        const int keep = me->nfft - me->subblock_size;
+        memmove(me->last_frame, me->last_frame + me->subblock_size, (size_t)keep * sizeof(me->last_frame[0]));
+        memcpy(me->last_frame + keep, frame + frame_pos, (size_t)me->subblock_size * sizeof(me->last_frame[0]));
+        frame_pos += me->subblock_size;
 
         // Do DFT of windowed analysis frame
         for (int pos = 0; pos < me->nfft; ++pos)
@@ -182,6 +177,9 @@ void monitor_process(monitor_t* me, const float* frame)
                 float phase = atan2f(freqdata[src_bin].i, freqdata[src_bin].r);
                 me->wf.mag[offset].mag = db;
                 me->wf.mag[offset].phase = phase;
+#elif defined(WATERFALL_USE_FLOAT)
+                // Same floor as the 8-bit scale, so sync scores match it
+                me->wf.mag[offset] = (db < -120.0f) ? -120.0f : db;
 #else
                 // Scale decibels to unsigned 8-bit range and clamp the value
                 // Range 0-240 covers -120..0 dB in 0.5 dB steps
@@ -198,6 +196,99 @@ void monitor_process(monitor_t* me, const float* frame)
 
     ++me->wf.num_blocks;
 }
+
+#ifndef WATERFALL_USE_PHASE
+static int column_floor(const ftx_waterfall_t* wf, int rows, int columns, int col, int rank)
+{
+    int hist[256] = { 0 };
+    for (int r = 0; r < rows; ++r)
+    {
+        int v = WF_ELEM_MAG_INT(wf->mag[r * columns + col]);
+        hist[(v < 0) ? 0 : ((v > 255) ? 255 : v)]++;
+    }
+    int level = 0;
+    for (int seen = 0; level < 255; ++level)
+    {
+        seen += hist[level];
+        if (seen > rank)
+            break;
+    }
+    return level;
+}
+
+void monitor_flatten(monitor_t* me)
+{
+    // Floor percentile, in 0.5 dB units. A slot is mostly noise in any one column,
+    // so the lower quartile is the floor. Every column is moved to the median floor
+    // of the capture, so a flat capture is left as it was and nothing saturates.
+    // The passband is smooth, so each column uses the median floor of its frequency
+    // neighbours unless its own floor stands clear above that (a birdie). A column's
+    // own estimate is about 0.5 dB noisy, and subtracting that noise costs decodes.
+    enum { kPercentile = 25, kHalfWindow = 8, kBirdieUnits = 5, kMaxColumns = 1024 };
+    ftx_waterfall_t* wf = &me->wf;
+    int rows = wf->num_blocks * wf->time_osr;
+    int columns = wf->freq_osr * wf->num_bins;
+    if (rows < 8 || columns > kMaxColumns)
+        return;
+
+    // Floors in frequency order: physical sub-bin = bin * freq_osr + freq_sub
+    int raw[kMaxColumns];
+    int rank = rows * kPercentile / 100;
+    for (int bin = 0; bin < wf->num_bins; ++bin)
+        for (int fs = 0; fs < wf->freq_osr; ++fs)
+            raw[bin * wf->freq_osr + fs] = column_floor(wf, rows, columns, fs * wf->num_bins + bin, rank);
+
+    int floor_hist[256] = { 0 };
+    for (int f = 0; f < columns; ++f)
+        floor_hist[raw[f]]++;
+    int target = 0;
+    for (int seen = 0; target < 255; ++target)
+    {
+        seen += floor_hist[target];
+        if (2 * seen > columns)
+            break;
+    }
+
+    for (int bin = 0; bin < wf->num_bins; ++bin)
+    for (int fs = 0; fs < wf->freq_osr; ++fs)
+    {
+        int f = bin * wf->freq_osr + fs;
+        int lo = (f - kHalfWindow < 0) ? 0 : f - kHalfWindow;
+        int hi = (f + kHalfWindow >= columns) ? columns - 1 : f + kHalfWindow;
+        int window[2 * kHalfWindow + 1];
+        int n = 0;
+        for (int g = lo; g <= hi; ++g)
+        {
+            int v = raw[g];
+            int j = n++;
+            while (j > 0 && window[j - 1] > v)
+            {
+                window[j] = window[j - 1];
+                --j;
+            }
+            window[j] = v;
+        }
+        int floor_level = window[n / 2];
+        if (raw[f] - floor_level >= kBirdieUnits)
+            floor_level = raw[f];
+
+        int col = fs * wf->num_bins + bin;
+        int shift = target - floor_level;
+        if (shift == 0)
+            continue;
+        for (int r = 0; r < rows; ++r)
+        {
+            WF_ELEM_T* el = &wf->mag[r * columns + col];
+#ifdef WATERFALL_USE_FLOAT
+            *el += 0.5f * (float)shift;
+#else
+            int v = (int)*el + shift;
+            *el = (WF_ELEM_T)((v < 0) ? 0 : ((v > 255) ? 255 : v));
+#endif
+        }
+    }
+}
+#endif
 
 #ifdef WATERFALL_USE_PHASE
 void monitor_resynth(const monitor_t* me, const candidate_t* candidate, float* signal)

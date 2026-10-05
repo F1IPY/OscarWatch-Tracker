@@ -14,14 +14,84 @@ public static class Ft4AudioDoppler
     /// </summary>
     public static float[] RemoveLinearDrift(float[] samples, double sampleRate, double slopeHzPerSec)
     {
-        if (samples.Length <= 64
-            || sampleRate < 1000
-            || !double.IsFinite(slopeHzPerSec)
-            || Math.Abs(slopeHzPerSec) < 1e-9)
-        {
+        if (!IsUsableSlope(samples, sampleRate, slopeHzPerSec))
             return samples;
+
+        return BuildAnalytic(samples, sampleRate).RemoveLinearDrift(slopeHzPerSec);
+    }
+
+    private static bool IsUsableSlope(float[] samples, double sampleRate, double slopeHzPerSec) =>
+        samples.Length > 64
+        && sampleRate >= 1000
+        && double.IsFinite(slopeHzPerSec)
+        && Math.Abs(slopeHzPerSec) >= 1e-9;
+
+    /// <summary>
+    /// Analytic (one-sided) form of a slot, built once so several drift slopes can be
+    /// removed from the same capture without repeating the FFT pair.
+    /// </summary>
+    public sealed class AnalyticSignal
+    {
+        private const int ReseedInterval = 1024;
+        private readonly float[] _source;
+        private readonly double[] _re;
+        private readonly double[] _im;
+
+        internal AnalyticSignal(float[] source, double sampleRate, double[] re, double[] im)
+        {
+            _source = source;
+            SampleRate = sampleRate;
+            _re = re;
+            _im = im;
         }
 
+        public double SampleRate { get; }
+
+        /// <summary>Same result as <see cref="Ft4AudioDoppler.RemoveLinearDrift"/> on the source samples.</summary>
+        public float[] RemoveLinearDrift(double slopeHzPerSec)
+        {
+            if (!IsUsableSlope(_source, SampleRate, slopeHzPerSec))
+                return _source;
+
+            // Mix with exp(-jθn), θn = α n². The step exp(jα(2n+1)) itself turns by
+            // exp(j2α) each sample, so two complex products replace Cos/Sin per sample.
+            // Reseeding from the exact angle keeps rounding from building up.
+            var n = _source.Length;
+            var alpha = Math.PI * slopeHzPerSec / (SampleRate * SampleRate);
+            var turnRe = Math.Cos(2 * alpha);
+            var turnIm = Math.Sin(2 * alpha);
+            double zRe = 1, zIm = 0, stepRe = 1, stepIm = 0;
+            var output = new float[n];
+            for (var i = 0; i < n; i++)
+            {
+                if (i % ReseedInterval == 0)
+                {
+                    var theta = alpha * i * (double)i;
+                    zRe = Math.Cos(theta);
+                    zIm = Math.Sin(theta);
+                    var stepAngle = alpha * (2.0 * i + 1);
+                    stepRe = Math.Cos(stepAngle);
+                    stepIm = Math.Sin(stepAngle);
+                }
+
+                // Re{ a · e^{-jθ} } = ar·cosθ + ai·sinθ
+                output[i] = (float)(_re[i] * zRe + _im[i] * zIm);
+
+                var nextZRe = zRe * stepRe - zIm * stepIm;
+                zIm = zRe * stepIm + zIm * stepRe;
+                zRe = nextZRe;
+                var nextStepRe = stepRe * turnRe - stepIm * turnIm;
+                stepIm = stepRe * turnIm + stepIm * turnRe;
+                stepRe = nextStepRe;
+            }
+
+            return output;
+        }
+    }
+
+    /// <summary>One-sided spectrum of <paramref name="samples"/>, already scaled by 1/N.</summary>
+    public static AnalyticSignal BuildAnalytic(float[] samples, double sampleRate)
+    {
         var nIn = samples.Length;
         var nfft = 1;
         while (nfft < nIn)
@@ -51,19 +121,13 @@ public static class Ft4AudioDoppler
         FftInPlace(re, im, inverse: true);
 
         var inv = 1.0 / nfft;
-        var piSlope = Math.PI * slopeHzPerSec;
-        var output = new float[nIn];
-        for (var n = 0; n < nIn; n++)
+        for (var i = 0; i < nIn; i++)
         {
-            var t = n / sampleRate;
-            var theta = piSlope * t * t;
-            var c = Math.Cos(theta);
-            var s = Math.Sin(theta);
-            // Re{ a · e^{-jθ} } = ar·cosθ + ai·sinθ
-            output[n] = (float)((re[n] * c + im[n] * s) * inv);
+            re[i] *= inv;
+            im[i] *= inv;
         }
 
-        return output;
+        return new AnalyticSignal(samples, sampleRate, re, im);
     }
 
     /// <summary>

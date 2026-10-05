@@ -127,7 +127,7 @@ static int ldpc_check(uint8_t codeword[])
     return errors;
 }
 
-void bp_decode(float codeword[], int max_iters, uint8_t plain[], int* ok)
+void bp_decode(const float codeword[], int max_iters, uint8_t plain[], int* ok)
 {
     float tov[FTX_LDPC_N][3];
     float toc[FTX_LDPC_M][7];
@@ -205,6 +205,116 @@ void bp_decode(float codeword[], int max_iters, uint8_t plain[], int* ok)
                     }
                 }
                 tov[n][m_idx] = -2 * fast_atanh(Tmn);
+            }
+        }
+    }
+
+    *ok = min_errors;
+}
+
+// Normalised min-sum: the check node sends the smallest other input magnitude,
+// scaled down because that overstates the sum-product answer. No tanh/atanh.
+void bp_decode_minsum(const float codeword[], int max_iters, float scale, uint8_t plain[], int* ok)
+{
+    float tov[FTX_LDPC_N][3];
+    float toc[FTX_LDPC_M][7];
+
+    int min_errors = FTX_LDPC_M;
+
+    for (int n = 0; n < FTX_LDPC_N; ++n)
+    {
+        tov[n][0] = tov[n][1] = tov[n][2] = 0;
+    }
+
+    for (int iter = 0; iter < max_iters; ++iter)
+    {
+        int plain_sum = 0;
+        for (int n = 0; n < FTX_LDPC_N; ++n)
+        {
+            plain[n] = ((codeword[n] + tov[n][0] + tov[n][1] + tov[n][2]) > 0) ? 1 : 0;
+            plain_sum += plain[n];
+        }
+
+        if (plain_sum == 0)
+        {
+            // message converged to all-zeros, which is prohibited
+            break;
+        }
+
+        int errors = ldpc_check(plain);
+        if (errors < min_errors)
+        {
+            min_errors = errors;
+            if (errors == 0)
+            {
+                break;
+            }
+        }
+
+        // Bits to checks, same as bp_decode but without the tanh
+        for (int m = 0; m < FTX_LDPC_M; ++m)
+        {
+            for (int n_idx = 0; n_idx < kFTX_LDPC_Num_rows[m]; ++n_idx)
+            {
+                int n = kFTX_LDPC_Nm[m][n_idx] - 1;
+                float Tnm = codeword[n];
+                for (int m_idx = 0; m_idx < 3; ++m_idx)
+                {
+                    if ((kFTX_LDPC_Mn[n][m_idx] - 1) != m)
+                    {
+                        Tnm += tov[n][m_idx];
+                    }
+                }
+                toc[m][n_idx] = Tnm;
+            }
+        }
+
+        // Checks to bits. With LLR = log(P1/P0), the sum-product output
+        // -2*atanh(prod tanh(-T/2)) becomes -(-1)^d * prod sign(T) * min|T|
+        // over the d other inputs.
+        for (int m = 0; m < FTX_LDPC_M; ++m)
+        {
+            int rows = kFTX_LDPC_Num_rows[m];
+            float min1 = 1e30f, min2 = 1e30f;
+            int min1_idx = -1;
+            int negatives = 0;
+            for (int n_idx = 0; n_idx < rows; ++n_idx)
+            {
+                float t = toc[m][n_idx];
+                float a = fabsf(t);
+                if (t < 0)
+                    ++negatives;
+                if (a < min1)
+                {
+                    min2 = min1;
+                    min1 = a;
+                    min1_idx = n_idx;
+                }
+                else if (a < min2)
+                {
+                    min2 = a;
+                }
+            }
+
+            for (int n_idx = 0; n_idx < rows; ++n_idx)
+            {
+                float t = toc[m][n_idx];
+                int others_negative = negatives - ((t < 0) ? 1 : 0);
+                // -(-1)^d * prod sign(others) is negative when d + others_negative
+                // is even; with d = rows - 1 that is rows + others_negative odd
+                int flip = (rows + others_negative) & 1;
+                float mag = scale * ((n_idx == min1_idx) ? min2 : min1);
+                float out = flip ? -mag : mag;
+
+                int n = kFTX_LDPC_Nm[m][n_idx] - 1;
+                for (int m_idx = 0; m_idx < 3; ++m_idx)
+                {
+                    if ((kFTX_LDPC_Mn[n][m_idx] - 1) == m)
+                    {
+                        tov[n][m_idx] = out;
+                        break;
+                    }
+                }
             }
         }
     }

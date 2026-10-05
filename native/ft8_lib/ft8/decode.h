@@ -24,6 +24,11 @@ typedef struct
 #define WF_ELEM_T          waterfall_cpx_t
 #define WF_ELEM_MAG(x)     ((x).mag)
 #define WF_ELEM_MAG_INT(x) (int)(2 * ((x).mag + 120.0f))
+#elif defined(WATERFALL_USE_FLOAT)
+// Unquantised dB for the likelihoods; the sync score keeps the 0.5 dB integer scale
+#define WF_ELEM_T          float
+#define WF_ELEM_MAG(x)     (x)
+#define WF_ELEM_MAG_INT(x) (int)(2 * ((x) + 120.0f))
 #else
 #define WF_ELEM_T          uint8_t
 #define WF_ELEM_MAG(x)     ((float)(x)*0.5f - 120.0f)
@@ -57,7 +62,19 @@ typedef struct
     int16_t freq_offset; ///< Index of the frequency bin
     uint8_t time_sub;    ///< Index of the time subdivision used
     uint8_t freq_sub;    ///< Index of the frequency subdivision used
+    int8_t drift;        ///< Linear frequency slide across the whole message, in frequency subdivisions (0 = steady)
+    uint8_t drift_floor; ///< Slide rounds down, not to nearest: the track then fits a signal half a subdivision below freq_sub
 } ftx_candidate_t;
+
+/// Where and how widely ftx_find_candidates_ex looks.
+typedef struct
+{
+    int time_min;         ///< First time block offset tried
+    int time_max;         ///< Time block offsets below this are tried
+    const int8_t* drifts; ///< Drift hypotheses (see ftx_candidate_t.drift); NULL means steady only
+    int num_drifts;
+    int suppress_neighbours; ///< Keep one candidate per adjacent time/frequency subdivision cell
+} ftx_search_t;
 
 /// Structure that contains the status of various steps during decoding of a message
 typedef struct
@@ -80,6 +97,18 @@ typedef struct
 /// @return Number of candidates filled in the heap
 int ftx_find_candidates(const ftx_waterfall_t* power, int num_candidates, ftx_candidate_t heap[], int min_score);
 
+/// As ftx_find_candidates, over a chosen time window and set of drift hypotheses.
+/// @return Number of candidates, sorted by descending score
+int ftx_find_candidates_ex(const ftx_waterfall_t* power, int num_candidates, ftx_candidate_t list[], int min_score, const ftx_search_t* search);
+
+/// Default time block window searched by ftx_find_candidates for this protocol.
+void ftx_default_time_window(ftx_protocol_t protocol, int* time_min, int* time_max);
+
+/// Waterfall element offset of the lowest tone of symbol sym, following the candidate's drift.
+/// @param[out] bin Frequency bin of that tone (may be NULL)
+/// @return false when the symbol falls outside the captured time or frequency range
+bool ftx_candidate_track(const ftx_waterfall_t* wf, const ftx_candidate_t* cand, int sym, int* offset, int* bin);
+
 /// Attempt to decode a message candidate. Extracts the bit probabilities, runs LDPC decoder, checks CRC and unpacks the message in plain text.
 /// @param[in] power Waterfall data collected during message slot
 /// @param[in] cand Candidate to decode
@@ -88,6 +117,10 @@ int ftx_find_candidates(const ftx_waterfall_t* power, int num_candidates, ftx_ca
 /// @param[out] status ftx_decode_status_t structure that will be filled with the status of various decoding steps
 /// @return True if the decoding was successful, false otherwise (check status for details)
 bool ftx_decode_candidate(const ftx_waterfall_t* power, const ftx_candidate_t* cand, int max_iterations, ftx_message_t* message, ftx_decode_status_t* status);
+
+/// As ftx_decode_candidate, from bit likelihoods already taken with ftx_candidate_llr.
+/// @param[in] wf Waterfall the likelihoods came from (for the protocol)
+bool ftx_decode_candidate_llr(const ftx_waterfall_t* wf, const float* log174, int max_iterations, ftx_message_t* message, ftx_decode_status_t* status);
 
 /// Normalized log(p(1)/p(0)) for each of the 174 codeword bits, decoder order.
 void ftx_candidate_llr(const ftx_waterfall_t* wf, const ftx_candidate_t* cand, float* log174);

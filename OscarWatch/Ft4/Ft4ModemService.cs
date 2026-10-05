@@ -1377,19 +1377,18 @@ public sealed class Ft4ModemService : IDisposable
 
         var raw = samples;
         var corrected = raw;
-        var dlSlope = 0.0;
-        IReadOnlyList<double> driftSlopes = [];
+        var drift = default(DriftRange);
         // Slope over the on-air burst: the symbols the decoder uses, not the quiet end of the slot.
         if (_settings.Current.Ft4.AudioDopplerRx
             && TryGetDopplerSlopeHzPerSec(slotStart, Ft4SlotClock.Ft4SymbolBurstSeconds, out var dl, out var ul))
         {
-            if (Math.Abs(dl) >= 0.05)
-            {
-                dlSlope = dl;
-                corrected = Ft4AudioDoppler.RemoveLinearDrift(raw, 12000, dl);
-            }
+            // Stations whose uplink slides while they transmit: one native pass searches the
+            // leftover slope on both sides instead of a decode per slope.
+            if (!txSlot)
+                drift = new DriftRange(Ft4DriftSearch.MaxResidualHzPerSec(ul), Ft4DriftSearch.Steps(ul));
 
-            driftSlopes = Ft4DriftSearch.ResidualSlopes(ul);
+            if (Math.Abs(dl) >= 0.05)
+                corrected = Ft4AudioDoppler.RemoveLinearDrift(raw, 12000, dl);
         }
 
         var txHz = _sequencer?.TxAudioHz ?? _settings.Current.Ft4.TxAudioHz;
@@ -1400,51 +1399,19 @@ public sealed class Ft4ModemService : IDisposable
             return;
         }
 
-        Task? driftSearch = null;
-        if (!txSlot && driftSlopes.Count > 0)
-        {
-            driftSearch = Task.Factory.StartNew(
-                () => DecodeDriftingStations(slotStart, raw, dlSlope, driftSlopes, txHz, deep),
-                CancellationToken.None,
-                TaskCreationOptions.LongRunning | TaskCreationOptions.DenyChildAttach,
-                TaskScheduler.Default);
-        }
-
-        var foundOwn = PublishDecoded(slotStart, corrected, txSlot, timeShiftSec: 0, ownOnly: false, txHz, deep);
+        var foundOwn = PublishDecoded(slotStart, corrected, txSlot, timeShiftSec: 0, ownOnly: false, txHz, deep, drift);
         if (fullSlotPass && !txSlot && !ReferenceEquals(corrected, raw))
             PublishDecoded(slotStart, raw, txSlot: false, timeShiftSec: 0, ownOnly: false, txHz, deep);
-        driftSearch?.Wait();
         if (!txSlot || foundOwn)
             return;
 
         RecoverOwnEchoSequential(slotStart, raw, corrected, txHz, deep);
     }
 
-    /// <summary>
-    /// Receive passes at extra slopes for stations whose uplink slides while they transmit.
-    /// A pass that finds nothing costs a few milliseconds, so the grid stays cheap.
-    /// </summary>
-    private void DecodeDriftingStations(
-        DateTime slotStart,
-        float[] raw,
-        double downlinkSlopeHzPerSec,
-        IReadOnlyList<double> residualSlopes,
-        double txHz,
-        bool deep)
+    /// <summary>Leftover slope range the native decoder searches; default is steady only.</summary>
+    private readonly record struct DriftRange(double MaxResidualHzPerSec, int Steps)
     {
-        foreach (var residual in residualSlopes)
-        {
-            var aligned = Ft4AudioDoppler.RemoveLinearDrift(raw, 12000, downlinkSlopeHzPerSec + residual);
-            PublishDecoded(
-                slotStart,
-                aligned,
-                txSlot: false,
-                timeShiftSec: 0,
-                ownOnly: false,
-                txHz,
-                deep,
-                residualSlopeHzPerSec: residual);
-        }
+        public bool IsActive => Steps > 0 && MaxResidualHzPerSec > 0;
     }
 
     /// <summary>
@@ -1521,9 +1488,10 @@ public sealed class Ft4ModemService : IDisposable
     }
 
     /// <summary>Post decoder output. Returns true when our own callsign was published.</summary>
-    /// <param name="residualSlopeHzPerSec">
-    /// Extra slide removed beyond the downlink Doppler. Non-zero passes skip hinted replies:
-    /// guessing across a grid of slopes would turn noise into reports.
+    /// <param name="drift">
+    /// Leftover slope range to search beyond the downlink Doppler. Hinted replies are only
+    /// tried on steady candidates, since guessing across a grid of slopes would turn noise
+    /// into reports.
     /// </param>
     private bool PublishDecoded(
         DateTime slotStart,
@@ -1533,7 +1501,7 @@ public sealed class Ft4ModemService : IDisposable
         bool ownOnly,
         double txHz,
         bool deep,
-        double residualSlopeHzPerSec = 0)
+        DriftRange drift = default)
     {
         float fMin, fMax;
         if (ownOnly)
@@ -1546,7 +1514,6 @@ public sealed class Ft4ModemService : IDisposable
         // there is how a report appears in the same period as our 73.
         if (!ownOnly
             && !txSlot
-            && residualSlopeHzPerSec == 0
             && _settings.Current.Ft4.ApEnabled
             && Ft4DecodeDepth.UseApriori(_snapshot.GetCurrent().ElevationDeg)
             && _sequencer is not null
@@ -1556,7 +1523,9 @@ public sealed class Ft4ModemService : IDisposable
             apHz = (float)hintHz;
         }
 
-        var decoded = Ft8Native.DecodeFt4(samples, 12000, fMin, fMax, deep, apHints, apHz);
+        var decoded = drift.IsActive && !ownOnly
+            ? Ft8Native.DecodeFt4Drift(samples, 12000, fMin, fMax, deep, apHints, apHz, (float)drift.MaxResidualHzPerSec, drift.Steps)
+            : Ft8Native.DecodeFt4(samples, 12000, fMin, fMax, deep, apHints, apHz);
         var my = Ft4MessageCodec.NormalizeCall(_settings.Current.GroundStation.Callsign ?? "");
         var any = false;
         var foundOwn = false;
@@ -1663,8 +1632,11 @@ public sealed class Ft4ModemService : IDisposable
             }
 
             // A hinted reply on the SNR floor has no measurable signal. R+35 was −21 dB.
+            // A CRC-checked hint carried its own report through the CRC, so only a
+            // guessed one needs the SNR and DT guards.
             var hinted = d.ap != 0;
-            if (hinted && !Ft4DecodeDepth.IsPublishableHint(timeSec, d.snr))
+            var guessed = d.ap == Ft8Native.ApGuessed;
+            if (guessed && !Ft4DecodeDepth.IsPublishableHint(timeSec, d.snr))
             {
                 Log.Debug(
                     "FT4 hinted reply ignored, SNR {Snr:0} dB at DT {Dt:0.00} s: {Text}",
@@ -1679,7 +1651,7 @@ public sealed class Ft4ModemService : IDisposable
             var dedupeKey = slotStart.Ticks + "|" + d.text;
             lock (_decodePostGate)
             {
-                if (hinted && !_callDt.AllowsHint(callDe, timeSec))
+                if (guessed && !_callDt.AllowsHint(callDe, timeSec))
                 {
                     Log.Debug(
                         "FT4 hinted reply ignored, DT {Dt:0.00} s does not match {Call}: {Text}",
@@ -1696,11 +1668,11 @@ public sealed class Ft4ModemService : IDisposable
                     _callDt.NoteReliable(callDe, timeSec, d.snr);
             }
 
-            if (residualSlopeHzPerSec != 0)
+            if (d.drift_hz_s != 0)
             {
                 Log.Information(
                     "FT4 decode needed {Slope:+0;-0} Hz/s beyond the downlink Doppler: {Text} at {Hz:0} Hz, SNR {Snr:0} dB",
-                    residualSlopeHzPerSec,
+                    d.drift_hz_s,
                     d.text,
                     d.freq_hz,
                     d.snr);

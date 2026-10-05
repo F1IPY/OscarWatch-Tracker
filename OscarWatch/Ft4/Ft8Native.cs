@@ -86,8 +86,14 @@ internal static class Ft8Native
         public float snr;
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 48)]
         public string text;
-        /// <summary>Non-zero when the text is a hinted reply, not a CRC decode.</summary>
+        /// <summary>
+        /// Non-zero when the text is a hinted reply: <see cref="ApCrcChecked"/> when the
+        /// calls were supplied and the rest passed the CRC, <see cref="ApGuessed"/> when it
+        /// is only the closest message in the hint list.
+        /// </summary>
         public int ap;
+        /// <summary>Linear slide (Hz/s) the drift search matched; 0 for a steady signal.</summary>
+        public float drift_hz_s;
     }
 
     [DllImport(LibraryName, CallingConvention = CallingConvention.Cdecl)]
@@ -126,6 +132,25 @@ internal static class Ft8Native
         [MarshalAs(UnmanagedType.LPUTF8Str)] string? hints,
         float hintHz,
         float hintHalfHz);
+
+    [DllImport(LibraryName, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int ow_ft8_decode_pcm_drift(
+        float[] samples,
+        int numSamples,
+        int sampleRate,
+        int isFt4,
+        float fMinHz,
+        float fMaxHz,
+        [Out] Decode[] outDecodes,
+        int outCapacity,
+        int deep,
+        [MarshalAs(UnmanagedType.LPUTF8Str)] string? hints,
+        float hintHz,
+        float hintHalfHz,
+        float maxResidualHzPerSec,
+        int driftSteps,
+        float dtMinSec,
+        float dtMaxSec);
 
     [DllImport(LibraryName, CallingConvention = CallingConvention.Cdecl)]
     private static extern void ow_ft8_remember_callsign(
@@ -272,6 +297,12 @@ internal static class Ft8Native
         return DecodeFt4(samples, sampleRate, fMin, fMax, deep: false);
     }
 
+    /// <summary><see cref="Decode.ap"/> for a hint taken on agreement alone, without a CRC.</summary>
+    public const int ApGuessed = 1;
+
+    /// <summary><see cref="Decode.ap"/> for a hint whose report, CRC and parity came from the audio.</summary>
+    public const int ApCrcChecked = 2;
+
     /// <summary>Half-width around the station we are working when trying hinted messages (Hz).</summary>
     public const float ApSearchHalfWidthHz = 200;
 
@@ -320,6 +351,52 @@ internal static class Ft8Native
                 apHints,
                 apCentreHz,
                 ApSearchHalfWidthHz);
+        return Trim(output, n);
+    }
+
+    /// <summary>
+    /// One decode that also searches signals still sliding by up to
+    /// <paramref name="maxResidualHzPerSec"/> either way, in
+    /// <paramref name="driftSteps"/> steps each side. A drifting station is reported
+    /// at its mid-burst frequency.
+    /// </summary>
+    public static Decode[] DecodeFt4Drift(
+        float[] samples,
+        int sampleRate,
+        float fMinHz,
+        float fMaxHz,
+        bool deep,
+        string? apHints,
+        float apCentreHz,
+        float maxResidualHzPerSec,
+        int driftSteps)
+    {
+        if (driftSteps <= 0 || !(maxResidualHzPerSec > 0))
+            return DecodeFt4(samples, sampleRate, fMinHz, fMaxHz, deep, apHints, apCentreHz);
+
+        var output = new Decode[50];
+        var n = ow_ft8_decode_pcm_drift(
+            samples,
+            samples.Length,
+            sampleRate,
+            isFt4: 1,
+            fMinHz,
+            fMaxHz,
+            output,
+            output.Length,
+            deep ? 1 : 0,
+            string.IsNullOrEmpty(apHints) ? null : apHints,
+            apCentreHz,
+            string.IsNullOrEmpty(apHints) ? 0 : ApSearchHalfWidthHz,
+            maxResidualHzPerSec,
+            driftSteps,
+            0f,
+            0f);
+        return Trim(output, n);
+    }
+
+    private static Decode[] Trim(Decode[] output, int n)
+    {
         if (n <= 0)
             return [];
         var result = new Decode[n];

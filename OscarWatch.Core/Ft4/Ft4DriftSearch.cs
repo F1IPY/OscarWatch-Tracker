@@ -1,44 +1,50 @@
 namespace OscarWatch.Core.Ft4;
 
 /// <summary>
-/// Extra receive slopes for stations whose uplink still slides within their transmission.
+/// Residual slope range for stations whose uplink still slides within their transmission.
 /// Many rigs ignore CAT tuning while keyed, so a station without audio pre-comp
 /// arrives with roughly its uplink Doppler slope left over after our downlink correction.
-/// The sign depends on the transponder and their setup, so both sides are tried.
+/// The sign depends on the transponder and their setup, so the native decoder searches
+/// both sides of the steady track in one pass.
 /// </summary>
 public static class Ft4DriftSearch
 {
     /// <summary>
-    /// Grid spacing. The decoder copes with about ±4 Hz/s of leftover slide,
-    /// so 8 Hz/s steps leave no gap between neighbouring passes.
+    /// Native grid spacing. The decoder copes with about ±2 Hz/s between hypotheses,
+    /// so 4 Hz/s steps leave no gap.
     /// </summary>
-    public const double StepHzPerSec = 8;
+    public const double StepHzPerSec = 4;
+
+    /// <summary>Slide the steady search already decodes, so smaller slopes need no drift search.</summary>
+    public const double SteadyToleranceHzPerSec = 4;
 
     /// <summary>Upper bound on steps each side, so a TCA slope cannot run away with CPU.</summary>
-    public const int MaxStepsEachSide = 8;
+    public const int MaxStepsEachSide = 16;
 
     /// <summary>
-    /// Leftover slopes (Hz/s, relative to the downlink-corrected copy) worth an extra pass.
-    /// Covers our own uplink slope with some margin, since other stations see a different geometry.
-    /// Empty when the uplink barely moves within a slot and the normal pass already covers it.
+    /// Largest leftover slope (Hz/s, either sign, relative to the downlink-corrected copy) worth
+    /// searching. Covers our own uplink slope with some margin, since other stations see a
+    /// different geometry. Zero when the uplink barely moves within a slot.
     /// </summary>
-    public static IReadOnlyList<double> ResidualSlopes(double uplinkSlopeHzPerSec)
+    public static double MaxResidualHzPerSec(double uplinkSlopeHzPerSec)
     {
         if (!double.IsFinite(uplinkSlopeHzPerSec))
-            return [];
+            return 0;
 
-        var reach = Math.Abs(uplinkSlopeHzPerSec) * 1.3 + StepHzPerSec / 2;
-        var steps = Math.Min(MaxStepsEachSide, (int)Math.Floor(reach / StepHzPerSec));
-        if (steps < 1)
-            return [];
+        var span = Math.Abs(uplinkSlopeHzPerSec) * 1.3;
+        if (span < SteadyToleranceHzPerSec)
+            return 0;
 
-        var slopes = new List<double>(steps * 2);
-        for (var k = 1; k <= steps; k++)
-        {
-            slopes.Add(k * StepHzPerSec);
-            slopes.Add(-k * StepHzPerSec);
-        }
+        return Math.Min(span + StepHzPerSec / 2, StepHzPerSec * MaxStepsEachSide);
+    }
 
-        return slopes;
+    /// <summary>Drift hypotheses each side of steady for <see cref="MaxResidualHzPerSec"/>; 0 means steady only.</summary>
+    public static int Steps(double uplinkSlopeHzPerSec)
+    {
+        var reach = MaxResidualHzPerSec(uplinkSlopeHzPerSec);
+        if (reach <= 0)
+            return 0;
+
+        return Math.Clamp((int)Math.Ceiling(reach / StepHzPerSec), 1, MaxStepsEachSide);
     }
 }

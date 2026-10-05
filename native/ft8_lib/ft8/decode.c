@@ -4,6 +4,7 @@
 #include "ldpc.h"
 
 #include <stdbool.h>
+#include <stddef.h>
 #include <math.h>
 
 // #define LOG_LEVEL LOG_DEBUG
@@ -124,13 +125,38 @@ static int ft8_sync_score(const ftx_waterfall_t* wf, const ftx_candidate_t* cand
     return score;
 }
 
+bool ftx_candidate_track(const ftx_waterfall_t* wf, const ftx_candidate_t* cand, int sym, int* offset, int* bin)
+{
+    int block_abs = cand->time_offset + sym;
+    if ((block_abs < 0) || (block_abs >= wf->num_blocks))
+        return false;
+
+    int sub = cand->freq_sub;
+    int b = cand->freq_offset;
+    if (cand->drift != 0)
+    {
+        // Zero slide at the middle symbol, so the candidate frequency is the mid-message one
+        int nn = (wf->protocol == FTX_PROTOCOL_FT4) ? FT4_NN : FT8_NN;
+        int num_tones = (wf->protocol == FTX_PROTOCOL_FT4) ? 4 : 8;
+        float slide = cand->drift * (float)(2 * sym - (nn - 1)) / (float)(2 * nn);
+        sub += cand->drift_floor ? (int)floorf(slide) : (int)lrintf(slide);
+        int shift = (sub >= 0) ? (sub / wf->freq_osr) : -((wf->freq_osr - 1 - sub) / wf->freq_osr);
+        b += shift;
+        sub -= shift * wf->freq_osr;
+        if ((b < 0) || (b + num_tones > wf->num_bins))
+            return false;
+    }
+
+    *offset = ((block_abs * wf->time_osr + cand->time_sub) * wf->freq_osr + sub) * wf->num_bins + b;
+    if (bin)
+        *bin = b;
+    return true;
+}
+
 static int ft4_sync_score(const ftx_waterfall_t* wf, const ftx_candidate_t* candidate)
 {
     int score = 0;
     int num_average = 0;
-
-    // Get the pointer to symbol 0 of the candidate
-    const WF_ELEM_T* mag_cand = get_cand_mag(wf, candidate);
 
     // Compute average score over sync symbols (block = 1-4, 34-37, 67-70, 100-103)
     for (int m = 0; m < FT4_NUM_SYNC; ++m)
@@ -138,44 +164,39 @@ static int ft4_sync_score(const ftx_waterfall_t* wf, const ftx_candidate_t* cand
         for (int k = 0; k < FT4_LENGTH_SYNC; ++k)
         {
             int block = 1 + (FT4_SYNC_OFFSET * m) + k;
-            int block_abs = candidate->time_offset + block;
-            // Check for time boundaries
-            if (block_abs < 0)
+            int offset;
+            if (!ftx_candidate_track(wf, candidate, block, &offset, NULL))
                 continue;
-            if (block_abs >= wf->num_blocks)
-                break;
 
-            // Get the pointer to symbol 'block' of the candidate
-            const WF_ELEM_T* p4 = mag_cand + (block * wf->block_stride);
-
+            const WF_ELEM_T* p4 = wf->mag + offset;
             int sm = kFT4_Costas_pattern[m][k]; // Index of the expected bin
-
-            // score += (4 * p4[sm]) - p4[0] - p4[1] - p4[2] - p4[3];
-            // num_average += 4;
+            int expected = WF_ELEM_MAG_INT(p4[sm]);
 
             // Check only the neighbors of the expected symbol frequency- and time-wise
             if (sm > 0)
             {
                 // look at one frequency bin lower
-                score += WF_ELEM_MAG_INT(p4[sm]) - WF_ELEM_MAG_INT(p4[sm - 1]);
+                score += expected - WF_ELEM_MAG_INT(p4[sm - 1]);
                 ++num_average;
             }
             if (sm < 3)
             {
                 // look at one frequency bin higher
-                score += WF_ELEM_MAG_INT(p4[sm]) - WF_ELEM_MAG_INT(p4[sm + 1]);
+                score += expected - WF_ELEM_MAG_INT(p4[sm + 1]);
                 ++num_average;
             }
-            if ((k > 0) && (block_abs > 0))
+            // Time neighbours follow the drift track, which is the same bin when steady
+            int near;
+            if ((k > 0) && ftx_candidate_track(wf, candidate, block - 1, &near, NULL))
             {
                 // look one symbol back in time
-                score += WF_ELEM_MAG_INT(p4[sm]) - WF_ELEM_MAG_INT(p4[sm - wf->block_stride]);
+                score += expected - WF_ELEM_MAG_INT(wf->mag[near + sm]);
                 ++num_average;
             }
-            if (((k + 1) < FT4_LENGTH_SYNC) && ((block_abs + 1) < wf->num_blocks))
+            if (((k + 1) < FT4_LENGTH_SYNC) && ftx_candidate_track(wf, candidate, block + 1, &near, NULL))
             {
                 // look one symbol forward in time
-                score += WF_ELEM_MAG_INT(p4[sm]) - WF_ELEM_MAG_INT(p4[sm + wf->block_stride]);
+                score += expected - WF_ELEM_MAG_INT(wf->mag[near + sm]);
                 ++num_average;
             }
         }
@@ -187,13 +208,106 @@ static int ft4_sync_score(const ftx_waterfall_t* wf, const ftx_candidate_t* cand
     return score;
 }
 
+// Frequency part of the drift track for one (drift, freq_sub), so the candidate
+// search does not redo the slide arithmetic for every time and bin offset.
+typedef struct
+{
+    int16_t freq_part[FT4_NN]; // sub * num_bins + bin shift
+    int8_t shift[FT4_NN];
+} ft4_track_t;
+
+static void ft4_build_track(const ftx_waterfall_t* wf, int drift, int drift_floor, int freq_sub, ft4_track_t* t)
+{
+    for (int sym = 0; sym < FT4_NN; ++sym)
+    {
+        // Same slide arithmetic as ftx_candidate_track
+        float slide = drift * (float)(2 * sym - (FT4_NN - 1)) / (float)(2 * FT4_NN);
+        int sub = freq_sub + (drift_floor ? (int)floorf(slide) : (int)lrintf(slide));
+        int shift = (sub >= 0) ? (sub / wf->freq_osr) : -((wf->freq_osr - 1 - sub) / wf->freq_osr);
+        sub -= shift * wf->freq_osr;
+        t->shift[sym] = (int8_t)shift;
+        t->freq_part[sym] = (int16_t)(sub * wf->num_bins + shift);
+    }
+}
+
+static inline bool ft4_track_offset(const ftx_waterfall_t* wf, const ftx_candidate_t* cand, const ft4_track_t* t, int sym, int* offset)
+{
+    int block_abs = cand->time_offset + sym;
+    if ((block_abs < 0) || (block_abs >= wf->num_blocks))
+        return false;
+    int b = cand->freq_offset + t->shift[sym];
+    if ((b < 0) || (b + 4 > wf->num_bins))
+        return false;
+    *offset = (block_abs * wf->time_osr + cand->time_sub) * wf->freq_osr * wf->num_bins + t->freq_part[sym] + cand->freq_offset;
+    return true;
+}
+
+static int ft4_sync_score_track(const ftx_waterfall_t* wf, const ftx_candidate_t* candidate, const ft4_track_t* t)
+{
+    int score = 0;
+    int num_average = 0;
+
+    for (int m = 0; m < FT4_NUM_SYNC; ++m)
+    {
+        for (int k = 0; k < FT4_LENGTH_SYNC; ++k)
+        {
+            int block = 1 + (FT4_SYNC_OFFSET * m) + k;
+            int offset;
+            if (!ft4_track_offset(wf, candidate, t, block, &offset))
+                continue;
+
+            const WF_ELEM_T* p4 = wf->mag + offset;
+            int sm = kFT4_Costas_pattern[m][k];
+            int expected = WF_ELEM_MAG_INT(p4[sm]);
+
+            if (sm > 0)
+            {
+                score += expected - WF_ELEM_MAG_INT(p4[sm - 1]);
+                ++num_average;
+            }
+            if (sm < 3)
+            {
+                score += expected - WF_ELEM_MAG_INT(p4[sm + 1]);
+                ++num_average;
+            }
+            int near;
+            if ((k > 0) && ft4_track_offset(wf, candidate, t, block - 1, &near))
+            {
+                score += expected - WF_ELEM_MAG_INT(wf->mag[near + sm]);
+                ++num_average;
+            }
+            if (((k + 1) < FT4_LENGTH_SYNC) && ft4_track_offset(wf, candidate, t, block + 1, &near))
+            {
+                score += expected - WF_ELEM_MAG_INT(wf->mag[near + sm]);
+                ++num_average;
+            }
+        }
+    }
+
+    if (num_average > 0)
+        score /= num_average;
+
+    return score;
+}
+
+void ftx_default_time_window(ftx_protocol_t protocol, int* time_min, int* time_max)
+{
+    // FT4 symbols are short (48 ms). Extend the start-time search so a
+    // full-duplex satellite echo that begins ~1–2.5 s into the slot can
+    // still land in one decode without a second aligned pass.
+    *time_min = -10;
+    *time_max = (protocol == FTX_PROTOCOL_FT4) ? 55 : 20;
+}
+
 int ftx_find_candidates(const ftx_waterfall_t* wf, int num_candidates, ftx_candidate_t heap[], int min_score)
 {
-    int (*sync_fun)(const ftx_waterfall_t*, const ftx_candidate_t*) = (wf->protocol == FTX_PROTOCOL_FT4) ? ft4_sync_score : ft8_sync_score;
-    int num_tones = (wf->protocol == FTX_PROTOCOL_FT4) ? 4 : 8;
+    ftx_search_t search = { 0 };
+    ftx_default_time_window(wf->protocol, &search.time_min, &search.time_max);
 
     int heap_size = 0;
-    ftx_candidate_t candidate;
+    ftx_candidate_t candidate = { 0 };
+    int (*sync_fun)(const ftx_waterfall_t*, const ftx_candidate_t*) = (wf->protocol == FTX_PROTOCOL_FT4) ? ft4_sync_score : ft8_sync_score;
+    int num_tones = (wf->protocol == FTX_PROTOCOL_FT4) ? 4 : 8;
 
     // Here we allow time offsets that exceed signal boundaries, as long as we still have all data bits.
     // I.e. we can afford to skip the first 7 or the last 7 Costas symbols, as long as we track how many
@@ -202,11 +316,7 @@ int ftx_find_candidates(const ftx_waterfall_t* wf, int num_candidates, ftx_candi
     {
         for (candidate.freq_sub = 0; candidate.freq_sub < wf->freq_osr; ++candidate.freq_sub)
         {
-            // FT4 symbols are short (48 ms). Extend the start-time search so a
-            // full-duplex satellite echo that begins ~1–2.5 s into the slot can
-            // still land in one decode without a second aligned pass.
-            int time_max = (wf->protocol == FTX_PROTOCOL_FT4) ? 55 : 20;
-            for (candidate.time_offset = -10; candidate.time_offset < time_max; ++candidate.time_offset)
+            for (candidate.time_offset = search.time_min; candidate.time_offset < search.time_max; ++candidate.time_offset)
             {
                 for (candidate.freq_offset = 0; (candidate.freq_offset + num_tones - 1) < wf->num_bins; ++candidate.freq_offset)
                 {
@@ -254,10 +364,115 @@ int ftx_find_candidates(const ftx_waterfall_t* wf, int num_candidates, ftx_candi
     return heap_size;
 }
 
+static bool candidates_adjacent(const ftx_waterfall_t* wf, const ftx_candidate_t* a, const ftx_candidate_t* b)
+{
+    int df = (a->freq_offset * wf->freq_osr + a->freq_sub) - (b->freq_offset * wf->freq_osr + b->freq_sub);
+    int dt = (a->time_offset * wf->time_osr + a->time_sub) - (b->time_offset * wf->time_osr + b->time_sub);
+    return (df >= -1) && (df <= 1) && (dt >= -1) && (dt <= 1);
+}
+
+static int lowest_score_index(const ftx_candidate_t list[], int size)
+{
+    int lowest = 0;
+    for (int i = 1; i < size; ++i)
+    {
+        if (list[i].score < list[lowest].score)
+            lowest = i;
+    }
+    return lowest;
+}
+
+int ftx_find_candidates_ex(const ftx_waterfall_t* wf, int num_candidates, ftx_candidate_t list[], int min_score, const ftx_search_t* search)
+{
+    int (*sync_fun)(const ftx_waterfall_t*, const ftx_candidate_t*) = (wf->protocol == FTX_PROTOCOL_FT4) ? ft4_sync_score : ft8_sync_score;
+    int num_tones = (wf->protocol == FTX_PROTOCOL_FT4) ? 4 : 8;
+    static const int8_t steady = 0;
+    const int8_t* drifts = (search->drifts && search->num_drifts > 0) ? search->drifts : &steady;
+    int num_drifts = (search->drifts && search->num_drifts > 0) ? search->num_drifts : 1;
+
+    int size = 0;
+    int lowest = 0;
+    ftx_candidate_t candidate = { 0 };
+
+    for (int d = 0; d < num_drifts; ++d)
+    {
+        // ft8_sync_score reads straight along the waterfall, so FT8 stays steady
+        candidate.drift = (wf->protocol == FTX_PROTOCOL_FT4) ? drifts[d] : 0;
+        bool repeated = false;
+        for (int e = 0; e < d && !repeated; ++e)
+            repeated = ((wf->protocol == FTX_PROTOCOL_FT4) ? drifts[e] : 0) == candidate.drift;
+        if (repeated)
+            continue;
+        // Rounding the slide to nearest fits a start on a subdivision; rounding down
+        // fits one half-way between, which would otherwise be a whole subdivision off
+        // at one end of the message.
+        int num_phases = (candidate.drift != 0) ? 2 : 1;
+        for (int phase = 0; phase < num_phases; ++phase)
+        for (candidate.time_sub = 0; candidate.time_sub < wf->time_osr; ++candidate.time_sub)
+        {
+            candidate.drift_floor = (uint8_t)phase;
+            for (candidate.freq_sub = 0; candidate.freq_sub < wf->freq_osr; ++candidate.freq_sub)
+            {
+                ft4_track_t track;
+                if (wf->protocol == FTX_PROTOCOL_FT4)
+                    ft4_build_track(wf, candidate.drift, candidate.drift_floor, candidate.freq_sub, &track);
+                for (candidate.time_offset = search->time_min; candidate.time_offset < search->time_max; ++candidate.time_offset)
+                {
+                    for (candidate.freq_offset = 0; (candidate.freq_offset + num_tones - 1) < wf->num_bins; ++candidate.freq_offset)
+                    {
+                        candidate.score = (wf->protocol == FTX_PROTOCOL_FT4)
+                            ? ft4_sync_score_track(wf, &candidate, &track)
+                            : sync_fun(wf, &candidate);
+                        if (candidate.score < min_score)
+                            continue;
+                        // A full list only takes a better candidate. Anything not better
+                        // than the lowest is also not better than any neighbour in the list.
+                        if ((size == num_candidates) && (candidate.score <= list[lowest].score))
+                            continue;
+
+                        if (search->suppress_neighbours)
+                        {
+                            bool beaten = false;
+                            for (int i = 0; i < size && !beaten; ++i)
+                                beaten = candidates_adjacent(wf, &list[i], &candidate) && (list[i].score >= candidate.score);
+                            if (beaten)
+                                continue;
+                            for (int i = size - 1; i >= 0; --i)
+                            {
+                                if (candidates_adjacent(wf, &list[i], &candidate))
+                                    list[i] = list[--size];
+                            }
+                        }
+
+                        if (size < num_candidates)
+                            list[size++] = candidate;
+                        else
+                            list[lowest] = candidate;
+                        if (size == num_candidates)
+                            lowest = lowest_score_index(list, size);
+                    }
+                }
+            }
+        }
+    }
+
+    // Descending score; the list is short
+    for (int i = 1; i < size; ++i)
+    {
+        ftx_candidate_t c = list[i];
+        int j = i - 1;
+        while ((j >= 0) && (list[j].score < c.score))
+        {
+            list[j + 1] = list[j];
+            --j;
+        }
+        list[j + 1] = c;
+    }
+    return size;
+}
+
 static void ft4_extract_likelihood(const ftx_waterfall_t* wf, const ftx_candidate_t* cand, float* log174)
 {
-    const WF_ELEM_T* mag = get_cand_mag(wf, cand); // Pointer to 4 magnitude bins of the first symbol
-
     // Go over FSK tones and skip Costas sync symbols
     for (int k = 0; k < FT4_ND; ++k)
     {
@@ -266,16 +481,15 @@ static void ft4_extract_likelihood(const ftx_waterfall_t* wf, const ftx_candidat
         int sym_idx = k + ((k < 29) ? 5 : ((k < 58) ? 9 : 13));
         int bit_idx = 2 * k;
 
-        // Check for time boundaries
-        int block = cand->time_offset + sym_idx;
-        if ((block < 0) || (block >= wf->num_blocks))
+        int offset;
+        if (!ftx_candidate_track(wf, cand, sym_idx, &offset, NULL))
         {
             log174[bit_idx + 0] = 0;
             log174[bit_idx + 1] = 0;
         }
         else
         {
-            ft4_extract_symbol(mag + (sym_idx * wf->block_stride), log174 + bit_idx);
+            ft4_extract_symbol(wf->mag + offset, log174 + bit_idx);
         }
     }
 }
@@ -343,9 +557,19 @@ bool ftx_decode_candidate(const ftx_waterfall_t* wf, const ftx_candidate_t* cand
 {
     float log174[FTX_LDPC_N]; // message bits encoded as likelihood
     ftx_candidate_llr(wf, cand, log174);
+    return ftx_decode_candidate_llr(wf, log174, max_iterations, message, status);
+}
 
+bool ftx_decode_candidate_llr(const ftx_waterfall_t* wf, const float* log174, int max_iterations, ftx_message_t* message, ftx_decode_status_t* status)
+{
     uint8_t plain174[FTX_LDPC_N]; // message bits (0/1)
+    // Sum-product measured as sensitive as min-sum (scale 0.75) and faster on
+    // the synthetic sweep; define OW_LDPC_MINSUM=<scale> to A/B again.
+#ifdef OW_LDPC_MINSUM
+    bp_decode_minsum(log174, max_iterations, OW_LDPC_MINSUM, plain174, &status->ldpc_errors);
+#else
     bp_decode(log174, max_iterations, plain174, &status->ldpc_errors);
+#endif
     // ldpc_decode(log174, max_iterations, plain174, &status->ldpc_errors);
 
     if (status->ldpc_errors > 0)

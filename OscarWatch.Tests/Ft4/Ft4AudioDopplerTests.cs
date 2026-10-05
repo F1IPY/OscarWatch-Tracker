@@ -45,6 +45,49 @@ public sealed class Ft4AudioDopplerTests
         Assert.InRange(eOut / eIn, 0.5, 2.0);
     }
 
+    [Theory]
+    [InlineData(4.0)]
+    [InlineData(-12.0)]
+    [InlineData(30.0)]
+    public void RemoveLinearDrift_turns_a_full_slot_chirp_back_into_a_steady_tone(double slope)
+    {
+        const int rate = 12000;
+        const int n = 90000;
+        const double f0 = 1500;
+        var chirp = new float[n];
+        for (var i = 0; i < n; i++)
+        {
+            var t = i / (double)rate;
+            chirp[i] = (float)Math.Cos(2 * Math.PI * f0 * t + Math.PI * slope * t * t);
+        }
+
+        var steady = Ft4AudioDoppler.RemoveLinearDrift(chirp, rate, slope);
+
+        // Away from the ends, where the one-sided spectrum is exact.
+        var worst = 0.0;
+        for (var i = 2000; i < n - 2000; i++)
+        {
+            var expected = Math.Cos(2 * Math.PI * f0 * i / rate);
+            worst = Math.Max(worst, Math.Abs(steady[i] - expected));
+        }
+
+        Assert.True(worst < 0.02, $"largest error {worst:0.0000}");
+    }
+
+    [Fact]
+    public void Shared_analytic_signal_matches_a_fresh_build_for_every_slope()
+    {
+        const int rate = 12000;
+        var pcm = new float[30000];
+        var rng = new Random(3);
+        for (var i = 0; i < pcm.Length; i++)
+            pcm[i] = (float)(rng.NextDouble() - 0.5);
+
+        var shared = Ft4AudioDoppler.BuildAnalytic(pcm, rate);
+        foreach (var slope in new[] { -16.0, -8, 2, 8, 16 })
+            Assert.Equal(Ft4AudioDoppler.RemoveLinearDrift(pcm, rate, slope), shared.RemoveLinearDrift(slope));
+    }
+
     [Fact]
     public void Doppler_shift_slope_from_range_rate_change_is_nonzero()
     {

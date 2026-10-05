@@ -270,6 +270,31 @@ public sealed class Ft8NativeRoundTripTests
     }
 
     [Fact]
+    public void Ap_hints_near_the_plain_threshold_are_crc_checked()
+    {
+        if (!RequireNativeOrReturn())
+            return;
+
+        const int rate = 12000;
+        const string message = "MM9SQL G4ABC RR73";
+        var pcm = Ft8Native.EncodeFt4(message, freqHz: 1500f);
+        Assert.NotNull(pcm);
+
+        var hints = ApHintsFor("MM9SQL", "G4ABC");
+        var checkedHits = 0;
+        for (var seed = 1; seed <= 6; seed++)
+        {
+            var noisy = AddWhiteNoise(pcm!, rate, snrDb: -16, seed);
+            var hinted = Ft8Native.DecodeFt4(noisy, rate, 200f, 2800f, deep: false, hints, apCentreHz: 1500f);
+            if (hinted.Any(d => d.text == message && d.ap == Ft8Native.ApCrcChecked))
+                checkedHits++;
+            Assert.DoesNotContain(hinted, d => d.ap != 0 && d.text != message);
+        }
+
+        Assert.True(checkedHits >= 2, $"CRC-checked hints {checkedHits}/6 at -16 dB");
+    }
+
+    [Fact]
     public void Ap_hints_do_not_invent_a_message_from_noise()
     {
         if (!RequireNativeOrReturn())

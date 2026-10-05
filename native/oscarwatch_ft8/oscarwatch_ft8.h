@@ -26,8 +26,11 @@ typedef struct
     float time_sec;
     float snr;
     char text[OW_FT8_MAX_MESSAGE_LEN];
-    /// Non-zero when the text is a hinted reply, not a CRC decode.
+    /// Non-zero when the text is a hinted reply: 2 when the calls were supplied and
+    /// the rest passed the CRC, 1 when it is only the closest message in the hint list.
     int ap;
+    /// Linear slide (Hz/s) the drift search matched; 0 for a steady signal.
+    float drift_hz_s;
 } ow_ft8_decode_t;
 
 /// Encode a plain FT4/FT8 message text to a 12 kHz float PCM buffer (slot-length with silence padding).
@@ -87,6 +90,30 @@ OW_FT8_API int ow_ft8_decode_pcm_ap(
     const char* hints_nl,
     float hint_hz,
     float hint_half_hz);
+
+/// Same as ow_ft8_decode_pcm_ap, and also searches FT4 signals whose tones
+/// drift linearly by up to max_residual_hz_per_sec either way, in drift_steps
+/// steps each side. The reported frequency is the middle of the burst.
+/// dt_min_sec and dt_max_sec limit the start-time search; equal values use the
+/// full default window.
+/// @return number of decoded messages, or negative on error
+OW_FT8_API int ow_ft8_decode_pcm_drift(
+    const float* samples,
+    int num_samples,
+    int sample_rate,
+    int is_ft4,
+    float f_min_hz,
+    float f_max_hz,
+    ow_ft8_decode_t* out_decodes,
+    int out_capacity,
+    int deep,
+    const char* hints_nl,
+    float hint_hz,
+    float hint_half_hz,
+    float max_residual_hz_per_sec,
+    int drift_steps,
+    float dt_min_sec,
+    float dt_max_sec);
 
 /// Remember a callsign for hash-table resolution during later decodes.
 OW_FT8_API void ow_ft8_remember_callsign(const char* callsign);
