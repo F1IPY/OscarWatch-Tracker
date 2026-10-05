@@ -21,6 +21,7 @@ public sealed class Ft4ModemService : IDisposable
     private readonly FrequencyOverlayViewModel _frequencies;
     private readonly IQsoLogbookRepository _logbook;
     private readonly ICloudlogQsoUploadService _cloudlogUpload;
+    private readonly ISatelliteLinkBroadcastService _satelliteLink;
     private readonly ILiveTrackerSnapshotProvider _snapshot;
     private readonly IOrbitPropagator _propagator;
     private readonly IRigController _rig;
@@ -71,6 +72,7 @@ public sealed class Ft4ModemService : IDisposable
         IRigController rig,
         IQsoLogbookRepository logbook,
         ICloudlogQsoUploadService cloudlogUpload,
+        ISatelliteLinkBroadcastService satelliteLink,
         ILiveTrackerSnapshotProvider snapshot,
         IOrbitPropagator propagator,
         ILocalizationService localization,
@@ -83,6 +85,7 @@ public sealed class Ft4ModemService : IDisposable
         _frequencies = frequencies;
         _logbook = logbook;
         _cloudlogUpload = cloudlogUpload;
+        _satelliteLink = satelliteLink;
         _snapshot = snapshot;
         _propagator = propagator;
         _rig = rig;
@@ -1843,6 +1846,8 @@ public sealed class Ft4ModemService : IDisposable
 
             if (cloudlogUpload == CloudlogUploadStatus.Pending)
                 await _cloudlogUpload.QueueUploadIfEnabledAsync(record.Id).ConfigureAwait(false);
+
+            _satelliteLink.PublishQso(record, book, SatelliteLinkQsoEventKind.Logged, _tracking.FocusedNoradId);
 
             _lastLoggedKey = key;
             Status = manual
