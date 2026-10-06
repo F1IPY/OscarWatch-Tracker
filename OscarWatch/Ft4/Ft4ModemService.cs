@@ -356,7 +356,7 @@ public sealed class Ft4ModemService : IDisposable
     public void StartCq(bool evenSlot)
     {
         StopTune();
-        if (!EnsureTransmitAllowed())
+        if (!EnsureSatelliteAllowed())
             return;
 
         _sequencer?.StartCq(evenSlot);
@@ -367,6 +367,7 @@ public sealed class Ft4ModemService : IDisposable
         else
             Status = _l.Get("Ft4.Status.Answering", answered);
         Changed?.Invoke();
+        CheckRfPowerInBackground();
     }
 
     /// <summary>
@@ -431,7 +432,7 @@ public sealed class Ft4ModemService : IDisposable
         if (_sequencer is null || string.IsNullOrWhiteSpace(_sequencer.TheirCall))
             return false;
         StopTune();
-        if (!EnsureTransmitAllowed())
+        if (!EnsureSatelliteAllowed())
             return false;
         if (!_sequencer.ForceReport(snrDb))
             return false;
@@ -439,6 +440,7 @@ public sealed class Ft4ModemService : IDisposable
         _txWatchdogResetUtc = DateTime.UtcNow;
         Status = _l.Get("Ft4.Status.SendingReport", _sequencer.TheirCall);
         Changed?.Invoke();
+        CheckRfPowerInBackground();
         return true;
     }
 
@@ -447,7 +449,7 @@ public sealed class Ft4ModemService : IDisposable
         if (_sequencer is null || string.IsNullOrWhiteSpace(_sequencer.TheirCall))
             return false;
         StopTune();
-        if (!EnsureTransmitAllowed())
+        if (!EnsureSatelliteAllowed())
             return false;
         if (!_sequencer.Force73())
             return false;
@@ -455,13 +457,14 @@ public sealed class Ft4ModemService : IDisposable
         _txWatchdogResetUtc = DateTime.UtcNow;
         Status = _l.Get("Ft4.Status.Sending73", _sequencer.TheirCall);
         Changed?.Invoke();
+        CheckRfPowerInBackground();
         return true;
     }
 
     public void EnableTx()
     {
         StopTune();
-        if (!EnsureTransmitAllowed())
+        if (!EnsureSatelliteAllowed())
             return;
 
         _sequencer?.EnableTx();
@@ -472,6 +475,7 @@ public sealed class Ft4ModemService : IDisposable
         else
             Status = _l.Get("Ft4.Status.TxEnabled");
         Changed?.Invoke();
+        CheckRfPowerInBackground();
     }
 
     public void HaltTx()
@@ -510,7 +514,7 @@ public sealed class Ft4ModemService : IDisposable
     {
         if (!IsRunning)
             return false;
-        if (!EnsureTransmitAllowed())
+        if (!EnsureSatelliteAllowed())
             return false;
         if (IsTuning)
             return true;
@@ -532,6 +536,16 @@ public sealed class Ft4ModemService : IDisposable
         {
             try
             {
+                // Tune keys at once, so the RF power read must answer before PTT (off the UI thread).
+                if (!CheckRfPowerAllowed())
+                {
+                    Volatile.Write(ref _tuning, 0);
+                    return;
+                }
+
+                if (!IsTuning)
+                    return;
+
                 await _ptt.KeyAsync().ConfigureAwait(false);
                 if (!IsTuning)
                 {
@@ -601,7 +615,7 @@ public sealed class Ft4ModemService : IDisposable
         if (_sequencer is null)
             return;
         StopTune();
-        if (!EnsureTransmitAllowed())
+        if (!EnsureSatelliteAllowed())
             return;
 
         var even = Ft4SlotClock.IsEvenSlot(decode.SlotUtc, Ft4SlotClock.Ft4SlotSeconds);
@@ -610,6 +624,7 @@ public sealed class Ft4ModemService : IDisposable
         _txWatchdogResetUtc = DateTime.UtcNow;
         Status = _l.Get("Ft4.Status.Answering", decode.Text);
         Changed?.Invoke();
+        CheckRfPowerInBackground();
     }
 
     /// <summary>
@@ -653,21 +668,48 @@ public sealed class Ft4ModemService : IDisposable
     /// </param>
     private bool EnsureTransmitAllowed(Task<bool>? rfPowerCheck = null)
     {
-        var reason = EvaluateTransmitBlock();
-        if (reason != Ft4SatelliteEligibility.BlockReason.None)
-        {
-            if (_sequencer?.TransmitEnabled == true)
-                HaltTx();
-
-            Status = _l.Get(Ft4SatelliteEligibility.StatusKey(reason));
-            _eligibilityBlockStatus = Status;
-            Changed?.Invoke();
+        if (!EnsureSatelliteAllowed())
             return false;
-        }
 
         return rfPowerCheck is null
             ? CheckRfPowerAllowed()
             : Ft4RfPowerLead.AwaitVerdict(rfPowerCheck);
+    }
+
+    /// <summary>Satellite and mode eligibility only (no CAT I/O), halting TX when it fails.</summary>
+    private bool EnsureSatelliteAllowed()
+    {
+        var reason = EvaluateTransmitBlock();
+        if (reason == Ft4SatelliteEligibility.BlockReason.None)
+            return true;
+
+        if (_sequencer?.TransmitEnabled == true)
+            HaltTx();
+
+        Status = _l.Get(Ft4SatelliteEligibility.StatusKey(reason));
+        _eligibilityBlockStatus = Status;
+        Changed?.Invoke();
+        return false;
+    }
+
+    /// <summary>
+    /// After a TX button: read RF power off the UI thread so the window does not wait on the rig.
+    /// It still halts TX (or lowers power) within a CAT round trip, and every slot checks again
+    /// before audio starts.
+    /// </summary>
+    private void CheckRfPowerInBackground()
+    {
+        _ = Task.Run(() =>
+        {
+            try
+            {
+                CheckRfPowerAllowed();
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "FT4 RF power check failed");
+            }
+        });
     }
 
     /// <summary>CAT RF power read, lowering power or halting TX when it is over the FT4 limit.</summary>
