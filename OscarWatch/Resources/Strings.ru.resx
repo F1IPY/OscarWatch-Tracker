@@ -4312,6 +4312,9 @@ LOS: {2}
   <data name="Ft4.NativeUnavailable">
     <value>Нативная библиотека FT4 не найдена. Декодирование и генерация недоступны.</value>
   </data>
+  <data name="Ft4.NativeUnavailableWindows">
+    <value>Не удалось загрузить библиотеку декодера FT4. Установите Microsoft Visual C++ Redistributable и перезапустите OscarWatch.</value>
+  </data>
   <data name="Ft4.Status.NeedStation">
     <value>Укажите позывной и грид в Настройки, Станция.</value>
   </data>

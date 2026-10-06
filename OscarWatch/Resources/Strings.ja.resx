@@ -4308,6 +4308,9 @@
   <data name="Ft4.NativeUnavailable">
     <value>ネイティブFT4ライブラリが見つかりません。復号と生成は利用できません。</value>
   </data>
+  <data name="Ft4.NativeUnavailableWindows">
+    <value>FT4デコーダーライブラリを読み込めません。Microsoft Visual C++ 再頒布可能パッケージをインストールしてから、OscarWatchを再起動してください。</value>
+  </data>
   <data name="Ft4.Status.NeedStation">
     <value>設定の「局」でコールサインとグリッドを設定してください。</value>
   </data>

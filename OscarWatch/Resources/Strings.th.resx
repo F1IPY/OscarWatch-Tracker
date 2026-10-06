@@ -4312,6 +4312,9 @@ LOS: {2}
   <data name="Ft4.NativeUnavailable">
     <value>ไม่พบไลบรารี FT4 แบบเนทีฟ ไม่สามารถถอดรหัสและสร้างสัญญาณได้</value>
   </data>
+  <data name="Ft4.NativeUnavailableWindows">
+    <value>ไม่สามารถโหลดไลบรารีถอดรหัส FT4 ได้ โปรดติดตั้ง Microsoft Visual C++ Redistributable แล้วเริ่ม OscarWatch ใหม่</value>
+  </data>
   <data name="Ft4.Status.NeedStation">
     <value>ตั้งค่าสัญญาณเรียกและกริดใน การตั้งค่า, สถานี</value>
   </data>

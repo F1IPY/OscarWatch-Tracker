@@ -7,6 +7,10 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 set(FT8_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../ft8_lib")
 
+# Link the MSVC C runtime statically, so the DLL loads on Windows PCs that do
+# not have the Visual C++ Redistributable (it would otherwise need VCRUNTIME140.dll).
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")
+
 # Float dB waterfall instead of 0.5 dB steps in a byte. Every source that
 # includes decode.h must agree, so it is set for the whole project.
 option(OW_FT8_FLOAT_WATERFALL "Store the decode waterfall as float dB" OFF)

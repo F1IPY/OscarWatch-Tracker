@@ -4312,6 +4312,9 @@ Terbaru: {1} ({2})</value>
   <data name="Ft4.NativeUnavailable">
     <value>Pustaka asli FT4 tidak ditemukan. Dekode dan generate tidak tersedia.</value>
   </data>
+  <data name="Ft4.NativeUnavailableWindows">
+    <value>Pustaka dekoder FT4 tidak dapat dimuat. Instal Microsoft Visual C++ Redistributable, lalu mulai ulang OscarWatch.</value>
+  </data>
   <data name="Ft4.Status.NeedStation">
     <value>Atur tanda panggilan dan grid di Pengaturan, Stasiun.</value>
   </data>

@@ -4308,6 +4308,9 @@
   <data name="Ft4.NativeUnavailable">
     <value>未找到原生 FT4 库。解码与生成不可用。</value>
   </data>
+  <data name="Ft4.NativeUnavailableWindows">
+    <value>无法加载 FT4 解码库。请安装 Microsoft Visual C++ 可再发行组件包，然后重新启动 OscarWatch。</value>
+  </data>
   <data name="Ft4.Status.NeedStation">
     <value>请在设置、电台中设置呼号和网格。</value>
   </data>

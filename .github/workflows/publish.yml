@@ -172,6 +172,29 @@ jobs:
             -p:IncludeNativeLibrariesForSelfExtract=$singleFile `
             -o $out
 
+      # portaudio.dll (from PortAudioSharp2) needs VCRUNTIME140.dll, which a PC without the
+      # Visual C++ Redistributable lacks. Ship it beside the exe (Microsoft allows app-local copies).
+      - name: Bundle the Visual C++ runtime (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $out = "${{ runner.temp }}/publish-${{ matrix.rid }}"
+          $arch = if ("${{ matrix.rid }}" -eq "win-arm64") { "arm64" } else { "x64" }
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -property installationPath
+          $crt = Get-ChildItem "$vs\VC\Redist\MSVC" -Directory |
+            Sort-Object Name -Descending |
+            ForEach-Object { Get-ChildItem "$($_.FullName)\$arch" -Directory -Filter "Microsoft.VC*.CRT" -ErrorAction SilentlyContinue } |
+            Select-Object -First 1
+          if (-not $crt) { throw "No Visual C++ runtime found for $arch under $vs" }
+          foreach ($name in "vcruntime140.dll", "vcruntime140_1.dll") {
+            $src = Join-Path $crt.FullName $name
+            if (Test-Path $src) {
+              Copy-Item $src $out -Force
+              Write-Host "Bundled $src"
+            }
+          }
+          if (-not (Test-Path (Join-Path $out "vcruntime140.dll"))) { throw "vcruntime140.dll was not bundled" }
+
       - name: Publish (Unix)
         if: runner.os != 'Windows'
         shell: bash
@@ -211,6 +234,17 @@ jobs:
             echo "FT4 native library looks too small: $path"
             exit 1
           fi
+
+      - name: Check FT4 native library needs no Visual C++ Redistributable (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $dll = "${{ runner.temp }}/publish-${{ matrix.rid }}/runtimes/${{ matrix.rid }}/native/oscarwatch_ft8.dll"
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -property installationPath
+          $dumpbin = Get-ChildItem "$vs\VC\Tools\MSVC" -Recurse -Filter dumpbin.exe | Where-Object { $_.FullName -match 'Hostx64\\x64' } | Select-Object -First 1
+          $deps = & $dumpbin.FullName /dependents $dll | Out-String
+          Write-Host $deps
+          if ($deps -match '(?i)vcruntime|msvcp|api-ms-win-crt') { throw "oscarwatch_ft8.dll still depends on the Visual C++ runtime" }
 
       - name: Archive
         id: archive

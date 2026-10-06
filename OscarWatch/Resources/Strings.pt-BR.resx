@@ -4308,6 +4308,9 @@ Mais recente: {1} ({2})</value>
   <data name="Ft4.NativeUnavailable">
     <value>Biblioteca nativa FT4 não encontrada. Decodificação e geração indisponíveis.</value>
   </data>
+  <data name="Ft4.NativeUnavailableWindows">
+    <value>Não foi possível carregar a biblioteca do decodificador FT4. Instale o Microsoft Visual C++ Redistributable e reinicie o OscarWatch.</value>
+  </data>
   <data name="Ft4.Status.NeedStation">
     <value>Defina seu indicativo e grid em Definições, Estação.</value>
   </data>

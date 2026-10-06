@@ -256,7 +256,7 @@ public sealed class Ft4ModemService : IDisposable
 
         if (!Ft8Native.IsAvailable)
         {
-            Status = _l.Get("Ft4.NativeUnavailable");
+            Status = _l.Get(Ft8Native.UnavailableMessageKey);
             Changed?.Invoke();
             return;
         }

@@ -768,9 +768,9 @@ public partial class Ft4ViewModel : ViewModelBase, IDisposable
     {
         if (!_modem.NativeAvailable)
         {
-            StatusLine = _l.Get("Ft4.NativeUnavailable");
+            StatusLine = _l.Get(Ft8Native.UnavailableMessageKey);
             WaterfallStatusText = _l.Get("Ft4.Waterfall.Unavailable");
-            Log.Warning("FT4 native library unavailable");
+            Log.Warning("FT4 native library unavailable: {Error}", Ft8Native.LoadError);
             return;
         }
 

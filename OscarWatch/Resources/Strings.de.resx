@@ -4312,6 +4312,9 @@ Aktuell: {1} ({2})</value>
   <data name="Ft4.NativeUnavailable">
     <value>Native FT4-Bibliothek nicht gefunden. Dekodierung und Erzeugung nicht verfügbar.</value>
   </data>
+  <data name="Ft4.NativeUnavailableWindows">
+    <value>Die FT4-Decoderbibliothek konnte nicht geladen werden. Installieren Sie das Microsoft Visual C++ Redistributable und starten Sie OscarWatch neu.</value>
+  </data>
   <data name="Ft4.Status.NeedStation">
     <value>Rufzeichen und Grid unter Einstellungen, Station festlegen.</value>
   </data>

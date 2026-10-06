@@ -19,15 +19,7 @@ internal static class Ft8Native
         if (!libraryName.Equals(LibraryName, StringComparison.OrdinalIgnoreCase))
             return IntPtr.Zero;
 
-        var baseDir = AppContext.BaseDirectory;
-        var candidates = new[]
-        {
-            Path.Combine(baseDir, GetFileName()),
-            Path.Combine(baseDir, "runtimes", GetRid(), "native", GetFileName()),
-            Path.Combine(baseDir, "native", GetFileName()),
-        };
-
-        foreach (var path in candidates)
+        foreach (var path in CandidatePaths())
         {
             if (File.Exists(path) && NativeLibrary.TryLoad(path, out var handle))
                 return handle;
@@ -37,6 +29,26 @@ internal static class Ft8Native
             ? fallback
             : IntPtr.Zero;
     }
+
+    private static string[] CandidatePaths()
+    {
+        var baseDir = AppContext.BaseDirectory;
+        return
+        [
+            Path.Combine(baseDir, GetFileName()),
+            Path.Combine(baseDir, "runtimes", GetRid(), "native", GetFileName()),
+            Path.Combine(baseDir, "native", GetFileName()),
+        ];
+    }
+
+    /// <summary>
+    /// Status text key when the library will not load. On Windows a library that is present
+    /// but will not load almost always means the Visual C++ runtime is missing.
+    /// </summary>
+    public static string UnavailableMessageKey =>
+        OperatingSystem.IsWindows() && CandidatePaths().Any(File.Exists)
+            ? "Ft4.NativeUnavailableWindows"
+            : "Ft4.NativeUnavailable";
 
     private static string GetFileName()
     {
@@ -57,6 +69,9 @@ internal static class Ft8Native
         return arm64 ? "linux-arm64" : "linux-x64";
     }
 
+    /// <summary>Why the last <see cref="IsAvailable"/> check failed, for the log.</summary>
+    public static string? LoadError { get; private set; }
+
     public static bool IsAvailable
     {
         get
@@ -67,12 +82,14 @@ internal static class Ft8Native
                 ow_ft8_remember_callsign("");
                 return true;
             }
-            catch (DllNotFoundException)
+            catch (DllNotFoundException ex)
             {
+                LoadError = ex.Message;
                 return false;
             }
-            catch (EntryPointNotFoundException)
+            catch (EntryPointNotFoundException ex)
             {
+                LoadError = ex.Message;
                 return false;
             }
         }
