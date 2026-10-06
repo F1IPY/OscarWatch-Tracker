@@ -57,6 +57,7 @@ public sealed class Ft4ModemService : IDisposable
     private DateTime _lastEchoCalibrationSlot = DateTime.MinValue;
     private bool _decodeQueuedThisSlot;
     private bool? _deepDecodeActive;
+    private readonly Ft4RxHealth _rxHealth = new(DateTime.UtcNow);
     private readonly HashSet<string> _postedDecodeKeys = new(StringComparer.Ordinal);
     private readonly Ft4CallDt _callDt = new();
     private readonly Dictionary<string, Ft4DecodedMessage> _postedEchoes = new(StringComparer.Ordinal);
@@ -311,6 +312,7 @@ public sealed class Ft4ModemService : IDisposable
             _lastEchoCalibrationSlot = DateTime.MinValue;
         }
         _txWatchdogResetUtc = DateTime.UtcNow;
+        _rxHealth.Reset(DateTime.UtcNow);
         RefreshClockFromGps();
 
         // OrbitDeck: hold CAT dial within each slot; audio-domain corrects within-slot drift.
@@ -893,6 +895,8 @@ public sealed class Ft4ModemService : IDisposable
                 }
 
                 var n = _audio.ReadCaptureSamples(scratch);
+                if (_rxHealth.OnCapture(DateTime.UtcNow, n > 0) is { } captureEvent)
+                    LogRxHealth(captureEvent);
                 if (n <= 0)
                 {
                     await Task.Delay(15, ct).ConfigureAwait(false);
@@ -921,6 +925,48 @@ public sealed class Ft4ModemService : IDisposable
                 Changed?.Invoke();
                 await Task.Delay(500, ct).ConfigureAwait(false);
             }
+        }
+    }
+
+    private void LogRxHealth(Ft4RxHealthEvent e)
+    {
+        switch (e.Kind)
+        {
+            case Ft4RxHealthKind.NoAudio:
+                Log.Warning(
+                    "FT4 capture has delivered no audio for {Seconds:0.0} s from '{Device}'",
+                    e.Gap.TotalSeconds,
+                    _settings.Current.Ft4.InputDeviceDisplayName);
+                break;
+            case Ft4RxHealthKind.AudioResumed:
+                Log.Information("FT4 capture audio resumed after {Seconds:0.0} s without any", e.Gap.TotalSeconds);
+                break;
+            case Ft4RxHealthKind.Silent:
+                Log.Warning(
+                    "FT4 capture is silent ({Level:0} dBFS) for {Slots} receive slots in a row from '{Device}'",
+                    e.LevelDbfs,
+                    e.Slots,
+                    _settings.Current.Ft4.InputDeviceDisplayName);
+                break;
+            case Ft4RxHealthKind.SoundResumed:
+                Log.Information(
+                    "FT4 capture has sound again ({Level:0} dBFS) after {Slots} silent receive slots",
+                    e.LevelDbfs,
+                    e.Slots);
+                break;
+            case Ft4RxHealthKind.NoDecodes:
+                Log.Warning(
+                    "FT4 has decoded nothing for {Slots} receive slots with the satellite at {Elevation:0}° (capture level {Level:0} dBFS)",
+                    e.Slots,
+                    e.ElevationDeg,
+                    e.LevelDbfs);
+                break;
+            case Ft4RxHealthKind.DecodesResumed:
+                Log.Information(
+                    "FT4 decodes resumed after {Slots} empty receive slots (elevation {Elevation:0}°)",
+                    e.Slots,
+                    e.ElevationDeg);
+                break;
         }
     }
 
@@ -1551,9 +1597,23 @@ public sealed class Ft4ModemService : IDisposable
             return;
         }
 
-        var foundOwn = PublishDecoded(slotStart, corrected, txSlot, timeShiftSec: 0, ownOnly: false, txHz, deep, drift);
+        var foundOwn = PublishDecoded(slotStart, corrected, txSlot, timeShiftSec: 0, ownOnly: false, txHz, deep, out var decodedCount, drift);
         if (fullSlotPass && !txSlot && !ReferenceEquals(corrected, raw))
-            PublishDecoded(slotStart, raw, txSlot: false, timeShiftSec: 0, ownOnly: false, txHz, deep);
+        {
+            PublishDecoded(slotStart, raw, txSlot: false, timeShiftSec: 0, ownOnly: false, txHz, deep, out var rawCount);
+            decodedCount += rawCount;
+        }
+
+        if (!txSlot)
+        {
+            foreach (var e in _rxHealth.OnReceiveSlot(
+                         slotStart,
+                         Ft4RxHealth.LevelDbfs(raw),
+                         decodedCount,
+                         _snapshot.GetCurrent().ElevationDeg))
+                LogRxHealth(e);
+        }
+
         if (!txSlot || foundOwn)
             return;
 
@@ -1579,9 +1639,9 @@ public sealed class Ft4ModemService : IDisposable
         var primary = Task.Factory.StartNew(
             () =>
             {
-                var own = PublishDecoded(slotStart, corrected, txSlot: true, timeShiftSec: 0, ownOnly: false, txHz, deep);
+                var own = PublishDecoded(slotStart, corrected, txSlot: true, timeShiftSec: 0, ownOnly: false, txHz, deep, out _);
                 if (!own && !ReferenceEquals(corrected, raw))
-                    own = PublishDecoded(slotStart, raw, txSlot: true, timeShiftSec: 0, ownOnly: true, txHz, deep);
+                    own = PublishDecoded(slotStart, raw, txSlot: true, timeShiftSec: 0, ownOnly: true, txHz, deep, out _);
                 return own;
             },
             CancellationToken.None,
@@ -1593,7 +1653,7 @@ public sealed class Ft4ModemService : IDisposable
             {
                 foreach (var (aligned, shiftSec) in Ft4EchoAligner.EnumerateEchoAlignments(raw, 12000, txHz))
                 {
-                    if (!PublishDecoded(slotStart, aligned, txSlot: true, shiftSec, ownOnly: true, txHz, deep))
+                    if (!PublishDecoded(slotStart, aligned, txSlot: true, shiftSec, ownOnly: true, txHz, deep, out _))
                         continue;
 
                     Log.Information(
@@ -1622,13 +1682,13 @@ public sealed class Ft4ModemService : IDisposable
         // time window both hide a full-duplex copy that is obvious on screen.
         var foundOwn = false;
         if (!ReferenceEquals(corrected, raw))
-            foundOwn = PublishDecoded(slotStart, raw, txSlot: true, timeShiftSec: 0, ownOnly: true, txHz, deep);
+            foundOwn = PublishDecoded(slotStart, raw, txSlot: true, timeShiftSec: 0, ownOnly: true, txHz, deep, out _);
         if (foundOwn)
             return;
 
         foreach (var (aligned, shiftSec) in Ft4EchoAligner.EnumerateEchoAlignments(raw, 12000, txHz))
         {
-            foundOwn = PublishDecoded(slotStart, aligned, txSlot: true, shiftSec, ownOnly: true, txHz, deep);
+            foundOwn = PublishDecoded(slotStart, aligned, txSlot: true, shiftSec, ownOnly: true, txHz, deep, out _);
             if (foundOwn)
             {
                 Log.Information(
@@ -1653,6 +1713,7 @@ public sealed class Ft4ModemService : IDisposable
         bool ownOnly,
         double txHz,
         bool deep,
+        out int decodedCount,
         DriftRange drift = default)
     {
         float fMin, fMax;
@@ -1678,6 +1739,7 @@ public sealed class Ft4ModemService : IDisposable
         var decoded = drift.IsActive && !ownOnly
             ? Ft8Native.DecodeFt4Drift(samples, 12000, fMin, fMax, deep, apHints, apHz, (float)drift.MaxResidualHzPerSec, drift.Steps)
             : Ft8Native.DecodeFt4(samples, 12000, fMin, fMax, deep, apHints, apHz);
+        decodedCount = decoded.Length;
         var my = Ft4MessageCodec.NormalizeCall(_settings.Current.GroundStation.Callsign ?? "");
         var any = false;
         var foundOwn = false;
