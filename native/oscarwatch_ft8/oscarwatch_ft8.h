@@ -51,6 +51,20 @@ OW_FT8_API int ow_ft8_encode_pcm(
     int sample_rate,
     int* out_count);
 
+/// Same as ow_ft8_encode_pcm, with every tone moving linearly by slope_hz_s
+/// (zero offset at the slot start, sample 0) and the waveform scaled by gain.
+/// Use the playback rate directly as sample_rate to skip resampling.
+OW_FT8_API int ow_ft8_encode_pcm_ex(
+    const char* message_text,
+    float freq_hz,
+    int is_ft4,
+    float slope_hz_s,
+    float gain,
+    float* out_samples,
+    int out_capacity,
+    int sample_rate,
+    int* out_count);
+
 /// Decode one slot of float PCM at the given sample rate.
 /// @param samples mono float PCM for one slot (FT4 ≈ 7.5 s, FT8 ≈ 15 s)
 /// @param num_samples length of samples

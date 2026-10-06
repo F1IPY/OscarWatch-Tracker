@@ -235,18 +235,11 @@ public sealed class Ft4AudioService : IDisposable
     }
 
     /// <summary>
-    /// Resample and scale a 12 kHz burst for the open output. Does not start playback.
-    /// Used so the slot boundary only has to hand the buffer to the soundcard.
+    /// Open (or confirm) the output and report its sample rate, so a burst can be synthesised
+    /// at that rate and handed to <see cref="TryPlayPrepared"/> without resampling.
     /// </summary>
-    public bool TryPreparePlayback(
-        float[] samples12k,
-        double level,
-        string? deviceId,
-        string? deviceDisplayName,
-        out float[] devicePcm,
-        out int sampleRate)
+    public bool TryGetOutputSampleRate(string? deviceId, string? deviceDisplayName, out int sampleRate)
     {
-        devicePcm = [];
         sampleRate = 0;
         lock (_gate)
         {
@@ -257,17 +250,19 @@ public sealed class Ft4AudioService : IDisposable
                     return false;
 
                 EnsureOutputUnlocked(deviceId, deviceDisplayName);
-                devicePcm = ScaleForOutput(samples12k, level);
                 sampleRate = _playbackSampleRate;
                 return true;
             }
             catch (Exception ex)
             {
-                Log.Warning(ex, "FT4 prepare playback failed");
+                Log.Warning(ex, "FT4 output open for TX prepare failed");
                 return false;
             }
         }
     }
+
+    /// <summary>Linear output gain for the operator's TX level setting.</summary>
+    public static float OutputGain(double level) => (float)Math.Clamp(level, 0.01, 1.0);
 
     public void PlayPcm(float[] samples12k, double level, string? deviceId, string? deviceDisplayName = null)
     {
@@ -334,7 +329,7 @@ public sealed class Ft4AudioService : IDisposable
     private float[] ScaleForOutput(float[] samples12k, double level)
     {
         var scaled = Resample(samples12k, 12000, _playbackSampleRate);
-        var gain = (float)Math.Clamp(level, 0.01, 1.0);
+        var gain = OutputGain(level);
         for (var i = 0; i < scaled.Length; i++)
             scaled[i] *= gain;
         return scaled;

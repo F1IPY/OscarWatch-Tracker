@@ -157,11 +157,20 @@ public static class Ft4AudioDoppler
         double uplinkDopplerSlopeHzPerSec,
         string? uplinkMode)
     {
-        var sign = TxPrecompSign(uplinkMode);
-        // removeLinearDrift(slope) applies −slope to audio frequency; we want
-        // audio offset = sign · uplinkSlope · t, so pass slope = −sign · uplinkSlope.
-        return RemoveLinearDrift(pcm, sampleRate, -sign * uplinkDopplerSlopeHzPerSec);
+        // removeLinearDrift(slope) applies −slope to audio frequency, so passing the
+        // negated audio slope applies it.
+        return RemoveLinearDrift(pcm, sampleRate, -TxPrecompAudioSlope(uplinkDopplerSlopeHzPerSec, uplinkMode));
     }
+
+    /// <summary>
+    /// Audio frequency slope (Hz/s from the slot start) that keeps the emitted RF fixed:
+    /// sign · uplink slope. The native encoder applies it directly while synthesising, which
+    /// matches <see cref="ApplyTxPrecompensation"/> without the FFT pair.
+    /// </summary>
+    public static double TxPrecompAudioSlope(double uplinkDopplerSlopeHzPerSec, string? uplinkMode) =>
+        double.IsFinite(uplinkDopplerSlopeHzPerSec)
+            ? TxPrecompSign(uplinkMode) * uplinkDopplerSlopeHzPerSec
+            : 0.0;
 
     private static void FftInPlace(double[] re, double[] im, bool inverse)
     {

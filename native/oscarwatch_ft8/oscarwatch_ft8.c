@@ -293,25 +293,71 @@ static void gfsk_pulse(int n_spsym, float symbol_bt, float* pulse)
     }
 }
 
-/* FT4 @ 12 kHz: n_spsym = round(12000 * 0.048) = 576; pulse length 3*576. */
-static float g_ft4_12k_pulse[3 * 576];
-static int g_ft4_12k_pulse_ready;
-
-static const float* ft4_pulse_12k(void)
+/* GFSK pulses by samples per symbol (576 for FT4 at 12 kHz, 2304 at 48 kHz).
+   Entries are never freed; the table only holds the few rates in use. */
+#define kPulseCacheSize 6
+static struct
 {
-    if (!g_ft4_12k_pulse_ready)
+    int n_spsym;
+    float symbol_bt;
+    float* pulse;
+} g_pulse_cache[kPulseCacheSize];
+static ow_lock_t g_pulse_lock = OW_LOCK_INIT;
+
+/// @return the shared pulse, or NULL when the table is full (caller builds its own).
+static const float* cached_pulse(int n_spsym, float symbol_bt)
+{
+    const float* found = NULL;
+    ow_lock(&g_pulse_lock);
+    for (int i = 0; i < kPulseCacheSize; ++i)
     {
-        gfsk_pulse(576, FT4_SYMBOL_BT, g_ft4_12k_pulse);
-        g_ft4_12k_pulse_ready = 1;
+        if (!g_pulse_cache[i].pulse)
+        {
+            float* p = (float*)malloc((size_t)(3 * n_spsym) * sizeof(float));
+            if (p)
+            {
+                gfsk_pulse(n_spsym, symbol_bt, p);
+                g_pulse_cache[i].n_spsym = n_spsym;
+                g_pulse_cache[i].symbol_bt = symbol_bt;
+                g_pulse_cache[i].pulse = p;
+                found = p;
+            }
+            break;
+        }
+        if (g_pulse_cache[i].n_spsym == n_spsym && g_pulse_cache[i].symbol_bt == symbol_bt)
+        {
+            found = g_pulse_cache[i].pulse;
+            break;
+        }
     }
-    return g_ft4_12k_pulse;
+    ow_unlock(&g_pulse_lock);
+    return found;
 }
 
+/// Shared pulse when one is cached, otherwise a private copy in *storage (free it).
+static const float* acquire_pulse(int n_spsym, float symbol_bt, float** storage)
+{
+    *storage = NULL;
+    const float* pulse = cached_pulse(n_spsym, symbol_bt);
+    if (pulse)
+        return pulse;
+    *storage = (float*)malloc((size_t)(3 * n_spsym) * sizeof(float));
+    if (*storage)
+        gfsk_pulse(n_spsym, symbol_bt, *storage);
+    return *storage;
+}
+
+/// Tones start at f0 and every frequency moves by slope_hz_s, with zero offset
+/// t0_samples before the first signal sample (the slot start), so the burst
+/// keeps its slot-start audio position like Ft4AudioDoppler.RemoveLinearDrift.
 /// @return 0 on success, -1 on allocation failure (signal left untouched).
 static int synth_gfsk(
     const uint8_t* symbols,
     int n_sym,
     float f0,
+    float slope_hz_s,
+    int t0_samples,
+    float gain,
     float symbol_bt,
     float symbol_period,
     int signal_rate,
@@ -323,21 +369,8 @@ static int synth_gfsk(
     float dphi_peak = 2 * (float)M_PI * hmod / n_spsym;
 
     float* dphi = (float*)malloc((size_t)(n_wave + 2 * n_spsym) * sizeof(float));
-    float* pulse_storage = NULL;
-    const float* pulse;
-    if (n_spsym == 576 && signal_rate == 12000
-        && symbol_bt == FT4_SYMBOL_BT
-        && fabsf(symbol_period - FT4_SYMBOL_PERIOD) < 1e-6f)
-    {
-        pulse = ft4_pulse_12k();
-    }
-    else
-    {
-        pulse_storage = (float*)malloc((size_t)(3 * n_spsym) * sizeof(float));
-        if (pulse_storage)
-            gfsk_pulse(n_spsym, symbol_bt, pulse_storage);
-        pulse = pulse_storage;
-    }
+    float* pulse_storage;
+    const float* pulse = acquire_pulse(n_spsym, symbol_bt, &pulse_storage);
 
     if (!dphi || !pulse)
     {
@@ -346,8 +379,13 @@ static int synth_gfsk(
         return -1;
     }
 
+    /* dphi[k + n_spsym] advances the phase after signal sample k. */
+    const double rate = signal_rate;
     for (int i = 0; i < n_wave + 2 * n_spsym; ++i)
-        dphi[i] = 2 * (float)M_PI * f0 / signal_rate;
+    {
+        double t = (t0_samples + i - n_spsym) / rate;
+        dphi[i] = (float)(2 * M_PI * (f0 + slope_hz_s * t) / rate);
+    }
 
     for (int i = 0; i < n_sym; ++i)
     {
@@ -362,16 +400,19 @@ static int synth_gfsk(
         dphi[j + n_sym * n_spsym] += dphi_peak * pulse[j] * symbols[n_sym - 1];
     }
 
-    /* Every phase step is positive and under one turn (the carrier sits below
-       the sample rate), so one subtraction keeps phi in range. */
+    /* Every phase step is under one turn either way (the carrier sits below the
+       sample rate; a steep negative slope can take it below 0 Hz), so one
+       correction keeps phi in range. */
     const float two_pi = 2 * (float)M_PI;
     float phi = 0;
     for (int k = 0; k < n_wave; ++k)
     {
-        signal[k] = sinf(phi);
+        signal[k] = gain * sinf(phi);
         phi += dphi[k + n_spsym];
         if (phi >= two_pi)
             phi -= two_pi;
+        else if (phi < 0)
+            phi += two_pi;
     }
 
     int n_ramp = n_spsym / 8;
@@ -416,8 +457,25 @@ OW_FT8_API int ow_ft8_encode_pcm(
     int sample_rate,
     int* out_count)
 {
+    return ow_ft8_encode_pcm_ex(
+        message_text, freq_hz, is_ft4, 0.0f, 1.0f, out_samples, out_capacity, sample_rate, out_count);
+}
+
+OW_FT8_API int ow_ft8_encode_pcm_ex(
+    const char* message_text,
+    float freq_hz,
+    int is_ft4,
+    float slope_hz_s,
+    float gain,
+    float* out_samples,
+    int out_capacity,
+    int sample_rate,
+    int* out_count)
+{
     ensure_hashtable();
     if (!message_text || !out_samples || !out_count || sample_rate <= 0 || out_capacity <= 0)
+        return -1;
+    if (!isfinite(freq_hz) || !isfinite(slope_hz_s) || !isfinite(gain))
         return -1;
 
     ftx_message_t msg;
@@ -457,7 +515,9 @@ OW_FT8_API int ow_ft8_encode_pcm(
     }
 
     memset(out_samples, 0, (size_t)num_total * sizeof(float));
-    if (synth_gfsk(tones, num_tones, freq_hz, symbol_bt, symbol_period, sample_rate, out_samples + num_silence_head) != 0)
+    if (synth_gfsk(
+            tones, num_tones, freq_hz, slope_hz_s, num_silence_head, gain,
+            symbol_bt, symbol_period, sample_rate, out_samples + num_silence_head) != 0)
     {
         free(tones);
         return -3;
@@ -828,21 +888,8 @@ static int gfsk_baseband(
     float dphi_peak = 2 * (float)M_PI / n_spsym;
 
     float* dphi = (float*)calloc((size_t)(n_wave + 2 * n_spsym), sizeof(float));
-    float* pulse_storage = NULL;
-    const float* pulse;
-    if (n_spsym == 576 && rate == 12000
-        && symbol_bt == FT4_SYMBOL_BT
-        && fabsf(symbol_period - FT4_SYMBOL_PERIOD) < 1e-6f)
-    {
-        pulse = ft4_pulse_12k();
-    }
-    else
-    {
-        pulse_storage = (float*)malloc((size_t)(3 * n_spsym) * sizeof(float));
-        if (pulse_storage)
-            gfsk_pulse(n_spsym, symbol_bt, pulse_storage);
-        pulse = pulse_storage;
-    }
+    float* pulse_storage;
+    const float* pulse = acquire_pulse(n_spsym, symbol_bt, &pulse_storage);
 
     if (!dphi || !pulse)
     {

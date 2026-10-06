@@ -490,6 +490,31 @@ static void bench_threads(void)
 }
 #endif
 
+/* Transmit encode cost at the decoder rate and at a typical soundcard rate. */
+static void bench_tx(void)
+{
+    enum { kRuns = 50 };
+    static const int rates[] = { 12000, 48000 };
+    static const float slopes[] = { 0.f, 25.f };
+    for (int r = 0; r < 2; ++r)
+    {
+        int cap = rates[r] * 8 + 256;
+        float* buf = malloc((size_t)cap * sizeof(float));
+        for (int s = 0; s < 2; ++s)
+        {
+            int count = 0;
+            int rc = 0;
+            double t0 = ow_prof_now();
+            for (int i = 0; i < kRuns; ++i)
+                rc |= ow_ft8_encode_pcm_ex("G4ABC MM9SQL -12", 1500.f, 1, slopes[s], 0.5f, buf, cap, rates[r], &count);
+            double ms = 1000.0 * (ow_prof_now() - t0) / kRuns;
+            printf("tx encode %5d Hz, slope %4.0f Hz/s: %.2f ms per burst (%d samples, rc %d)\n",
+                rates[r], slopes[s], ms, count, rc);
+        }
+        free(buf);
+    }
+}
+
 int main(int argc, char** argv)
 {
     int seeds = 40;
@@ -531,6 +556,8 @@ int main(int argc, char** argv)
         bench_drift(seeds / 4 > 0 ? seeds / 4 : 1, deep, -12.f);
     if (all || strcmp(which, "ap") == 0)
         bench_ap(seeds / 2 > 0 ? seeds / 2 : 1);
+    if (all || strcmp(which, "tx") == 0)
+        bench_tx();
 #ifndef _WIN32
     if (all || strcmp(which, "threads") == 0)
         bench_threads();

@@ -107,6 +107,18 @@ internal static class Ft8Native
         out int outCount);
 
     [DllImport(LibraryName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern int ow_ft8_encode_pcm_ex(
+        [MarshalAs(UnmanagedType.LPUTF8Str)] string messageText,
+        float freqHz,
+        int isFt4,
+        float slopeHzPerSec,
+        float gain,
+        float[] outSamples,
+        int outCapacity,
+        int sampleRate,
+        out int outCount);
+
+    [DllImport(LibraryName, CallingConvention = CallingConvention.Cdecl)]
     public static extern int ow_ft8_decode_pcm(
         float[] samples,
         int numSamples,
@@ -178,6 +190,20 @@ internal static class Ft8Native
         float freqHz,
         int sampleRate,
         out float[]? pcm,
+        out string error) =>
+        TryEncodeFt4(message, freqHz, sampleRate, 0f, 1f, out pcm, out error);
+
+    /// <summary>
+    /// Encode FT4 PCM whose tones move by <paramref name="slopeHzPerSec"/> from the slot start
+    /// (TX Doppler pre-compensation), scaled by <paramref name="gain"/>.
+    /// </summary>
+    public static bool TryEncodeFt4(
+        string message,
+        float freqHz,
+        int sampleRate,
+        float slopeHzPerSec,
+        float gain,
+        out float[]? pcm,
         out string error)
     {
         pcm = null;
@@ -200,7 +226,8 @@ internal static class Ft8Native
             // Hashed / portable callsigns (e.g. MM9SQL/M) need to be in the table first.
             // Native hashtable locking allows encode/decode to run on parallel TX slots.
             RememberHashedTokens(text);
-            rc = ow_ft8_encode_pcm(text, freqHz, isFt4: 1, buffer, capacity, sampleRate, out count);
+            rc = ow_ft8_encode_pcm_ex(
+                text, freqHz, isFt4: 1, slopeHzPerSec, gain, buffer, capacity, sampleRate, out count);
         }
         catch (DllNotFoundException)
         {
