@@ -31,6 +31,13 @@ public static class AccessibilityThemeResources
     public const string GpsWarnKey = "GpsWarnBrush";
     public const string ThemeSubtlePanelBackgroundKey = "ThemeSubtlePanelBackgroundBrush";
     public const string ThemeInsetBackgroundKey = "ThemeInsetBackgroundBrush";
+    public const string StandbyBannerBackgroundKey = "StandbyBannerBackgroundBrush";
+    public const string StandbyBannerForegroundKey = "StandbyBannerForegroundBrush";
+    public const string StandbyBannerBorderKey = "StandbyBannerBorderBrush";
+    public const string StandbyActionBackgroundKey = "StandbyActionBackgroundBrush";
+    public const string StandbyActionForegroundKey = "StandbyActionForegroundBrush";
+    public const string StandbyActionHoverBackgroundKey = "StandbyActionHoverBackgroundBrush";
+    public const string StandbyActionPressedBackgroundKey = "StandbyActionPressedBackgroundBrush";
 
     public static void Install()
     {
@@ -92,5 +99,19 @@ public static class AccessibilityThemeResources
             isDark ? Color.Parse("#26282C") : Color.Parse("#F6F7F8"));
         resources[ThemeInsetBackgroundKey] = new SolidColorBrush(
             isDark ? Color.Parse("#1C1E22") : Color.Parse("#ECEEF0"));
+        // Standby is easy to leave on. Amber fill plus wording, with dark text on the action button.
+        resources[StandbyBannerBackgroundKey] = new SolidColorBrush(
+            isDark ? Color.Parse("#3A2A12") : Color.Parse("#FFF3D6"));
+        resources[StandbyBannerForegroundKey] = new SolidColorBrush(
+            isDark ? Color.Parse("#FFD27A") : Color.Parse("#7A4100"));
+        resources[StandbyBannerBorderKey] = new SolidColorBrush(
+            isDark ? Color.Parse("#E09A20") : Color.Parse("#C48412"));
+        resources[StandbyActionBackgroundKey] = new SolidColorBrush(
+            isDark ? Color.Parse("#E09A20") : Color.Parse("#E89B1E"));
+        resources[StandbyActionForegroundKey] = new SolidColorBrush(Color.Parse("#1A1A1A"));
+        resources[StandbyActionHoverBackgroundKey] = new SolidColorBrush(
+            isDark ? Color.Parse("#F0B040") : Color.Parse("#D4890C"));
+        resources[StandbyActionPressedBackgroundKey] = new SolidColorBrush(
+            isDark ? Color.Parse("#C48412") : Color.Parse("#B8730A"));
     }
 }

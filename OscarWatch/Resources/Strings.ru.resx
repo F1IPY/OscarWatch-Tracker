@@ -438,13 +438,19 @@ LOS: {2}
     <value>Щёлкните спутник, чтобы выбрать его, или используйте стрелки, когда график в фокусе. Линия показывает трассу пролёта; перекрестье отмечает наведение ротатора, если он подключён.</value>
   </data>
   <data name="Main.Standby.Hint">
-    <value>Только просмотр: ротатор припаркован, CAT на паузе</value>
+    <value>Режим ожидания включён. Ротатор припаркован, а CAT на паузе, пока вы не возобновите слежение.</value>
   </data>
   <data name="Main.Standby.Pause">
     <value>Ожидание</value>
   </data>
+  <data name="Main.Standby.PauseTip">
+    <value>Припарковать ротатор и поставить CAT на паузу. Карта остаётся живой, но станция перестаёт следить.</value>
+  </data>
   <data name="Main.Standby.Resume">
-    <value>Продолжить</value>
+    <value>Возобновить слежение</value>
+  </data>
+  <data name="Main.Standby.ResumeTip">
+    <value>Выйти из ожидания и возобновить слежение ротатора и CAT.</value>
   </data>
   <data name="Main.Sunlight">
     <value>Солнце</value>

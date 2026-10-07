@@ -438,13 +438,19 @@ LOS: {2}
     <value>คลิกดาวเทียมเพื่อเลือก หรือใช้ปุ่มลูกศรเมื่อโฟกัสอยู่ เส้นแสดงเส้นทางพาส; กากบาททำเครื่องหมายทิศที่โรเตอร์เล็งเมื่อเชื่อมต่อแล้ว</value>
   </data>
   <data name="Main.Standby.Hint">
-    <value>ดูอย่างเดียว: จอดโรเตอร์แล้ว, หยุด CAT ชั่วคราว</value>
+    <value>โหมดสแตนด์บายเปิดอยู่ โรเตอร์จอดอยู่และ CAT หยุดชั่วคราวจนกว่าคุณจะติดตามต่อ</value>
   </data>
   <data name="Main.Standby.Pause">
     <value>สแตนด์บาย</value>
   </data>
+  <data name="Main.Standby.PauseTip">
+    <value>จอดโรเตอร์และหยุด CAT ชั่วคราว แผนที่ยังแสดงสด แต่สถานีหยุดติดตาม</value>
+  </data>
   <data name="Main.Standby.Resume">
-    <value>ทำงานต่อ</value>
+    <value>ติดตามต่อ</value>
+  </data>
+  <data name="Main.Standby.ResumeTip">
+    <value>ออกจากสแตนด์บาย แล้วติดตามด้วยโรเตอร์และ CAT ต่อ</value>
   </data>
   <data name="Main.Sunlight">
     <value>แสงอาทิตย์</value>

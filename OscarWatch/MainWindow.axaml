@@ -327,6 +327,32 @@
               <Setter Property="MinWidth" Value="34" />
               <Setter Property="Padding" Value="8,0" />
             </Style>
+            <Style Selector="TextBlock.standbytitle">
+              <Setter Property="Foreground" Value="{DynamicResource StandbyBannerForegroundBrush}" />
+            </Style>
+            <Style Selector="Border.standbybanner">
+              <Setter Property="Background" Value="{DynamicResource StandbyBannerBackgroundBrush}" />
+              <Setter Property="BorderBrush" Value="{DynamicResource StandbyBannerBorderBrush}" />
+              <Setter Property="BorderThickness" Value="1" />
+              <Setter Property="CornerRadius" Value="6" />
+              <Setter Property="Padding" Value="10,8" />
+            </Style>
+            <Style Selector="Button.live-sidebar-action.standbyengaged">
+              <Setter Property="Background" Value="{DynamicResource StandbyActionBackgroundBrush}" />
+              <Setter Property="Foreground" Value="{DynamicResource StandbyActionForegroundBrush}" />
+              <Setter Property="BorderBrush" Value="{DynamicResource StandbyBannerBorderBrush}" />
+              <Setter Property="BorderThickness" Value="1" />
+            </Style>
+            <Style Selector="Button.live-sidebar-action.standbyengaged:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+              <Setter Property="Background" Value="{DynamicResource StandbyActionHoverBackgroundBrush}" />
+              <Setter Property="BorderBrush" Value="{DynamicResource StandbyBannerBorderBrush}" />
+              <Setter Property="Foreground" Value="{DynamicResource StandbyActionForegroundBrush}" />
+            </Style>
+            <Style Selector="Button.live-sidebar-action.standbyengaged:pressed /template/ ContentPresenter#PART_ContentPresenter">
+              <Setter Property="Background" Value="{DynamicResource StandbyActionPressedBackgroundBrush}" />
+              <Setter Property="BorderBrush" Value="{DynamicResource StandbyBannerBorderBrush}" />
+              <Setter Property="Foreground" Value="{DynamicResource StandbyActionForegroundBrush}" />
+            </Style>
         </Border.Styles>
         <Grid x:Name="SidebarLayoutGrid"
               RowDefinitions="Auto,*,Auto"
@@ -339,22 +365,29 @@
             <StackPanel MinWidth="0">
               <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,8">
             <TextBlock Grid.Column="0"
-                       Text="{loc:Localize Key=Main.Live}"
+                       Text="{Binding SidebarModeTitle}"
                        FontWeight="SemiBold"
                        FontSize="14"
-                       VerticalAlignment="Center" />
+                       TextTrimming="CharacterEllipsis"
+                       VerticalAlignment="Center"
+                       Classes.standbytitle="{Binding IsStandby}" />
             <Button Grid.Column="1"
                     Classes="live-sidebar-action"
+                    Classes.standbyengaged="{Binding IsStandby}"
                     Content="{Binding StandbyButtonText}"
                     Command="{Binding ToggleStandbyCommand}"
+                    ToolTip.Tip="{Binding StandbyButtonToolTip}"
                     VerticalAlignment="Center" />
           </Grid>
           <StackPanel Spacing="8" Margin="0,0,0,8">
-            <TextBlock Text="{loc:Localize Key=Main.Standby.Hint}"
-                       FontSize="11"
-                       TextWrapping="Wrap"
-                       Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
-                       IsVisible="{Binding IsStandby}" />
+            <Border Classes="standbybanner"
+                    IsVisible="{Binding IsStandby}">
+              <TextBlock Text="{loc:Localize Key=Main.Standby.Hint}"
+                         FontSize="12"
+                         FontWeight="SemiBold"
+                         TextWrapping="Wrap"
+                         Foreground="{DynamicResource StandbyBannerForegroundBrush}" />
+            </Border>
 
             <Border Classes="live-panel">
               <StackPanel Spacing="6">

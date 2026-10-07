@@ -416,13 +416,19 @@
     <value>衛星をクリックして選択するか、フォーカス時に矢印キーを使用します。線はパス経路、十字は接続時のローテーター向きを示します。</value>
   </data>
   <data name="Main.Standby.Hint">
-    <value>閲覧のみ — ローテーター停止、CAT一時停止</value>
+    <value>スタンバイ中です。追跡を再開するまで、ローテーターは停止し、CATは一時停止しています。</value>
   </data>
   <data name="Main.Standby.Pause">
     <value>スタンバイ</value>
   </data>
+  <data name="Main.Standby.PauseTip">
+    <value>ローテーターを停止し、CATを一時停止します。地図はライブのままですが、局の追跡は止まります。</value>
+  </data>
   <data name="Main.Standby.Resume">
-    <value>再開</value>
+    <value>追跡を再開</value>
+  </data>
+  <data name="Main.Standby.ResumeTip">
+    <value>スタンバイを解除し、ローテーターとCATの追跡を再開します。</value>
   </data>
   <data name="Main.Sunlight">
     <value>日照</value>

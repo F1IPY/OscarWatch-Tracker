@@ -438,13 +438,19 @@ Dauer: {4}</value>
     <value>Klicken Sie auf einen Satelliten, um ihn auszuwählen, oder nutzen Sie die Pfeiltasten bei Fokus. Die Linie zeigt den Überflugpfad; das Fadenkreuz markiert die Rotorzielrichtung, wenn verbunden.</value>
   </data>
   <data name="Main.Standby.Hint">
-    <value>Nur Anzeige: Rotor geparkt, CAT pausiert</value>
+    <value>Bereitschaft ist aktiv. Der Rotor ist geparkt und CAT ist pausiert, bis Sie das Tracking fortsetzen.</value>
   </data>
   <data name="Main.Standby.Pause">
     <value>Bereitschaft</value>
   </data>
+  <data name="Main.Standby.PauseTip">
+    <value>Rotor parken und CAT pausieren. Die Karte bleibt live, aber die Station verfolgt nicht mehr.</value>
+  </data>
   <data name="Main.Standby.Resume">
-    <value>Fortsetzen</value>
+    <value>Tracking fortsetzen</value>
+  </data>
+  <data name="Main.Standby.ResumeTip">
+    <value>Bereitschaft beenden und Rotor- sowie CAT-Tracking fortsetzen.</value>
   </data>
   <data name="Main.Sunlight">
     <value>Sonnenlicht</value>

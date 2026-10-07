@@ -434,13 +434,19 @@
     <value>单击卫星进行选择，或在聚焦时使用方向键。线条显示其过境路径；连接时十字标记表示旋翼器指向。</value>
   </data>
   <data name="Main.Standby.Hint">
-    <value>浏览模式 — 旋转器已停靠，CAT 已暂停</value>
+    <value>待机已开启。在恢复跟踪之前，旋转器已停靠，CAT 已暂停。</value>
   </data>
   <data name="Main.Standby.Pause">
     <value>待机</value>
   </data>
+  <data name="Main.Standby.PauseTip">
+    <value>停靠旋转器并暂停 CAT。地图仍为实时，但电台停止跟踪。</value>
+  </data>
   <data name="Main.Standby.Resume">
-    <value>恢复</value>
+    <value>恢复跟踪</value>
+  </data>
+  <data name="Main.Standby.ResumeTip">
+    <value>退出待机，恢复旋转器和 CAT 跟踪。</value>
   </data>
   <data name="Main.Sunlight">
     <value>日照</value>

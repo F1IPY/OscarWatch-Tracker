@@ -438,13 +438,19 @@ Durasi: {4}</value>
     <value>Klik satelit untuk memilihnya, atau gunakan tombol panah saat terfokus. Garis menunjukkan jalur lintasannya; crosshair menandai arah rotator saat terhubung.</value>
   </data>
   <data name="Main.Standby.Hint">
-    <value>Hanya menjelajah: rotator diparkir, CAT dijeda</value>
+    <value>Mode siaga aktif. Rotator diparkir dan CAT dijeda sampai Anda melanjutkan pelacakan.</value>
   </data>
   <data name="Main.Standby.Pause">
     <value>Siaga</value>
   </data>
+  <data name="Main.Standby.PauseTip">
+    <value>Parkir rotator dan jeda CAT. Peta tetap langsung, tetapi stasiun berhenti melacak.</value>
+  </data>
   <data name="Main.Standby.Resume">
-    <value>Lanjutkan</value>
+    <value>Lanjutkan pelacakan</value>
+  </data>
+  <data name="Main.Standby.ResumeTip">
+    <value>Keluar dari siaga dan lanjutkan pelacakan rotator serta CAT.</value>
   </data>
   <data name="Main.Sunlight">
     <value>Cahaya matahari</value>

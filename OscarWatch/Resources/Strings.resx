@@ -434,13 +434,19 @@
     <value>Click a satellite to select it, or use arrow keys when focused. The line shows its pass path; the crosshair marks rotator aim when connected.</value>
   </data>
   <data name="Main.Standby.Hint">
-    <value>Browsing only — rotator parked, CAT paused</value>
+    <value>Standby is on. The rotator is parked and CAT is paused until you resume tracking.</value>
   </data>
   <data name="Main.Standby.Pause">
     <value>Standby</value>
   </data>
+  <data name="Main.Standby.PauseTip">
+    <value>Park the rotator and pause CAT. The map stays live, but the station stops tracking.</value>
+  </data>
   <data name="Main.Standby.Resume">
-    <value>Resume</value>
+    <value>Resume tracking</value>
+  </data>
+  <data name="Main.Standby.ResumeTip">
+    <value>Leave standby and resume rotator and CAT tracking.</value>
   </data>
   <data name="Main.Sunlight">
     <value>Sunlight</value>

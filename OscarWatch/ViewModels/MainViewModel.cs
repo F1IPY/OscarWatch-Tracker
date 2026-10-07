@@ -159,6 +159,8 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(ParkRotatorCommand))]
     [NotifyPropertyChangedFor(nameof(StandbyButtonText))]
+    [NotifyPropertyChangedFor(nameof(StandbyButtonToolTip))]
+    [NotifyPropertyChangedFor(nameof(SidebarModeTitle))]
     [NotifyPropertyChangedFor(nameof(ShowRotatorMenuItem))]
     [NotifyCanExecuteChangedFor(nameof(ToggleRigCatPauseCommand))]
     [NotifyCanExecuteChangedFor(nameof(OpenRotatorManualCommand))]
@@ -167,6 +169,14 @@ public partial class MainViewModel : ViewModelBase
     public string StandbyButtonText => IsStandby
         ? _l.Get("Main.Standby.Resume")
         : _l.Get("Main.Standby.Pause");
+
+    public string StandbyButtonToolTip => IsStandby
+        ? _l.Get("Main.Standby.ResumeTip")
+        : _l.Get("Main.Standby.PauseTip");
+
+    public string SidebarModeTitle => IsStandby
+        ? _l.Get("Main.Standby.Pause")
+        : _l.Get("Main.Live");
 
     public bool ShowRotatorMenuItem => IsStandby && _settings.Current.Rotator.Enabled;
 

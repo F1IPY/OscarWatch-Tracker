@@ -434,13 +434,19 @@
     <value>Haz clic en un satélite para seleccionarlo, o usa las flechas cuando esté enfocado. La línea muestra su trayectoria de paso; la cruz marca la orientación del rotador cuando está conectado.</value>
   </data>
   <data name="Main.Standby.Hint">
-    <value>Solo consulta — rotor estacionado, CAT en pausa</value>
+    <value>El modo en espera está activo. El rotor está estacionado y el CAT está en pausa hasta que reanudes el seguimiento.</value>
   </data>
   <data name="Main.Standby.Pause">
     <value>En espera</value>
   </data>
+  <data name="Main.Standby.PauseTip">
+    <value>Estaciona el rotor y pausa el CAT. El mapa sigue en vivo, pero la estación deja de seguir.</value>
+  </data>
   <data name="Main.Standby.Resume">
-    <value>Reanudar</value>
+    <value>Reanudar seguimiento</value>
+  </data>
+  <data name="Main.Standby.ResumeTip">
+    <value>Sal del modo en espera y reanuda el seguimiento del rotor y del CAT.</value>
   </data>
   <data name="Main.Sunlight">
     <value>Luz solar</value>

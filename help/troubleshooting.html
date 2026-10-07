@@ -84,7 +84,7 @@
         <li>Check the serial port in Settings — on Windows, use Device Manager to see which COM port appears when you plug in USB. On Linux, see <a href="linux-serial.html">Linux serial ports</a> if <code>ttyUSB</code> numbers changed after reboot.</li>
         <li>Ensure radio, rotator, and GPS (if used) each use a <strong>different</strong> port.</li>
         <li>Close other applications using the same port.</li>
-        <li>Leave <strong>Standby</strong> if you expect tracking — Resume for live operation.</li>
+        <li>Leave <strong>Standby</strong> if you expect tracking. Press <strong>Resume tracking</strong> for live operation. The sidebar heading says Standby, not Live, while it is on.</li>
         <li>Settings or the sidebar may show a COM port conflict warning if two devices share one port.</li>
         <li>If the port appears but CAT is flaky, try a different USB–serial adapter — see <a href="#usb-serial">USB serial adapters</a>.</li>
       </ul>
@@ -196,7 +196,7 @@
         <strong>Settings → Radio → Uplink CAT wait after dial</strong> (default <strong>2500 ms</strong>).
         How soon receive Doppler CAT resumes is <strong>Resume CAT after dial</strong> (default <strong>800 ms</strong>).
         If uplink seems late right after a long tune, wait a moment or lengthen those values. If Sub stays selected
-        with no pass running, press <strong>Resume</strong> or toggle Standby, or turn satellite mode off and on
+        with no pass running, press <strong>Resume tracking</strong> if Standby is on, or turn satellite mode off and on
         on the radio. See <a href="radio-doppler-tuning.html#passband-knob">spinning the dial</a> in Doppler tuning help.
       </p>
 
