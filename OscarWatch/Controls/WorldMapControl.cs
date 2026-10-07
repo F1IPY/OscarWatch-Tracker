@@ -346,7 +346,9 @@ public class WorldMapControl : ThemeAwareControl
         base.OnPointerPressed(e);
         Focus();
         var pos = e.GetPosition(this);
-        FocusedNoradId = HitTestSatellite(pos, Bounds.Width, Bounds.Height);
+        var hit = HitTestSatellite(pos, Bounds.Width, Bounds.Height);
+        if (hit is not null)
+            FocusedNoradId = hit;
     }
 
     protected override void OnKeyDown(KeyEventArgs e)
@@ -648,10 +650,114 @@ public class WorldMapControl : ThemeAwareControl
     private string? HitTestSatellite(Point pos, double w, double h)
     {
         var states = TrackStates;
-        if (states is null)
+        if (states is null || w <= 0 || h <= 0)
             return null;
 
         var centreLon = MapCentreLongitude;
+        var palette = UiPaletteResolver.Current;
+
+        // Labels are painted on top, and the focused label is painted last.
+        var focusedLabel = HitTestLabel(states, pos, w, h, centreLon, palette, focusedOnly: true);
+        if (focusedLabel is not null)
+            return focusedLabel;
+
+        var label = HitTestLabel(states, pos, w, h, centreLon, palette, focusedOnly: false);
+        if (label is not null)
+            return label;
+
+        var marker = HitTestMarker(states, pos, w, h, centreLon);
+        if (marker is not null)
+            return marker;
+
+        var (clickLat, clickLon) = PixelToGeo(pos.X, pos.Y, w, h, centreLon);
+        var footprintHits = new List<(string NoradId, double RadiusDeg, double AngularDistanceDeg)>();
+        foreach (var state in states)
+        {
+            if (!TrackingPlotAccessibility.IsPlotSatelliteVisible(SoloFocusedSatellite, FocusedNoradId, state.NoradId))
+                continue;
+
+            if (state.Footprint.Count < 3)
+                continue;
+
+            var radiusDeg = state.FootprintRadiusDeg > 0
+                ? state.FootprintRadiusDeg
+                : FootprintGeometry.EstimateRingRadiusDeg(state.Subpoint, state.Footprint);
+            if (radiusDeg <= 0)
+                continue;
+
+            var angular = SphericalGeo.AngularDistanceDeg(
+                clickLat,
+                clickLon,
+                state.Subpoint.LatitudeDeg,
+                state.Subpoint.LongitudeDeg);
+            footprintHits.Add((state.NoradId, radiusDeg, angular));
+        }
+
+        return ChooseSmallestFootprintHit(footprintHits);
+    }
+
+    private string? HitTestLabel(
+        IReadOnlyList<SatelliteTrackState> states,
+        Point pos,
+        double w,
+        double h,
+        double centreLon,
+        UiPalette palette,
+        bool focusedOnly)
+    {
+        string? bestId = null;
+        var bestDist = double.MaxValue;
+
+        foreach (var state in states)
+        {
+            var isFocused = string.Equals(state.NoradId, FocusedNoradId, StringComparison.Ordinal);
+            if (focusedOnly)
+            {
+                if (!isFocused)
+                    continue;
+            }
+            else if (isFocused)
+            {
+                continue;
+            }
+
+            if (!TrackingPlotAccessibility.IsPlotSatelliteVisible(SoloFocusedSatellite, FocusedNoradId, state.NoradId))
+                continue;
+
+            if (string.IsNullOrEmpty(state.Name))
+                continue;
+
+            var text = _labelCache.Get(state.Name, isFocused ? 12 : 11, palette);
+            var (sx, sy) = EquirectangularProjection.GeoToPixel(
+                state.Subpoint.LatitudeDeg, state.Subpoint.LongitudeDeg, w, h, centreLon);
+
+            foreach (var xOffset in GetSubpointWrapOffsets(sx, w))
+            {
+                var bounds = SatelliteLabelBounds(sx + xOffset, sy, text.Width, text.Height);
+                if (!bounds.Contains(pos))
+                    continue;
+
+                var dx = pos.X - bounds.Center.X;
+                var dy = pos.Y - bounds.Center.Y;
+                var dist = dx * dx + dy * dy;
+                if (dist < bestDist)
+                {
+                    bestDist = dist;
+                    bestId = state.NoradId;
+                }
+            }
+        }
+
+        return bestId;
+    }
+
+    private string? HitTestMarker(
+        IReadOnlyList<SatelliteTrackState> states,
+        Point pos,
+        double w,
+        double h,
+        double centreLon)
+    {
         string? bestId = null;
         var bestDist = double.MaxValue;
 
@@ -676,6 +782,55 @@ public class WorldMapControl : ThemeAwareControl
                     bestId = state.NoradId;
                 }
             }
+        }
+
+        return bestId;
+    }
+
+    /// <summary>Screen rectangle of the name drawn above a subpoint, including its padding.</summary>
+    internal static Rect SatelliteLabelBounds(double anchorX, double anchorY, double textWidth, double textHeight)
+    {
+        var tx = anchorX - textWidth / 2;
+        var ty = anchorY - textHeight - 8;
+        return new Rect(tx - 4, ty - 2, textWidth + 8, textHeight + 4);
+    }
+
+    internal static (double LatitudeDeg, double LongitudeDeg) PixelToGeo(
+        double x,
+        double y,
+        double width,
+        double height,
+        double centerLongitudeDeg)
+    {
+        var lon = x / width * 360.0 - 180.0 + centerLongitudeDeg;
+        var lat = 90.0 - y / height * 180.0;
+        return (Math.Clamp(lat, -90, 90), lon);
+    }
+
+    /// <summary>
+    /// When several footprints contain the click, the smallest one is the satellite the operator aimed at.
+    /// </summary>
+    internal static string? ChooseSmallestFootprintHit(
+        IReadOnlyList<(string NoradId, double RadiusDeg, double AngularDistanceDeg)> hits)
+    {
+        string? bestId = null;
+        var bestRadius = double.MaxValue;
+        var bestDist = double.MaxValue;
+
+        foreach (var hit in hits)
+        {
+            if (hit.RadiusDeg <= 0 || hit.AngularDistanceDeg > hit.RadiusDeg)
+                continue;
+
+            var closerRadius = hit.RadiusDeg < bestRadius - 1e-6;
+            var sameRadiusCloser = Math.Abs(hit.RadiusDeg - bestRadius) <= 1e-6
+                && hit.AngularDistanceDeg < bestDist;
+            if (!closerRadius && !sameRadiusCloser)
+                continue;
+
+            bestId = hit.NoradId;
+            bestRadius = hit.RadiusDeg;
+            bestDist = hit.AngularDistanceDeg;
         }
 
         return bestId;
@@ -1401,12 +1556,9 @@ public class WorldMapControl : ThemeAwareControl
         double fontSize = 12)
     {
         var text = _labelCache.Get(name, fontSize, palette);
-
-        var tx = x - text.Width / 2;
-        var ty = y - text.Height - 8;
-        var bg = new Rect(tx - 4, ty - 2, text.Width + 8, text.Height + 4);
+        var bg = SatelliteLabelBounds(x, y, text.Width, text.Height);
         context.FillRectangle(_labelCache.GetBackgroundBrush(palette), bg);
-        context.DrawText(text, new Point(tx, ty));
+        context.DrawText(text, new Point(bg.X + 4, bg.Y + 2));
     }
 
     private sealed class FootprintGeometryEntry
