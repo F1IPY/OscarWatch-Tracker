@@ -215,6 +215,7 @@ public class QsoLogbookCorrespondentLookupTests
         public void ApplySettings(SatelliteLinkSettings settings) { }
         public void Publish(SatelliteTrackState? track, RigTrackingContext? context, bool force = false) { }
         public void PublishQso(QsoRecord record, QsoLogbook logbook, SatelliteLinkQsoEventKind kind, string? noradId = null) { }
+        public void PublishPassAlert(PassInfo pass, DateTime utcNow) { }
         public Task<bool> TestBindAsync(SatelliteLinkSettings settings, CancellationToken cancellationToken = default) =>
             Task.FromResult(true);
         public Task StopAsync() => Task.CompletedTask;

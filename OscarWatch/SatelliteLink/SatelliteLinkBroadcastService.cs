@@ -101,6 +101,16 @@ public sealed class SatelliteLinkBroadcastService : ISatelliteLinkBroadcastServi
         _ = BroadcastAsync(json);
     }
 
+    public void PublishPassAlert(PassInfo pass, DateTime utcNow)
+    {
+        if (!_settings.Enabled || !_host.IsListening)
+            return;
+
+        var message = SatelliteLinkPassAlertMessageBuilder.Build(pass, utcNow);
+        var json = JsonSerializer.Serialize(message, JsonOptions);
+        _ = BroadcastAsync(json);
+    }
+
     public async Task<bool> TestBindAsync(SatelliteLinkSettings settings, CancellationToken cancellationToken = default)
     {
         await _lifecycle.WaitAsync(cancellationToken).ConfigureAwait(false);

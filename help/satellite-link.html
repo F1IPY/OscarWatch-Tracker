@@ -41,10 +41,12 @@
         When you log a QSO in <strong>OscarWatch Logbook</strong>, OscarWatch also broadcasts a <code>qsoLogged</code> event
         (and <code>qsoUpdated</code> / <code>qsoDeleted</code> when you edit or remove entries) so external tools can
         mirror your log in real time.
+        When a scheduled sidebar pass reaches its reminder, OscarWatch broadcasts a <code>passAlert</code> event
+        so a second screen or logging app can warn you before AOS.
       </p>
       <p>
-        Each message also includes a <code>wispDde</code> string in the old Wisp32/GSC format for adapters that
-        still expect SatPC32-style text.
+        Each satellite status message also includes a <code>wispDde</code> string in the old Wisp32/GSC format for adapters that
+        still expect SatPC32-style text. QSO and pass-alert messages do not.
       </p>
 
       <h2>Settings</h2>
@@ -130,6 +132,35 @@
   "satellite": null,
   "wispDde": "** NO SATELLITE **"
 }</code></pre>
+
+      <h3>Scheduled pass alerts</h3>
+      <p>
+        When a pass you marked in the sidebar enters its reminder window (the same moment as the on-screen alert),
+        OscarWatch broadcasts one <code>passAlert</code> frame. It is not repeated, and it is not part of
+        <code>satelliteStatus</code>, so a listener will not retune the radio. The message has no frequencies.
+        Clients that connect later do not receive a backlog.
+      </p>
+      <pre><code>{
+  "type": "passAlert",
+  "version": 1,
+  "timestampUtc": "2026-10-07T18:25:00.000Z",
+  "pass": {
+    "satellite": {
+      "name": "AO-07",
+      "noradId": "07530"
+    },
+    "aosUtc": "2026-10-07T18:30:00.000Z",
+    "losUtc": "2026-10-07T18:42:00.000Z",
+    "maxElevationDeg": 24.6,
+    "secondsUntilAos": 300
+  }
+}</code></pre>
+      <ul>
+        <li><code>pass.satellite.name</code> and <code>noradId</code> identify the scheduled spacecraft.</li>
+        <li><code>aosUtc</code> and <code>losUtc</code> are UTC (ISO-8601). Use them to ignore a duplicate if you reconnect and the reminder has already fired.</li>
+        <li><code>maxElevationDeg</code> is the pass maximum elevation in degrees.</li>
+        <li><code>secondsUntilAos</code> is whole seconds until AOS at the moment the alert was sent, never below zero.</li>
+      </ul>
 
       <h3>QSO logbook messages</h3>
       <p>
@@ -237,6 +268,9 @@ async def main():
                     print(f"{sat} RX {rx} Hz")
                 else:
                     print("No satellite")
+            elif kind == "passAlert":
+                sat = msg["pass"]["satellite"]["name"]
+                print(f"{sat} AOS in {msg['pass']['secondsUntilAos']} s")
             elif kind == "qsoLogged":
                 qso = msg["qso"]
                 print(f"Logged {qso['call']} on {qso['satellite']['name']}")
@@ -267,6 +301,9 @@ while (ws.State == WebSocketState.Open)
     {
         case "satelliteStatus" when root.GetProperty("inRange").GetBoolean():
             Console.WriteLine(root.GetProperty("satellite").GetProperty("name").GetString());
+            break;
+        case "passAlert":
+            Console.WriteLine(root.GetProperty("pass").GetProperty("satellite").GetProperty("name").GetString());
             break;
         case "qsoLogged":
             Console.WriteLine($"Logged {root.GetProperty("qso").GetProperty("call").GetString()}");

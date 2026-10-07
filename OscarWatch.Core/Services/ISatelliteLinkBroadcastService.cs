@@ -18,6 +18,8 @@ public interface ISatelliteLinkBroadcastService
 
     void PublishQso(QsoRecord record, QsoLogbook logbook, SatelliteLinkQsoEventKind kind, string? noradId = null);
 
+    void PublishPassAlert(PassInfo pass, DateTime utcNow);
+
     Task<bool> TestBindAsync(SatelliteLinkSettings settings, CancellationToken cancellationToken = default);
 
     Task StopAsync();

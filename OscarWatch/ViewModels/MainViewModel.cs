@@ -1893,14 +1893,18 @@ public partial class MainViewModel : ViewModelBase
         if (upcoming.Count == 0)
             return;
 
+        var now = DateTime.UtcNow;
         var due = _scheduledPassReminder.Process(
-            DateTime.UtcNow,
+            now,
             scheduled,
             upcoming,
             schedule.LeadMinutesBeforeAos);
 
         foreach (var pass in due)
+        {
+            _satelliteLink.PublishPassAlert(pass, now);
             ShowScheduledPassAlert(pass, schedule);
+        }
     }
 
     private void ShowScheduledPassAlert(PassInfo pass, PassScheduleSettings schedule)
