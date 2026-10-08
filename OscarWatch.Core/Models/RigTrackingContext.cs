@@ -9,6 +9,8 @@ public sealed class RigTrackingContext
     public required CorrectedFrequencies Corrected { get; init; }
     public double TransmitOffsetKHz { get; init; }
     public double ReceiveOffsetKHz { get; init; }
+    public double PassbandDownlinkAdjustKHz { get; init; }
+    public double PassbandUplinkAdjustKHz { get; init; }
     public double? SelectedCtcssHz { get; init; }
 
     /// <summary>When true, uplink mode is CW for linear SSB voice database entries.</summary>

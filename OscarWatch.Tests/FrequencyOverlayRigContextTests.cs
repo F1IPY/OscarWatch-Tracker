@@ -250,6 +250,70 @@ public class FrequencyOverlayRigContextTests
     }
 
     [Fact]
+    public void Passband_slider_applies_same_shift_for_nor_and_opposite_shift_for_rev()
+    {
+        var settings = new TestSettingsService();
+        var database = new TestSatelliteDatabaseService(
+        [
+            new SatelliteRadioEntry
+            {
+                Name = "RS-44",
+                Modes =
+                [
+                    new SatelliteTransponderMode
+                    {
+                        Type = "NOR Mode",
+                        DownlinkKHz = 435_667,
+                        UplinkKHz = 145_937,
+                        DownlinkMode = "USB",
+                        UplinkMode = "LSB",
+                        Doppler = "NOR"
+                    },
+                    new SatelliteTransponderMode
+                    {
+                        Type = "REV Mode",
+                        DownlinkKHz = 435_667,
+                        UplinkKHz = 145_937,
+                        DownlinkMode = "USB",
+                        UplinkMode = "LSB",
+                        Doppler = "REV"
+                    }
+                ]
+            }
+        ]);
+
+        var vm = new FrequencyOverlayViewModel(settings, database, LocalizationService.Instance);
+        var state = new SatelliteTrackState
+        {
+            Name = "RS-44",
+            NoradId = "99999",
+            Subpoint = new GeoCoordinate(0, 0),
+            LookAngles = new LookAngles(180, 20, 800, 0)
+        };
+
+        vm.Update(state);
+        vm.SelectedMode = vm.AvailableModes.First(m => m.Type == "NOR Mode");
+        vm.PassbandTuneOffsetKHz = 2.0;
+
+        var norContext = vm.TryBuildRigTrackingContext(state);
+        Assert.NotNull(norContext);
+        Assert.Equal(2.0, norContext.PassbandDownlinkAdjustKHz, 3);
+        Assert.Equal(2.0, norContext.PassbandUplinkAdjustKHz, 3);
+        Assert.Equal(2.0, norContext.Corrected.RadioReceiveKHz - norContext.Mode.DownlinkKHz, 3);
+        Assert.Equal(2.0, norContext.Corrected.RadioTransmitKHz - norContext.Mode.UplinkKHz, 3);
+
+        vm.SelectedMode = vm.AvailableModes.First(m => m.Type == "REV Mode");
+        vm.PassbandTuneOffsetKHz = 2.0;
+
+        var revContext = vm.TryBuildRigTrackingContext(state);
+        Assert.NotNull(revContext);
+        Assert.Equal(2.0, revContext.PassbandDownlinkAdjustKHz, 3);
+        Assert.Equal(-2.0, revContext.PassbandUplinkAdjustKHz, 3);
+        Assert.Equal(2.0, revContext.Corrected.RadioReceiveKHz - revContext.Mode.DownlinkKHz, 3);
+        Assert.Equal(-2.0, revContext.Corrected.RadioTransmitKHz - revContext.Mode.UplinkKHz, 3);
+    }
+
+    [Fact]
     public void TryBuildRigTrackingContext_adds_ft4_uplink_calibration_to_transmit_offset()
     {
         var settings = new TestSettingsService();

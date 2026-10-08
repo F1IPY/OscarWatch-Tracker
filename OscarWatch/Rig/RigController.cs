@@ -890,8 +890,8 @@ public sealed class RigController : IRigController, IDisposable
             rxRangeRate,
             context.ReceiveOffsetKHz,
             context.TransmitOffsetKHz,
-            _passbandDownlinkAdjustKHz,
-            _passbandUplinkAdjustKHz,
+            _passbandDownlinkAdjustKHz + context.PassbandDownlinkAdjustKHz,
+            _passbandUplinkAdjustKHz + context.PassbandUplinkAdjustKHz,
             context.DopplerStrategy,
             txRangeRate);
         var pureBaselineHz = ToHz(DopplerFrequencyCalculator.Compute(
@@ -899,8 +899,8 @@ public sealed class RigController : IRigController, IDisposable
             rxRangeRate,
             context.ReceiveOffsetKHz,
             context.TransmitOffsetKHz,
-            0,
-            0,
+            context.PassbandDownlinkAdjustKHz,
+            context.PassbandUplinkAdjustKHz,
             context.DopplerStrategy,
             txRangeRate).RadioReceiveKHz);
         var expectedMainHz = ToHz(baseline.RadioReceiveKHz);
@@ -2322,8 +2322,8 @@ public sealed class RigController : IRigController, IDisposable
             rxRangeRate,
             context.ReceiveOffsetKHz,
             context.TransmitOffsetKHz,
-            _passbandDownlinkAdjustKHz,
-            _passbandUplinkAdjustKHz,
+            _passbandDownlinkAdjustKHz + context.PassbandDownlinkAdjustKHz,
+            _passbandUplinkAdjustKHz + context.PassbandUplinkAdjustKHz,
             context.DopplerStrategy,
             txRangeRate);
     }

@@ -708,6 +708,29 @@
               <Button Classes="offset-step" Content="-100" Tag="-100" Click="OnOffsetStepClick" />
               <Button Classes="offset-step" Content="-1000" Tag="-1000" Click="OnOffsetStepClick" />
             </UniformGrid>
+            <StackPanel Spacing="6">
+              <TextBlock Text="Passband tune (kHz)" FontSize="12" FontWeight="SemiBold" Foreground="#FFE0E0E0" />
+              <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
+                <TextBlock Grid.Column="0" Text="-25" FontSize="11" Foreground="#FFB0B0B0" VerticalAlignment="Center" />
+                <Slider Grid.Column="1"
+                        Minimum="-25"
+                        Maximum="25"
+                        Value="{Binding PassbandTuneOffsetKHz, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        TickFrequency="0.1"
+                        IsSnapToTickEnabled="False"
+                        PointerWheelChanged="OnPassbandTuneSliderWheelChanged" />
+                <TextBlock Grid.Column="2" Text="+25" FontSize="11" Foreground="#FFB0B0B0" VerticalAlignment="Center" />
+                <Button Grid.Column="3"
+                        Classes="offset-step"
+                        Content="0"
+                        MinWidth="36"
+                        Click="OnPassbandTuneResetClick" />
+              </Grid>
+              <TextBlock Text="{Binding PassbandTuneOffsetKHz, StringFormat='{}{0:+0.000;-0.000;0} kHz'}"
+                         FontFamily="Consolas,Courier New,monospace"
+                         FontSize="13"
+                         Foreground="#FFFFFFFF" />
+            </StackPanel>
             <Button Classes="store-offset"
                     Content="{loc:Localize Key=Freq.StoreOffset}"
                     Command="{Binding StoreOffsetCommand}" />

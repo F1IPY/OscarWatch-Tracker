@@ -365,6 +365,25 @@ public partial class FrequencyOverlayControl : UserControl
       vm.AdjustActiveOffsetHz(deltaHz);
   }
 
+  private void OnPassbandTuneSliderWheelChanged(object? sender, PointerWheelEventArgs e)
+  {
+    if (DataContext is not FrequencyOverlayViewModel vm)
+      return;
+
+    var deltaHz = e.Delta.Y != 0 ? (int)Math.Round(e.Delta.Y * 100) : 0;
+    if (deltaHz == 0)
+      return;
+
+    vm.AdjustPassbandTuneOffsetHz(deltaHz);
+    e.Handled = true;
+  }
+
+  private void OnPassbandTuneResetClick(object? sender, RoutedEventArgs e)
+  {
+    if (DataContext is FrequencyOverlayViewModel vm)
+      vm.ResetPassbandTuneOffset();
+  }
+
   private static (double X, double Y) ClampPosition(
     double x,
     double y,

@@ -17,6 +17,7 @@ public partial class FrequencyOverlayViewModel : ViewModelBase
     /// <summary>Maximum magnitude for RX/TX offset spinners and nudge keys (kHz).</summary>
     public const double OffsetMinKHz = -20.0;
     public const double OffsetMaxKHz = 20.0;
+    public const double PassbandTuneLimitKHz = 25.0;
 
     private readonly ISettingsService _settings;
     private readonly ISatelliteDatabaseService _database;
@@ -104,6 +105,9 @@ public partial class FrequencyOverlayViewModel : ViewModelBase
 
     [ObservableProperty]
     private double _transmitOffsetKHz;
+
+    [ObservableProperty]
+    private double _passbandTuneOffsetKHz;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ActiveOffsetKHz))]
@@ -422,6 +426,7 @@ public partial class FrequencyOverlayViewModel : ViewModelBase
             _rigPassbandUplinkAdjustKHz = 0;
             _passbandSyncSuspended = true;
             LoadModesForSatellite(state.Name, state.NoradId);
+            PassbandTuneOffsetKHz = 0;
             RequestOverlayReclamp();
         }
 
@@ -444,16 +449,29 @@ public partial class FrequencyOverlayViewModel : ViewModelBase
 
     private CorrectedFrequencies ComputeCorrected(
         double rxRangeRateKmPerSec,
-        double? txRangeRateKmPerSec = null) =>
-        DopplerFrequencyCalculator.Compute(
+        double? txRangeRateKmPerSec = null)
+    {
+        var tune = ResolvePassbandTuneAdjustments();
+        return DopplerFrequencyCalculator.Compute(
             SelectedMode!,
             rxRangeRateKmPerSec,
             ReceiveOffsetKHz,
             GetEffectiveTransmitOffsetKHz(),
-            _rigPassbandDownlinkAdjustKHz,
-            _rigPassbandUplinkAdjustKHz,
+            _rigPassbandDownlinkAdjustKHz + tune.DownlinkAdjustKHz,
+            _rigPassbandUplinkAdjustKHz + tune.UplinkAdjustKHz,
             DopplerStrategy,
             txRangeRateKmPerSec);
+    }
+
+    private (double DownlinkAdjustKHz, double UplinkAdjustKHz) ResolvePassbandTuneAdjustments()
+    {
+        if (SelectedMode is null || Math.Abs(PassbandTuneOffsetKHz) < 0.0001)
+            return (0, 0);
+
+        return SelectedMode.DopplerCorrection == DopplerCorrection.Reverse
+            ? (PassbandTuneOffsetKHz, -PassbandTuneOffsetKHz)
+            : (PassbandTuneOffsetKHz, PassbandTuneOffsetKHz);
+    }
 
     private DopplerLeadRangeRates ResolveRangeRates(SatelliteTrackState state) =>
         DopplerCatLead.ResolveRangeRates(
@@ -525,6 +543,7 @@ public partial class FrequencyOverlayViewModel : ViewModelBase
 
         var (rxRate, txRate) = ResolveRangeRates(state);
         var corrected = ComputeCorrected(rxRate, txRate);
+        var passbandTune = ResolvePassbandTuneAdjustments();
 
         return new RigTrackingContext
         {
@@ -533,6 +552,8 @@ public partial class FrequencyOverlayViewModel : ViewModelBase
             Corrected = corrected,
             TransmitOffsetKHz = GetEffectiveTransmitOffsetKHz(),
             ReceiveOffsetKHz = ReceiveOffsetKHz,
+            PassbandDownlinkAdjustKHz = passbandTune.DownlinkAdjustKHz,
+            PassbandUplinkAdjustKHz = passbandTune.UplinkAdjustKHz,
             SelectedCtcssHz = GetActiveCtcssHz(),
             CwUplink = IsCwUplink,
             CwKeepSidebandDownlink = CwKeepSidebandDownlink,
@@ -663,6 +684,7 @@ public partial class FrequencyOverlayViewModel : ViewModelBase
 
         _rigPassbandDownlinkAdjustKHz = 0;
         _rigPassbandUplinkAdjustKHz = 0;
+        PassbandTuneOffsetKHz = 0;
 
         if (_currentSatelliteName is not null)
         {
@@ -714,6 +736,19 @@ public partial class FrequencyOverlayViewModel : ViewModelBase
         ApplyOffsetEdit();
     }
 
+    partial void OnPassbandTuneOffsetKHzChanged(double value)
+    {
+        var clamped = Math.Clamp(value, -PassbandTuneLimitKHz, PassbandTuneLimitKHz);
+        if (Math.Abs(value - clamped) > 0.0001)
+        {
+            PassbandTuneOffsetKHz = clamped;
+            return;
+        }
+
+        if (!_isLoadingSelection)
+            ApplyOffsetEdit();
+    }
+
     partial void OnIsTransmitOffsetSelectedChanged(bool value)
     {
         if (_isLoadingSelection)
@@ -743,6 +778,14 @@ public partial class FrequencyOverlayViewModel : ViewModelBase
     {
         ActiveOffsetKHz = Math.Clamp(ActiveOffsetKHz + deltaHz / 1000.0, OffsetMinKHz, OffsetMaxKHz);
     }
+
+    public void AdjustPassbandTuneOffsetHz(int deltaHz) =>
+        PassbandTuneOffsetKHz = Math.Clamp(
+            PassbandTuneOffsetKHz + deltaHz / 1000.0,
+            -PassbandTuneLimitKHz,
+            PassbandTuneLimitKHz);
+
+    public void ResetPassbandTuneOffset() => PassbandTuneOffsetKHz = 0;
 
     /// <summary>Receive offset nudge in Hz (applied to downlink nominal before doppler).</summary>
     public void AdjustReceiveOffsetHz(int deltaHz) => AdjustActiveOffsetHz(deltaHz);
